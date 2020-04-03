@@ -213,7 +213,7 @@ while($line = fgets(STDIN)){
 
 xmlwriter_end_element($xw);
 echo xmlwriter_output_memory($xw);
-fputs (STDERR,"End of program, exit 0\n");
+// fputs (STDERR,"End of program, exit 0\n");
 exit(0);
 
 
