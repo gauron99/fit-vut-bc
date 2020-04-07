@@ -240,7 +240,7 @@ foreach ($files as $file) {
     $to_delete[] = $xml_file;
     // echo "exec this: ".$parse_script . " <" . $file. " >" . $matches[1].".xml\n";
     shell_exec($parse_script . " <" . $file. " >" . $xml_file);
-    
+//EXEC() POUZIT?
     $rc = shell_exec("echo $?"); //$rc will have a return code saved for cmp
     
     // var_dump($rc_files);#debug
@@ -249,6 +249,7 @@ foreach ($files as $file) {
         // echo "RCfile: ",$rc_file,"\n"; #debug
         // echo "file: ", $matches[1],"\n"; #debug
         if($rc_file === $matches[1].".rc"){
+// TESTOVAT POMOCI DIFF MUZE BYT
             $true_rc = file_get_contents($rc_file); #rc from a .rc file
             $tests_all++;
 
