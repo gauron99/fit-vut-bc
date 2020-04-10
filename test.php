@@ -265,8 +265,11 @@ foreach ($files as $file) {
             }
             else{
                 // echo("success1\n");
-                $tests_success ++;
                 #cmp .xml & .out
+                $tests_success ++;
+                // $jarfile = "-jar /pub/courses/ipp/jexamxml/jexamxml.jar";
+                // $retval;
+                // exec("java ".$jarfile." test.out test.your_out diffs.xml  /D /pub/courses/ipp/jexamxml/options",$output,$retval);
             }
         }
     }           
@@ -315,3 +318,6 @@ th{
 </table>
 </body>
 </html>
+
+<!-- PRO XML TESTOVANI -->
+<!-- java -jar /pub/courses/ipp/jexamxml/jexamxml.jar vas_vystup.xml referencni.xml delta.xml /pub/courses/ipp/jexamxml/options -->
