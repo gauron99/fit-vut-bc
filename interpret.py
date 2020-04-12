@@ -9,9 +9,7 @@ import xml.etree.ElementTree as ET #import library to work with xml
 import sys, os
 import re
 
-import hashlib
-
-
+## ~~~~~~~~~~ classes ~~~~~~~~~~ ##
 class Opperation():
     def __init__(self,name,arg1,arg2,arg3):
         self.name  = name
@@ -28,46 +26,88 @@ class Frames():
         
 ## ~~~~~~~~~~ functions ~~~~~~~~~~ ##
 
+def bubblesort(nlist):
+    #n items = n -1 pairs to be compared
+    #by first iteration largest number is last(where it should be)
+    for i in range(len(nlist)-1,0,-1):
+        for j in range(i):
+            if nlist[j] > nlist[j+1]:
+                temp = nlist[j]
+                nlist[j] = nlist[j+1]
+                nlist[j+1] = temp
+
 #prints out given message and exits with desired code
 def err_exit(string,rc):
     print ("Error: ",string,"- exiting w/",rc)
     sys.exit(rc)
 
-#work with arguments one by one
-# opp = opperation
-def workArgs(opp,child):
-    print ('in workArgs(',opp,'):~~~~~~~~~~~~~')
-    global GF, LF, TF
-    print('YOYOYOY ',child)
+#return true if var exists
+def is_var(string,fr):
     try:
-        arg = child.attrib['type']
-        text = child.text
-        pass
-    except:
-        print(arg,text)
-        err_exit("Expected attribute 'type' in argument",32)
-    
-    text = re.match(r'(GF|LF|TF)@(.*)',text)#cut text into groups
-
-    if opp == 'defvar':
-        if arg == 'var':        
-            print(text.group(2))#debug
-            if text.group(1) == 'GF':
-                GF[text.group(2)] = tuple() #is defined, not inicialized, therefore None
-    elif opp == 'read':
-        print ('Hey read')
-        if arg == 'var':
-                if text.group(1) == 'GF':
-                    for i in GF:
-                        if text.group(2) in i:
-                            print ('JE TO TAM')
-
-        elif arg == 'type':
-            pass
+        x = re.match(r'^(GF|LF|TF)@(.*)',string)
+        if x.group(1) == "GF":
+            print ('\n',x.group(2),': Yo whaddup yall Im in GF')
+            for key in fr.GF:
+                if x.group(2) == key:
+                    return True
+            return False
+        elif x.group(1) == "LF":
+            print ('\n',x.group(2),': Hey fellas me in LF')
+            for key in fr.LF:
+                if x.group(2) == key:
+                    return True
+            return False
         else:
-            print ('asi chybka')
+            print ('\n',x.group(2),': Ello im joinin TF')
+            for key in fr.TF:
+                if x.group(2) == key:
+                    return True
+            return False
+    except:
+        print('Note: (Var might contain unsupported frame(should be - GF/LF/TF))')
+        err_exit("Variable couldnt be verified",52)
 
-    print ('~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+def is_symb(string,sType,fr):
+    if sType == 'var':#has frame, check var
+        if is_var(string,fr):
+            return True
+        return False
+
+    #is symb & not var
+    try:
+        # sType = int, string, bool, nil
+        # {in xml: <arg1 type="sType">string</arg1>}
+
+        #int
+        if sType == 'int':
+            try:
+                int(string)
+                # if y == y.__int__(): #no need, if int() fails it raises an error
+                return True
+            except:
+                print ('Note: Value of type int is not an integer')
+                return False
+        #bool    
+        elif sType == 'bool':
+            if string == 'true' or string == 'false':
+                return True
+            print ('Note: Type bool should be "bool@<true/false>"')
+            return False
+        #str
+        elif sType == 'string':
+            return True
+        #nil
+        elif sType == 'nil':
+            if string == 'nil':
+                return True
+            else:
+                print('Note: Type nil supported for "nil@nil" only')
+                return False #error return + message after each check
+
+    except:
+        err_exit("Unsupported symbol type",52)
+
+
 
 ## ~~~~~~~~~~ frames & lists of labels and support call/return func ~~~~~~~~~~ ##
 myLabelList = {} #dictionary of labels & their instr # {"label": <number>, ...}
@@ -179,20 +219,32 @@ if 'language' in root.attrib:
 else:
     err_exit("program attribute expected: language",32)
 
-
-#cycle to save everything to a variable so its more excesible for call & return
-instr = []
+instrlist = []
+#bubblesort
 for child in root:
-    instr.append(child)
+    if int(child.attrib['order']) <= 0: #check for negative values
+        err_exit("Negative instruction number in 'order' is not allowed",32)
+    instrlist.append(int(child.attrib['order']))
+bubblesort(instrlist)
+
+
+#cycle to put instructions in order (from lowest (1))
+instr = []
+i=0
+for i in range(len(instrlist)):
+    i+=1
+    for child in root:
+        if instrlist[i-1] == int(child.attrib['order']):     
+            instr.append(child)
+            break
 
 order = []
-
 instCnt = 0
-print ('instr length: ',len(instr))
 #label cycle ( + xml basic structure validity check)
 while instCnt < len(instr):
     instCnt += 1
     child = instr[instCnt-1]
+
     #check element == 'instruction'
     if child.tag != 'instruction':
         if 'arg' in child.tag:
@@ -205,14 +257,12 @@ while instCnt < len(instr):
     else:
         err_exit("attributes 'order' & 'opcode' expected in elem instruction",32)
 
-    if int(child.attrib['order']) > 0:
-        for i in order:
-            if i == int(child.attrib['order']):
-                err_exit("Duplicity detected in instructions",32)
-        order.append(int(child.attrib['order']))
-        pass 
-    else:
-        err_exit("Negative order of instructions is not allowed",32)
+    #check for duplicity
+    for i in order:
+        if i == int(child.attrib['order']):
+            err_exit("Duplicity detected in instructions",32)
+    order.append(int(child.attrib['order']))
+        
     lab = child.attrib['opcode'].upper()
     if lab == "LABEL":
         if child.find('arg1').text in myLabelList:
@@ -222,33 +272,111 @@ while instCnt < len(instr):
             myLabelList[child.find('arg1').text] = instCnt
         #TODO this should work, not tested tho
 
-print ('~~~~~~~~~~Debug time~~~~~~~~~~\n')
+print ('~~~~~~~~~~Debug time~~~~~~~~~~\n')#####################################################################
 
 print('Labels: ',myLabelList)
 i = 0
+
 print ('All instructions:')
 while i < len(instr):
     i += 1
-    print('Inst',i,': ',instr[i-1].attrib)
+    
+    print('Inst',i,': ',instr[i-1].attrib, ", ",end='')
+    for c in instr[i-1]:
+        print(c.text," ",end='')
+    print('')
+# fr.GF['maggie'] = 4
+fr.GF['bitch'] = 4
+# fr.GF['fucker'] = 4
+fr.GF['sabina'] = 4
+g1 = "GF@maggie"
+g2 = "GF@bitch"
+g4 = "GF@fucker"
+g3 = "GF@sabina"
+fr.LF = {}
+fr.LF['bob']= 4
+# fr.LF['ivstypek']= 2
+fr.LF['whodis']= 1
+l1 = "LF@bob"
+l2 = "LF@ivstypek"
+l3 = "LF@whodis"
 
-print('\n~~~~~~~~~~Debug time over~~~~~~~~~~\n')
+fr.TF = {}
+fr.TF['Myman']= 4
+# fr.TF['badboi']= 5
+# fr.TF['jerry']= 5
+t1 ="TF@Myman"
+t2 ="TF@badboi"
+t3 ="TF@jerry"
+
+d = []
+d.append(g1)
+d.append(g2)
+d.append(g3)
+d.append(g4)
+
+d.append(l1)
+d.append(l2)
+d.append(l3)
+
+d.append(t1)
+d.append(t2)
+d.append(t3)
+
+# for da in d:
+#     y = is_var(da,fr)
+#     if y:
+#         print ('God: ye its true\n')
+#     else:
+#         print ('God: aint gonn happen\n')
+# s = 'int@+5'
+# boo = is_symb(s,fr)
+# if boo:
+#     print ('NICE its cislo')
+# else:
+#     print ('damn what a shame no cislo')#
+
+#int
+b2 = 666
+a1 = 'GF@bitch'
+
+#string
+b2 = 'DOPICEUZ'
+a1 = 'LF@bob'
+
+a = re.match(r'(.*)@(.*)',a1)
+if a.group(1) == "GF":
+    for arg in fr.GF:
+        if arg == a.group(2):
+            fr.GF[arg] = b2
+            break
+elif a.group(1) == "LF":
+    for arg in fr.LF:
+        if arg == a.group(2):
+            fr.LF[arg] = b2
+            break
+else: #a.group(1) == "TF" 
+    for arg in fr.TF:
+        if arg == a.group(2):
+            fr.TF[arg] = b2
+            break
+
+print('\n~~~~~~~~~~Debug time over~~~~~~~~~~\n') #################################################################################
+##debug print of all frames
+print ('\nAll frames:')
+print ('GF: ',fr.GF)
+print ('LF: ',fr.LF)
+print ('TF: ',fr.TF)
+
 exit(0)
 ## ~~~~~~~~~~~~~~~ main cycle ~~~~~~~~~~~~~~~ ##
-# def progr(instr):
-#     global myLabelList 
-#     global myCallList 
-#     global GF 
-#     global LF
-#     global LFcounter 
-#     global TF
-#     global instCnt
+
 actLine = 0
 
 while actLine < len(instr):
     actLine += 1
     child = instr[actLine - 1]
-    # print (child.tag,child.attrib)#debug
-    #inicialization of operation
+    
     opp = Opperation(child.attrib['opcode'].upper(),{},{},{})
     # opp.name = current opperation name (ex: LABEL)
 
@@ -260,9 +388,13 @@ while actLine < len(instr):
         elif argcnt == 2:
             opp.arg2[sub.attrib['type']] = sub.text 
         else:
-            opp.arg3[sub.attrib['type']] = sub.text 
+            opp.arg3[sub.attrib['type']] = sub.text
 
+    print ('arg1: ',opp.arg1) 
+    print ('arg2: ',opp.arg2) 
+    print ('arg3: ',opp.arg3) 
     
+        
     # upper() #case-insensitive
     if opp.name == 'CREATEFRAME':
             fr.TF = {} #easy enough
@@ -288,71 +420,105 @@ while actLine < len(instr):
         actLine = myCallList[num-1]
         myCallList.pop()
     elif opp.name == 'BREAK': # < & ^ these take no arguments
-        pass
-    elif opp.name == 'MOVE':
-        for subChild in child:
-            pass
-        pass
-    elif opp.name == 'DEFVAR':
-        for subChild in child:
-            workArgs("defvar",subChild)
-            pass
-    elif opp.name == 'CALL':
-        pass
-    elif opp.name == 'PUSHS':
-        pass
-    elif opp.name == 'POPS':
-        pass
-    elif opp.name == 'ADD':
-        pass
-    elif opp.name == 'SUB':
-        pass
-    elif opp.name == 'MUL':
-        pass
-    elif opp.name == 'IDIV':
-        pass
-    elif opp.name == 'LT': 
-        pass
-    elif opp.name == 'GT':
-        pass
-    elif opp.name == 'EQ':
-        pass
-    elif opp.name == 'AND':
-        pass
-    elif opp.name == 'OR':
-        pass
-    elif opp.name == 'NOT':
-        pass
-    elif opp.name == 'INT2CHAR':
-        pass
-    elif opp.name == 'STRI2INT':
-        pass
-    elif opp.name == 'READ':
-        for subChild in child:
-            workArgs("read",subChild)
-            pass
-    elif opp.name == 'WRITE':
-        pass
-    elif opp.name == 'CONCAT':
-        pass
-    elif opp.name == 'STRLEN':
-        pass
-    elif opp.name == 'SETCHAR':
-        pass
-    elif opp.name == 'TYPE':
-        pass
-    elif opp.name == 'LABEL':  ## this is done before the cycle, so jump on later
-        pass              ## defined label in code is possible
-    elif opp.name == 'JUMP':
-        pass
-    elif opp.name == 'JUMPIFEQ':
-        pass
-    elif opp.name == 'JUMPIFNEQ':
-        pass
-    elif opp.name == 'EXIT':
-        pass
-    elif opp.name == 'DPRINT':
-        pass
+        sys.stderr.write("--------------- BREAK debug ---------------\n\n")
+        sys.stderr.write("Current state\n")
+        sys.stderr.write("Global frame: ", fr.GF,"\n\n","Local frame: ", fr.LF,"\n\n","Temporary frame: ",fr.TF,"\n\n")
+        sys.stderr.write("Currently on instruction #",actLine,"\n")
+        try:
+            sys.stderr.write("Last instruction processed: ",instr[actLine -2].attrib['oppcode'],"\n")
+        except:
+            sys.stderr.write("Last instruction processed: None(This is the first instruction)\n")
+        try:
+            sys.stderr.write("Next instruction to process: ",instr[actLine].attrib['oppcode'],"\n")
+        except:
+            sys.stderr.write("Next instruction to process: None(This is the last instruction)\n")
+        sys.stderr.write("--------------- BREAK debug end ---------------\n\n")
+
+    elif opp.name == 'MOVE': # var, symb
+        a1,a2 = opp.arg1
+        b1,b2 = opp.arg2
+        if a1 != 'var':
+            err_exit("MOVE: first arg should be <var>",53)
+        if not is_var(a2,fr):
+            err_exit("1st arg in MOVE is not var",53)
+        if not is_symb(b2,b1,fr): #b1 = type (for symbols like int,string,etc)
+            err_exit("2nd arg in MOVE is not symb",53)
+        #is_compatible(opp)
+
+        a = re.match(r'^(.*)@(.*)',a2)
+        if a.group(1) == "GF":
+            for arg in fr.GF:
+                if arg == a.group(2):
+                    GF.fr[arg] = b2
+                    break
+        elif a.group(1) == "LF":
+            for arg in fr.GF:
+                if arg == a.group(2):
+                    LF.fr[arg] = b2
+                    break
+        else: #a.group(1) == "TF" 
+            for arg in fr.GF:
+                if arg == a.group(2):
+                    LF.fr[arg] = b2
+                    break
+    # elif opp.name == 'DEFVAR':
+       
+    # elif opp.name == 'CALL':
+    #     pass
+    # elif opp.name == 'PUSHS':
+    #     pass
+    # elif opp.name == 'POPS':
+    #     pass
+    # elif opp.name == 'ADD':
+    #     pass
+    # elif opp.name == 'SUB':
+    #     pass
+    # elif opp.name == 'MUL':
+    #     pass
+    # elif opp.name == 'IDIV':
+    #     pass
+    # elif opp.name == 'LT': 
+    #     pass
+    # elif opp.name == 'GT':
+    #     pass
+    # elif opp.name == 'EQ':
+    #     pass
+    # elif opp.name == 'AND':
+    #     pass
+    # elif opp.name == 'OR':
+    #     pass
+    # elif opp.name == 'NOT':
+    #     pass
+    # elif opp.name == 'INT2CHAR':
+    #     pass
+    # elif opp.name == 'STRI2INT':
+    #     pass
+    # elif opp.name == 'READ':
+    #     for subChild in child:
+    #         workArgs("read",subChild)
+    #         pass
+    # elif opp.name == 'WRITE':
+    #     pass
+    # elif opp.name == 'CONCAT':
+    #     pass
+    # elif opp.name == 'STRLEN':
+    #     pass
+    # elif opp.name == 'SETCHAR':
+    #     pass
+    # elif opp.name == 'TYPE':
+    #     pass
+    # elif opp.name == 'LABEL':  ## this is done before the cycle, so jump on later
+    #     pass              ## defined label in code is possible
+    # elif opp.name == 'JUMP':
+    #     pass
+    # elif opp.name == 'JUMPIFEQ':
+    #     pass
+    # elif opp.name == 'JUMPIFNEQ':
+    #     pass
+    # elif opp.name == 'EXIT':
+    #     pass
+    # elif opp.name == 'DPRINT':
+    #     pass
     else:
         print ('well fuck takovou operaci neznam')
         sys.exit(0) 
@@ -362,7 +528,7 @@ while actLine < len(instr):
 
 
 ##debug print of all frames
-print ('All frames:')
+print ('\nAll frames:')
 print ('GF: ',fr.GF)
 print ('LF: ',fr.LF)
 print ('TF: ',fr.TF)
