@@ -36,14 +36,21 @@ def bubblesort(nlist): #to order instruction ascending (vzezstupne = vzrustajici
                 nlist[j] = nlist[j+1]
                 nlist[j+1] = temp
 
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 #prints out given message and exits with desired code
 def err_exit(string,rc):
     print ("Error: ",string,"- exiting w/",rc)
     sys.exit(rc)
 
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#return tuple (pair) like this -> (type,value) (aka same as symbol)
 def gib_var_val(string): #returns the correct var in frame
     x = re.match(r'^(GF|LF|TF)@(.*)',string)
-
+    
     if x.group(1) == "GF":
         for key in fr.GF:
             if x.group(2) == key:
@@ -57,12 +64,46 @@ def gib_var_val(string): #returns the correct var in frame
             if x.group(2) == key:
                 return fr.TF[key]
 
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def is_good_str(string):
+    if re.match(r'#',string):
+        return False
+    if re.match(r'\\',string):
+        if re.match(r'\\\d{3}',string):
+            return True
+        else:
+            return False
+    return True
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def str_escape_seq(string):
+    if is_good_str(string) is False:
+        err_exit("String contains ilegal characters",57)
+    final = ''
+    tss = '' # totaly super string
+    done = True
+
+    for c in string:
+        if done is False: #loading sequence
+            tss += c
+            if len(tss) == 3:
+                final += chr(int(tss))
+                done = True
+
+        elif c == '\\': #begin to escape
+            done = False
+        else:
+            final += c
+    return final
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 def work_args():
-    print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nis comaptible:\n')
-    print(' name: ',opp.name)
-    print(' arg1(m): ',opp.arg1)
-    print(' arg2(n): ',opp.arg2)
-    print(' arg3(o): ',opp.arg3)
     for m1,m2 in opp.arg1.items():
         for n1,n2 in opp.arg2.items():
             if opp.arg3 is not None: #if only 2 arguments are needed (NOT & INT2CHAR)
@@ -70,98 +111,138 @@ def work_args():
                     break
             break
         break
-    
-    # if (is_var(m2,m1) or is_symb(n2,n1)) is False:
-        # err_exit('''Unsupported types of arguments for arithmetic/relational/boolean 
-        # or conversion instructions. Expected '<var> <symb> <symb>' (NOT & INT2CHAR excluded)''') 
+    if (is_var(m2,m1) is False) or (is_symb(n2,n1) is False):
+            err_exit("ADD/SUB/MUL/IDIV: arguments don't match type. Expected: <var> <symb1> <symb2>",53)
     
     m = re.match(r'^(GF|LF|TF)@(.*)',m2)
 
     #operations take only 2args (as ooposed to all other arithmetic, relational, boolean or conversion instructions)   
     if opp.name == 'NOT': #only 2 operands
-        pass
+        if is_var(n2,n1):
+            n1,n2 = gib_var_val(n2)
+
+        if n1 == 'bool':
+            if n2 == 'true':
+                temp = [n1, 'false']
+            elif n1 == 'false':
+                temp = [n1, 'true']
+            else:
+                err_exit("NOT: value of type <bool> can only be true / false",57)
+        else:
+            err_exit("NOT: second argument type expected: <bool>",53)
+        
     elif opp.name == 'INT2CHAR': #only 2 operands
-        pass
+        if is_var(n2,n1):
+            n1,n2 = gib_var_val(n2)
+        if n1 == 'int':
+            try:
+                n2 = int(n2)
+            except:
+                err_exit("INT2CHAR: value is not an integer",57)
+            try:
+                temp = ['string',chr(n2)]
+            except:
+                err_exit("INT2CHAR: Value is not valid value in Unicode",58)
+        else:
+            err_exit('INT2CHAR: second argument expected: <int>',53)
+
+    elif opp.name == 'ADD' or opp.name == 'SUB' or opp.name == 'MUL' or opp.name == 'IDIV':
+       
+        if is_var(n2,n1):
+            n1,n2 = gib_var_val(n2)
+        else:
+            n2 = int(n2)
+        if is_var(o2,o1):
+            o1,o2 = gib_var_val(o2)
+        else:
+            o2 = int(o2)
+
+        #operations all take 3 arguments <var> <symb1> <symb2>
+        if (is_symb(o2,o1) is False):
+            err_exit("ADD/SUB/MUL/IDIV: arguments don't match type. Expected: <var> <symb1> <symb2>",53)
+
+        #check if 2nd & 3rd args are int
+        if n1 != 'int' or o1 != 'int':
+            err_exit("ADD/SUB/MUL/IDIV: 2nd & 3rd argument must be of type int",53)
+
+        #check if not dividing by 0
+        if opp.name == 'IDIV':
+            if int(o2) == 0:
+                err_exit("IDIV: Dividing by 0 is not my cup of tea",57) 
+
+        if opp.name == 'ADD':
+            temp = ['int',n2 + o2]
+        elif opp.name == 'SUB':
+            temp = ['int',o2 - o2]
+        elif opp.name == 'IDIV':
+            temp = ['int',n2 // o2]
+        else: #MUL
+            temp = ['int',n2 * o2]
+
+    elif opp.name == 'LT' or opp.name == 'GT' or opp.name == 'EQ':
+        if is_var(n2,n1):
+                n1,n2 = gib_var_val(n2)
+        else:
+            if n1 == 'int':
+                n2 = int(n2)
+        if is_var(o2,o1):
+            o1,o2 = gib_var_val(o2)
+        else:
+            if o1 == 'int':
+                o2 = int(o2)
+
+        if (n1 == 'int' and o1 == 'int') or (n1 == 'string' and o1 == 'string') or (n1 == 'bool' and o1 == 'bool'): #both int
+            if opp.name == 'LT' and n1 < o1: #LT true
+                temp = ['bool', 'true']
+            elif opp.name == 'GT' and n1 > o1: #GT tru
+                temp = ['bool', 'true']
+            elif opp.name == 'EQ' and n1 == o1: #EQ tru
+                temp = ['bool', 'true']
+            else:
+                temp = ['bool', 'false']
+        elif opp.name == 'EQ': #its possible to compare something to nil@nil
+            if n1 == 'nil' and o1 == 'nil':
+                temp = ['bool', 'true']
+            else:
+                temp = ['bool', 'false']
+                
+
+        else: #err
+            err_exit("LT/GT/EQ: expected 2 same argument types(int / string / bool)",53)
 
     
-    #operations all take 3 arguments <var> <symb1> <symb2>
-    if is_symb(o2,o1) is False: #first two tested few lines up
-        err_exit('''Unsupported types of arguments for arithmetic/relational/boolean 
-        or conversion instructions. Expected '<var> <symb> <symb>' (NOT & INT2CHAR excluded)''') 
-    
-    if opp.name == 'ADD':
-        print('m is var ',is_var(m2,m1))
-        print('n is var ',is_var(n2,n1))
-        print('o is var ',is_var(o2,o1))
-        #check if its var, otherwise its symbol
-        if is_var(n2,n1) and is_var(o2,o1): #both vars
-            
-            n = re.match(r'^(GF|LF|TF)@(.*)',n2)
-            o = re.match(r'^(GF|LF|TF)@(.*)',o2)
-            tt1,tv1 = gib_var_val(n2) #tt = temp type; tv = temp val
-            tt2,tv2 = gib_var_val(o2)
-            print('eccececec',tt1,tt2)
-            if tt1 != 'int' or tt2 != 'int':
-                err_exit("ADD: 2nd & 3rd argument must be of type int",53)
+    elif opp.name == 'AND' or opp.name == 'OR':
+        if n1 == 'bool' and o1 == 'bool':
+            if opp.name == 'AND' and n2 == 'true' and o2 == 'true':
+                temp = ['bool','true']
+            elif opp.name == 'OR' and (n2 == 'true' or o2 == 'true'):
+                temp = ['bool','true']
+            else:
+                temp = ['bool','false']
 
-            if m.group(1) == "GF":
-                fr.GF[m.group(2)] = ['int',tv1 + tv2]
-            elif m.group(1) == "LF":
-                fr.LF[fr.LFcnt-1][m.group(2)] = ['int',tv1 + tv2]
-            else:#TF
-                fr.TF[m.group(2)] = ['int',tv1 + tv2]
-        elif is_var(n2,n1): #only second argument is var
-            n = re.match(r'^(GF|LF|TF)@(.*)',n2)
-
-            tt1,tv1 = gib_var_val(n2) #tt = temp type; tv = temp val
-            if tt1 != 'int' or o1 != 'int':
-                err_exit("ADD: 2nd & 3rd argument must be of type int",53)
-
-            if m.group(1) == "GF":
-                fr.GF[m.group(2)] = ['int',tv1 + int(o2)]
-            elif m.group(1) == "LF":
-                fr.LF[fr.LFcnt-1][m.group(2)] = ['int',tv1 + int(o2)]
-            else:#TF
-                fr.TF[m.group(2)] = ['int',tv1 + int(o2)]
-        elif is_var(o2,o1):
-            n = re.match(r'^(GF|LF|TF)@(.*)',o2)
-
-            tt1,tv1 = gib_var_val(o2) #tt = temp type; tv = temp val
-            if tt1 != 'int' or n1 != 'int':
-                err_exit("ADD: 2nd & 3rd argument must be of type int",53)
-
-            if m.group(1) == "GF":
-                fr.GF[m.group(2)] = ['int',tv1 + int(n2)]
-            elif m.group(1) == "LF":
-                fr.LF[fr.LFcnt-1][m.group(2)] = ['int',tv1 + int(n2)]
-            else:#TF
-                fr.TF[m.group(2)] = ['int',tv1 + int(n2)]
-
-        elif (n1 != 'int' or o1 != 'int'):
-            err_exit("ADD: both symbols must be of type int",53)
-
-
-    elif opp.name == 'SUB':
-        pass
-    elif opp.name == 'MUL':
-        pass
-    elif opp.name == 'IDIV':
-        pass
-    elif opp.name == 'LT':
-        pass
-    elif opp.name == 'GT':
-        pass
-    elif opp.name == 'EQ':
-        pass
-    elif opp.name == 'AND':
-        pass
-    elif opp.name == 'OR':
-        pass
-    elif opp.name == 'STRI2INT':
-        pass
+    elif opp.name == 'STRI2INT': #symb1 retezec; symb2 pozice v retezci
+        if n1 != 'string' and o1 != 'int':
+            err_exit("STRI2INT: expected types of args: (arg2 -> string)( arg3 -> int)",53)
+        try:
+            tem = ord(n2[o2])
+            temp = ['int',tem]#indexing from 0
+        except:
+            err_exit("STRI2INT: char cant be converted to integer or index is out of bound",58)
     else:
         err_exit('''Unknown error. Unsupported instruction in 'work_args()'. Function for arithmetic, relational,
          boolean and conversion instructions''',99)
+
+    #assign values
+    if m.group(1) == 'GF':
+        fr.GF[m.group(2)] = temp
+    elif m.group(1) == 'LF':    
+        fr.LF[fr.LFcnt-1][m.group(2)] = temp
+    else: #TF
+        fr.TF[m.group(2)] = temp
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 #return if frame is exists
 def fr_exist(frame):
     #GF exists from the start of the program (& always)
@@ -174,12 +255,17 @@ def fr_exist(frame):
             return False
         return True
 
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def label_exist(label):
     for i in myLabelList:
         if label == i:
             return True
     return False
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #return true if var exists
 def is_var(string,typ):
@@ -207,6 +293,9 @@ def is_var(string,typ):
         # print("Note: possibly used <symb> instead of <var> or wrong frame")
         # err_exit("Variable couldnt be verified",52)
         
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~        
+
 def is_symb(string,sType):
     if sType == 'var':#has frame, check var
         if is_var(string,sType):
@@ -248,21 +337,23 @@ def is_symb(string,sType):
     except:
         err_exit("Unsupported symbol type",52)
 
-
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ## ~~~~~~~~~~~~~~~~~~~~~~~~ frames & labels & stack ~~~~~~~~~~~~~~~~~~~~~~~~ ##
 myLabelList = {} #dictionary of labels & their instr # {"label": <number>, ...}
 myCallList = [] #list of positions
 myStack = [] #for stack instructions
 stackCnt = 0 #how many 'things' are in stack
-
+firstReading = True
+lines = []
 #inicialized GF,LF,TF,LFcnt; fr = Frames class
 fr = Frames({},None,None,0)
 
 #note: to access lists(LF,labels,calls,stack, index of last item is 'counter - 1')
 
 
-### ~~~~~~~~~~~~~~~~~~~~~ __MAIN__ start of the program ~~~~~~~~~~~~~~~~~~~~~ ###
+##### ~~~~~~~~~~~~~~~~~~~~~ __MAIN__ start of the program ~~~~~~~~~~~~~~~~~~~~~ #####
 
 
 ## ~~~~~~~~~~ parsing the arguments ~~~~~~~~~~ ##
@@ -310,17 +401,24 @@ r interpret itself
         # (if absolute path is not found, search cwd)
         # print ("path? ",os.path.isfile(sourceArg))#debug
         if not os.path.isfile(sourceArg):
-            #error
             err_exit('Could not open file in --source',11)
+
     elif(temp := re.match(r'^--input=(.*)',arg)):
         inputArg = temp.group(1)
-        # print ('--input= arg given: ',inputArg)#debug
-        print ("path? ",os.path.isfile(inputArg))
         if not os.path.isfile(inputArg):
             err_exit('Could not open file in --input',11)
-    # else:
-        # print("Argument given: ",arg)
-        # err_exit(("this argument is invalid"),10)
+        f=open(inputArg,"r")
+        inputArg =''
+        try:
+            for line in f:
+                inputArg += line
+            else:
+                pass #nothing is done if nothing is read (although inputArg is now NOT None)
+        except EOFError:
+            pass
+    else:
+        print("Note: Argument given: ",arg)
+        err_exit(("this argument is invalid"),10)
     #if-else end1
 #for end
 
@@ -330,30 +428,34 @@ if inputArg == sourceArg == None:
     err_exit("""Atleast one of the following arguments must be provided:
     '--source', '--input'. Use --help for help""",10)
 
-# if inputArg == None:
-#     #read from stdin
-#     inputArg = sys.stdin.readlines()
-#     print ("OUTPUT:\n",inputArg)
+if inputArg == None: #read from stdin
+    inputArg=''
+    try:
+        while True:
+            inputArg += input()+"\n"
+    except EOFError:
+        pass
 
 elif sourceArg == None:
-    sourceArg == sys.stdin.readlines()
-    print ("SAUCE: ", sourceArg)
-
+    sourceArg=''
+    try:
+        while True:
+            sourceArg += input()+"\n"
+    except EOFError:
+        pass
 
 ## ~~~~~~~~~~ working with xml input ~~~~~~~~~~ ##
 
-
-#no need to open a file manually?
-# try:
-#     f = open(sourceArg,"r")
-# except:
-#     err_exit('File could not be opened for reading',11)
-
 try:
-    tree = ET.parse(sourceArg)
+    tree = ET.parse(sourceArg) #sourceArg is a file
     root = tree.getroot()
 except:
-    err_exit("XML structure is invalid",31)
+    try:
+        root = ET.fromstring(sourceArg) #its a string
+    except:
+        err_exit("XML structure is invalid",31)
+
+
 
 if root.tag != "program":
     err_exit("root element expected: 'program'",32)
@@ -419,187 +521,19 @@ while instCnt < len(instr):
         else:
             #myLabelList.append(child.find('arg1').text)
             myLabelList[child.find('arg1').text] = instCnt
-        #TODO this should work, not tested tho
 
-print ('~~~~~~~~~~Debug time~~~~~~~~~~\n')##################################################################################
-
-# print('Labels: ',myLabelList)
-# i = 0
-
-# print ('All instructions:')
-# while i < len(instr):
-#     i += 1
-    
-#     print('Inst',i,': ',instr[i-1].attrib, ", ",end='')
-#     for c in instr[i-1]:
-#         print(c.text," ",end='')
-#     print('')
-
-# # fr.GF['maggie'] = 4
-# fr.GF['bitch'] = ['int',5]
-# # fr.GF['fucker'] = 4
-# fr.GF['sabina'] = ['int',4]
-# g1 = "GF@maggie"
-# g2 = "GF@bitch"
-# g4 = "GF@fucker"
-# g3 = "GF@sabina"
-
-
-#working with LF as a list of directories
-# fr.LFcnt = 0
-# fr.LF = [{}] #inicialize list
-# fr.LFcnt += 1
-
-# print('\nLF: ',fr.LF)
-# fr.LF[fr.LFcnt-1]['boi'] = ['int',5]
-# print(fr.LF)
-# fr.LF.append({})#add new dictionary
-# fr.LFcnt += 1
-# print(fr.LF)
-# fr.LF[fr.LFcnt-1]['a'] = ['str','ahoj']
-# print(fr.LF)
-# fr.LF.pop(fr.LFcnt-1)
-# fr.LFcnt -= 1
-# print(fr.LF)
-# fr.LF[fr.LFcnt-1]['b'] = ['bool','True']
-
-# print(fr.LF)
-# exit(0)
-
-# fr.LFcnt = 0
-# fr.LF = [{}]
-# fr.LFcnt += 1
-# fr.LF[fr.LFcnt-1]['bob']=['int',4]
-# # fr.LF['ivstypek']= 2
-# # fr.LF['whodis']= ['int',1]
-# l1 = "LF@bob"
-# l2 = "LF@ivstypek"
-# l3 = "LF@whodis"
-
-# fr.TF = {}
-# fr.TF['Myman']= ['string','text']
-# # fr.TF['badboi']= 5
-# # fr.TF['jerry']= 5
-# t1 ="TF@Myman"
-# t2 ="TF@badboi"
-# t3 ="TF@jerry"
-
-# d = []
-# d.append(g1)
-# d.append(g2)
-# d.append(g3)
-# d.append(g4)
-
-# d.append(l1)
-# d.append(l2)
-# d.append(l3)
-
-# d.append(t1)
-# d.append(t2)
-# d.append(t3)
-
-# for da in d:
-#     y = is_var(da)
-#     if y:
-#         print ('God: ye its true\n')
-#     else:
-#         print ('God: aint gonn happen\n')
-# s = 'int@+5'
-# boo = is_symb(s,typeyho)
-# if boo:
-#     print ('NICE its cislo')
-# else:
-#     print ('damn what a shame no cislo')#
-
-#int
-# b2 = True
-# a1 = 'GF@bitch'
-
-# #string
-# b2 = 'DOPICEUZ'
-# # a1 = 'LF@bob'
-
-# a = re.match(r'(.*)@(.*)',a1)
-# if a.group(1) == "GF":
-#     for arg in fr.GF:
-#         if arg == a.group(2):
-#             fr.GF[arg] = b2
-#             break
-# elif a.group(1) == "LF":
-#     for arg in fr.LF:
-#         if arg == a.group(2):
-#             fr.LF[arg] = b2
-#             break
-# else: #a.group(1) == "TF" 
-#     for arg in fr.TF:
-#         if arg == a.group(2):
-#             fr.TF[arg] = b2
-#             break
-
-# print ('\nGF <arg1 type="var">GF@a</arg1>: ',fr.GF)
-# fr.GF['sabina'][1] = 10
-# fr.GF['bitch'][1] = 10
-
-# isinstance(fr.GF['bitch'],str)
-# print('bitch_is_bool: ', isinstance(fr.GF['bitch'],int))
-# print('sabina_is_int: ', isinstance(fr.GF['sabina'],int))
-# print('Myman_is_str: ', isinstance(fr.TF['Myman'],str))
-
-##debug print of all frames
-# print ('\nAll frames:')
-# print ('GF: ',fr.GF)
-# print ('\nLF: ',fr.LF)
-# print ('\nTF: ',fr.TF)
-
-
-# for a1, a2 in opp.arg1.items():
-#     break
-
-# value = gib_var(a2)
-# print('value: ',value)
-# print(value)
-
-# x = re.match(r'^(GF|LF|TF)@(.*)',string)
-# if x.group(1) == "GF":
-#     for key in fr.GF:
-#         if x.group(2) == key:
-#             return True
-#     return False
-# elif x.group(1) == "LF":
-#     for key in fr.LF[fr.LFcnt-1]:
-#         if x.group(2) == key:
-#             return True
-#     return False
-# else:
-#     for key in fr.TF:
-#         if x.group(2) == key:
-#             return True
-#     return False
-
-################################################################################
-
-################################################################################
-print('\n~~~~~~~~~~Debug time over~~~~~~~~~~\n') ##############################################################################
-##debug print of all frames
-# print ('\nAll frames:')
-# print ('GF: ',fr.GF)
-# print ('LF: ',fr.LF)
-# print ('TF: ',fr.TF)
-# print ('\nStack:')
-# print (myStack)
-# exit(0)
-
-## ~~~~~~~~~~~~~~~ main cycle ~~~~~~~~~~~~~~~ ##
+## ~~~~~~~~~~~~~~~ Main cycle ~~~~~~~~~~~~~~~ ##
 
 actLine = 0
 
 while actLine < len(instr):
     actLine += 1
-    print(actLine)
     child = instr[actLine - 1]
     
     opp = Opperation(child.attrib['opcode'].upper(),None,None,None)
     # opp.name = current opperation name (ex: LABEL)
+
+
 
     argcnt = 0
     for sub in child:
@@ -614,10 +548,21 @@ while actLine < len(instr):
             opp.arg3 = {}
             opp.arg3[sub.attrib['type']] = sub.text
 
-    print('opp:',opp.name,'  ', end='')
-    print ('arg1:',opp.arg1,'  ',end='') 
-    print ('arg2:',opp.arg2,'  ',end='') 
-    print ('arg3:',opp.arg3,'  \n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n') 
+    # print('opp:',opp.name,'  ', end='')
+    # print ('arg1:',opp.arg1,'  ',end='') 
+    # print ('arg2:',opp.arg2,'  ',end='') 
+    # print ('arg3:',opp.arg3,'  \n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n') 
+
+    if opp.arg1 is not None:
+        for a1,a2 in opp.arg1.items():
+            if opp.arg2 is not None:
+                for b1,b2 in opp.arg2.items():
+                    if opp.arg3 is not None:
+                        for c1,c2 in opp.arg3.items():
+                            break
+                    break
+            break
+    
 
 #main SWITCH-like part        
     if opp.name == 'CREATEFRAME':
@@ -642,6 +587,7 @@ while actLine < len(instr):
         fr.LFcnt -= 1
 
     elif opp.name == 'RETURN':
+
         if myCallList == None:
             err_exit("RETURN: Trying to ret, but no 'calls' were made",56)
         num = len(myCallList)
@@ -664,10 +610,7 @@ while actLine < len(instr):
         sys.stderr.write("--------------- BREAK debug end ---------------\n\n")
 
     elif opp.name == 'MOVE': # var, symb
-        for a1, a2 in opp.arg1.items():
-            break
-        for b1, b2 in opp.arg2.items():
-            break
+        
         if is_var(a2,a1) is False:
             err_exit("MOVE: 1st argument type expected <var>",53)
         if is_symb(b2,b1) is False: #b1 = type (for symbols like int,string,etc)
@@ -719,8 +662,7 @@ while actLine < len(instr):
                     break
 
     elif opp.name == 'DEFVAR': # var
-        for a1, a2 in opp.arg1.items():
-            break
+        
         if a1 != 'var':
             err_exit("DEFVAR: arg should be of type <var>",53)
         
@@ -746,26 +688,25 @@ while actLine < len(instr):
             fr.TF[a.group(2)] = [None,None]
             
     elif opp.name == 'CALL': #label
-        for a1,a2 in opp.arg1.items():
-            if label_exist(a2) is False:
-                err_exit("CALL: Label refered to by CALL doesn't exist",56)
-            myCallList.append(actLine)
-            actLine = myLabelList[a2]
-        # else: #if no iteration of for is made, do else (smart snake)
-            # err_exit("CALL: requires 1 argument (label)",32) ?
+    
+        if label_exist(a2) is False:
+            err_exit("CALL: Label refered to by CALL doesn't exist",56)
+        myCallList.append(actLine)
+        actLine = myLabelList[a2]
+    # else: #if no iteration of for is made, do else (smart snake)
+        # err_exit("CALL: requires 1 argument (label)",32) ?
 
     elif opp.name == 'PUSHS': #symb
-        for a1,a2 in opp.arg1.items():
-            if is_symb(a2,a1) is False:
-                err_exit("PUSHS: argument is not <symb>",53)
-            myStack.append([a1,a2])
-            stackCnt += 1
+    
+        if is_symb(a2,a1) is False:
+            err_exit("PUSHS: argument is not <symb>",53)
+        myStack.append([a1,a2])
+        stackCnt += 1
             
     elif opp.name == 'POPS': #var
         if myStack == []: #is empty
             err_exit("POPS: stack is empty, nothing to pop",56)
-        for a1,a2 in opp.arg1.items():
-            break
+
         if is_var(a2,a1) is False:
             err_exit("POPS: Argument should be of type <var>",53)
         a = re.match(r'^(GF|TF|LF)@(.*)',a2)
@@ -778,98 +719,287 @@ while actLine < len(instr):
         myStack.pop()
         stackCnt -= 1
 
-    elif opp.name == 'ADD':
-        for a1,a2 in opp.arg1.items():
-            for b1,b2 in opp.arg2.items():
-                for c1,c2 in opp.arg3.items():
-                    break
-                break
-            break
-        print(is_var(a2,a1),is_symb(b2,b1),is_symb(c2,c1))
-        if (is_var(a2,a1) or is_symb(b2,b1) or is_symb(c2,c1)) is False:
-            err_exit("ADD: arguments don't match type. Expected: <var> <symb1> <symb2>",53)
+    #separated it to multiple lines so theres not 1 line with 300 characters
+    elif opp.name == 'ADD' or opp.name == 'SUB' or opp.name == 'MUL' or opp.name == 'IDIV':        
         work_args()
+    elif opp.name == 'LT' or opp.name == 'GT' or opp.name == 'EQ' or opp.name == 'AND': 
+        work_args()
+    elif opp.name == 'OR' or opp.name == 'NOT' or opp.name == 'INT2CHAR' or opp.name == 'STRI2CHAR':
+        work_args()
+        
+    elif opp.name == 'READ':
+        if b1 != 'type':
+            err_exit("READ: second arguments must be of type <type>",53)
+        if (b2 != 'int') and (b2 != 'string') and (b2 != 'bool'):
+            err_exit("READ: 2nd argument should be: (int,string,bool)",53)
+        if is_var(a2,a1) is False:
+            err_exit("READ: first argument is not of type var",53)
 
-    elif opp.name == 'SUB':
-        pass
-    # elif opp.name == 'MUL':
-    #     pass
-    # elif opp.name == 'IDIV':
-    #     pass
-    # elif opp.name == 'LT': 
-    #     pass
-    # elif opp.name == 'GT':
-    #     pass
-    # elif opp.name == 'EQ':
-    #     pass
-    # elif opp.name == 'AND':
-    #     pass
-    # elif opp.name == 'OR':
-    #     pass
-    # elif opp.name == 'NOT':
-    #     pass
-    # elif opp.name == 'INT2CHAR':
-    #     pass
-    # elif opp.name == 'STRI2INT':
-    #     pass
-    # elif opp.name == 'READ':
-    #     for subChild in child:
-    #         work_args("read",subChild)
-    #         pass
-    # elif opp.name == 'WRITE':
-    #     pass
-    # elif opp.name == 'CONCAT':
-    #     pass
-    # elif opp.name == 'STRLEN':
-    #     pass
-    # elif opp.name == 'SETCHAR':
-    #     pass
-    # elif opp.name == 'TYPE':
-    #     pass
-    # elif opp.name == 'LABEL':  ## this is done before the cycle, so jump on later
-    #     pass              ## defined label in code is possible
-    # elif opp.name == 'JUMP':
-    #     pass
-    # elif opp.name == 'JUMPIFEQ':
-    #     pass
-    # elif opp.name == 'JUMPIFNEQ':
-    #     pass
-    # elif opp.name == 'EXIT':
-    #     pass
+        if firstReading == True:
+            if inputArg == '': #aka empty file
+                temp = ['nil','nil']
+            else:
+                lines = inputArg.splitlines()
+            firstReading = False
+        if lines == []:
+            temp = ['nil','nil']
+        else:#read list is not empty, can be read from
+            tmp = lines[0]
+            lines.pop(0)
+            if b2 == 'int':
+                try:
+                    tmp = int(tmp)
+                except:
+                    err_exit("READ: line read cant be converted to 'int'",57)
+            elif b2 == 'string':
+                is_symb(tmp,'string')
+                tmp = str_escape_seq(tmp)
+
+            elif b2 == 'bool':
+                # "true" -> true otherwise false
+                if tmp == 'true':
+                    temp = ['bool','true']
+                else:
+                    temp = ['bool','false']
+
+    elif opp.name == 'WRITE':
+        temp = str_escape_seq(a2)
+        print(temp,end='')
+
+    elif opp.name == 'CONCAT':
+        if (is_var(a2,a1) is False) or (is_symb(b2,b1) is False) or (is_symb(c2,c1) is False):
+            err_exit("CONCAT: wrong argument types. Expected: <var> <symb> <symb>",53)
+        if is_var(b2,b1):
+               b1,b2 = gib_var_val(b2)
+        if is_var(c2,c1):
+               c1,c2 = gib_var_val(b2)
+            
+        if b1 == 'string' and c1 == 'string':
+            a = re.match(r'^(GF|LF|TF)@(.*)',a2)
+            if a.group(1) == 'GF':
+                fr.GF[a.group(2)] = ['string',b2 + c2] #concatenate 2 strings
+            elif a.group(1) == 'LF':
+                fr.LF[fr.LFcnt-1][a.group(2)] = ['string',b2 + c2]
+            else:#TF
+                fr.TF[a.group(2)] = ['string',b2 + c2]
+        else:
+            err_exit("CONCAT: only strings can be concatenated",53)
+
+    elif opp.name == 'STRLEN':
+        if (is_var(a2,a1) is False) or (is_symb(b2,b1) is False):
+            err_exit("STRLEN: arguments should be <var> <symb>",53)
+        if is_var(b2,b1):
+            b1,b2 = gib_var_val(b2)
+        a = re.match(r'^(GF|LF|TF)@(.*)',a2)
+        if a.group(1) == 'GF':
+            fr.GF[a.group(2)] = ['int',len(b2)]
+        elif a.group(1) == 'LF':
+            fr.LF[fr.LFcnt-1][a.group(2)] = ['int',len(b2)]
+        else:#TF
+            fr.TF[a.group(2)] = ['int',len(b2)]
+
+    elif opp.name == 'GETCHAR':
+        if (is_var(a2,a1) is False) or (is_symb(b2,b1) is False) or (is_symb(c2,c1) is False):
+            err_exit("GETCHAR: wrong argument types. Expected: <var> <symb> <symb>",53)
+        if is_var(b2,b1):
+            b1,b2 = gib_var_val(b2)
+        if is_var(c2,c1):
+            c1,c2 = gib_var_val(c2)
+        if c2 < 0 or c2 > len(b2):
+            err_exit("GETCHAR: index out of bounds",58)
+        for c in b2:
+            if c == c2:
+                a = re.match(r'^(GF|LF|TF)@(.*)',a2)
+                if a.group(1) == 'GF':
+                    fr.GF[a.group(2)] = ['string',c]
+                elif a.group(1) == 'LF':
+                    fr.LF[fr.LFcnt-1][a.group(2)] = ['string',c]
+                else:#TF
+                    fr.TF[a.group(2)] = ['string',c]
+                break
+
+
+    elif opp.name == 'SETCHAR':
+        if (is_var(a2,a1) is False) or (is_symb(b2,b1) is False) or (is_symb(c2,c1) is False):
+            err_exit("SETCHAR: wrong argument types. Expected: <var> <symb> <symb>",53)
+        if is_var(b2,b1):
+            b1,b2 = gib_var_val(b2)
+        if is_var(c2,c1):
+            c1,c2 = gib_var_val(c2)
+        
+        #save value to be changed
+        a = re.match(r'^(GF|LF|TF)@(.*)',a2)
+        if a.group(1) == 'GF':
+            a1,a2 = fr.GF[a.group(2)]
+        elif a.group(1) == 'LF':
+            a1,a2 = fr.LF[fr.LFcnt-1][a.group(2)]
+        else:#TF
+            a1,a2 = fr.TF[a.group(2)]
+
+        if b1 == 'int' and c1 == 'string' and a1 == 'string':
+        
+            if b2 < 0 or b2 > len(temp):
+                err_exit("SETCHAR: index out of bounds",58)
+                i = 0
+                for ah in a2:
+                    if b2 == i:
+                        temp += c2[0]
+                else:
+                    temp += ah 
+                    i += 1
+            else:
+                err_exit("SETCHAR: arg 1 & arg 3 must be a string, arg 2 an int",53)
+        if a.group(1) == 'GF':
+            fr.GF[a.group(2)] = [a1,temp]
+        elif a.group(1) == 'LF':
+            fr.LF[fr.LFcnt-1][a.group(2)] = [a1,temp]
+        else:#TF
+            fr.TF[a.group(2)] = [a1,temp]
+
+
+    elif opp.name == 'TYPE':
+        if (is_var(a2,a1) is False) or (is_symb(b2,b1) is False):
+            err_exit("TYPE: first arg expected <var>, second >symb>",53)
+        if is_var(b2,b1):
+            b1,b2 = gib_var_val(b2)
+        if b1 == 'int':
+            temp = ['string','int']
+        elif b1 == 'string':
+            temp = ['string','string']
+        elif b1 == 'bool':
+            temp = ['string','bool']
+        elif b1 == 'nil': #nil
+            temp = ['string', 'nil']
+        else:
+            temp = ['string', '']
+        a = re.match(r'^(GF|LF|TF)@(.*)',a2)
+        if a.group(1) == 'GF':
+                fr.GF[a.group(2)] = temp
+        elif a.group(1) == 'LF':
+            fr.LF[fr.LFcnt-1][a.group(2)] = temp
+        else:#TF
+            fr.TF[a.group(2)] = temp
+
+
+
+    elif opp.name == 'LABEL':  ## this is done before the cycle, so jump on 
+        pass              ## later-defined label in code is possible
+    elif opp.name == 'JUMP':
+    
+        if label_exist(a2) is False:
+            err_exit("JUMP: trying to jump to non existing label",52)
+        actLine = myLabelList[a2]
+
+    elif opp.name == 'JUMPIFEQ':
+        if label_exist(a2) is False:
+            err_exit("JUMPIFEQ: trying to jump to non existing label",52)
+        if is_symb(b2,b1) is False or is_symb(c2,c1) is False:
+            err_exit("JUMPIFEQ: 2nd & 3rd argument should be both <symb>")
+
+        if is_var(b2,b1):
+            b1, b2 = gib_var_val(b2)    
+        if is_var(c2,c1):
+            c1, c2 = gib_var_val(c2)
+
+        if b1 == c1: #types do match
+            if b1 == 'int':
+                if (int(b2) == int(c2)): #values match -> jump
+                    actLine = myLabelList[a2]
+            elif b1 == 'string': #both strings
+                if (str(b2) == str(c2)):
+                    actLine = myLabelList[a2]
+            elif b1 == 'nil':
+                actLine = myLabelList[a2]
+
+        elif b1 == 'nil' or c1 == 'nil':
+            pass #dont jump
+        else:
+            err_exit("JUMPIFEQ: non matching types of operands(nor one of them nil)",53)
+
+    elif opp.name == 'JUMPIFNEQ':
+        if label_exist(a2) is False:
+            err_exit("JUMPIFNEQ: trying to jump to non existing label",52)
+        if is_symb(b2,b1) is False or is_symb(c2,c1) is False:
+            err_exit("JUMPIFNEQ: 2nd & 3rd argument should be both <symb>")
+        
+        if is_var(b2,b1):
+            b1, b2 = gib_var_val(b2)    
+        if is_var(c2,c1):
+            c1, c2 = gib_var_val(c2)
+        if b1 == c1: #stejne typy
+            if b1 == 'int':
+                if int(b1) == int(c1): #jump if they are not equal
+                    pass
+                else:
+                    actLine = myLabelList[a2]
+                    
+        elif b1 == 'nil' or c1 == 'nil':
+            actLine = myLabelList[a2]
+        else:
+            err_exit("JUMPIFNEQ: non matching types of operands(nor one of them nil)",53)
+
+    elif opp.name == 'EXIT':
+        if a1 == 'int':
+            try:
+                temp = int(a2)
+                if temp >= 0 and temp <= 49:
+                    sys.exit(a2)
+                else:
+                    err_exit("EXIT: int has to be in interval <0,49>",57)
+            except:
+                err_exit("EXIT: argument value is not integer",57)
+        else:
+            err_exit("EXIT: argument should be of type <int>",53)
     # elif opp.name == 'DPRINT':
     #     pass
     else:
         print ('well fuck takovou operaci neznam')
         #sys.exit(0) 
-    # break
-#end while (main cycle)
-#end of function progr
-
+#end of main cycle switch like part
 
 ##debug print of all frames
-print ('\nAll frames:')
-print ('GF: ',fr.GF)
-print ('LF: ',fr.LF)
-print ('TF: ',fr.TF)
-print ('\nStack:')
-print (myStack)
+# print ('\nAll frames:')
+# print ('GF: ',fr.GF)
+# print ('LF: ',fr.LF)
+# print ('TF: ',fr.TF)
+# print ('\nStack:')
+# print (myStack)
 
 # CREATEFRAME done
 # PUSHFRAME done
 # POPFRAME done
-# RETURN ?
-# BREAK ?
+# RETURN done
+# BREAK done
 # MOVE done
 # DEFVAR done
 # CALL done
 # PUSHS done
 # POPS done
-# ADD
-# SUB
-# MUL
-# IDIV
-# LT
-# GT
-# EQ
+# ADD done
+# SUB done
+# MUL done
+# IDIV done
+# LT done
+# GT done
+# EQ done
+# AND done
+# OR done
+# NOT done
+# INT2CHAR ?
+# STRI2INT ?
+# READ done
+# WRITE done
+# CONCAT done
+# STRLEN done
+# GETCHAR done ?
+# SETCHAR done ?
+# TYPE
+# LABEL done
+# JUMP done
+# JUMPIFEQ done
+# JUMPIFNEQ done
+# EXIT done
+# DPRINT
+
 
 
