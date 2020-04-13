@@ -881,7 +881,6 @@ while actLine < len(instr):
             fr.TF[a.group(2)] = temp
 
 
-
     elif opp.name == 'LABEL':  ## this is done before the cycle, so jump on 
         pass              ## later-defined label in code is possible
     elif opp.name == 'JUMP':
@@ -953,10 +952,7 @@ while actLine < len(instr):
     # elif opp.name == 'DPRINT':
     #     pass
     else:
-        print ('well fuck takovou operaci neznam')
-        #sys.exit(0) 
-#end of main cycle switch like part
-
+        err_exit("Unknown instruction",52)
 ##debug print of all frames
 # print ('\nAll frames:')
 # print ('GF: ',fr.GF)
@@ -964,6 +960,8 @@ while actLine < len(instr):
 # print ('TF: ',fr.TF)
 # print ('\nStack:')
 # print (myStack)
+
+
 
 # CREATEFRAME done
 # PUSHFRAME done
@@ -1000,6 +998,3 @@ while actLine < len(instr):
 # JUMPIFNEQ done
 # EXIT done
 # DPRINT
-
-
-
