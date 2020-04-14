@@ -116,6 +116,7 @@ while($line = fgets(STDIN)){
             break;
 
         #⟨var⟩ ⟨symb1⟩ ⟨symb2⟩
+        case 'add':
         case 'sub':
         case 'mul':
         case 'idiv':

@@ -68,6 +68,10 @@ def gib_var_val(string): #returns the correct var in frame
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def is_good_str(string):
+    try:
+        string = str(string)
+    except:
+        return False
     if re.match(r'#',string):
         return False
     if re.match(r'\\',string):
@@ -82,6 +86,10 @@ def is_good_str(string):
 
 def str_escape_seq(string):
     if is_good_str(string) is False:
+        err_exit("String contains ilegal characters",57)
+    try:
+        string = str(string)
+    except:
         err_exit("String contains ilegal characters",57)
     final = ''
     tss = '' # totaly super string
@@ -147,23 +155,26 @@ def work_args():
             err_exit('INT2CHAR: second argument expected: <int>',53)
 
     elif opp.name == 'ADD' or opp.name == 'SUB' or opp.name == 'MUL' or opp.name == 'IDIV':
-       
-        if is_var(n2,n1):
-            n1,n2 = gib_var_val(n2)
-        else:
-            n2 = int(n2)
-        if is_var(o2,o1):
-            o1,o2 = gib_var_val(o2)
-        else:
-            o2 = int(o2)
 
         #operations all take 3 arguments <var> <symb1> <symb2>
         if (is_symb(o2,o1) is False):
             err_exit("ADD/SUB/MUL/IDIV: arguments don't match type. Expected: <var> <symb1> <symb2>",53)
 
+        try:
+            if is_var(n2,n1):
+                n1,n2 = gib_var_val(n2)
+            else:
+                n2 = int(n2)
+            if is_var(o2,o1):
+                o1,o2 = gib_var_val(o2)
+            else:
+                o2 = int(o2)
+        except:
+            pass
         #check if 2nd & 3rd args are int
         if n1 != 'int' or o1 != 'int':
             err_exit("ADD/SUB/MUL/IDIV: 2nd & 3rd argument must be of type int",53)
+        
 
         #check if not dividing by 0
         if opp.name == 'IDIV':
@@ -173,7 +184,7 @@ def work_args():
         if opp.name == 'ADD':
             temp = ['int',n2 + o2]
         elif opp.name == 'SUB':
-            temp = ['int',o2 - o2]
+            temp = ['int',n2 - o2]
         elif opp.name == 'IDIV':
             temp = ['int',n2 // o2]
         else: #MUL
@@ -289,9 +300,8 @@ def is_var(string,typ):
                     return True
             return False
     except:
-        return False
         # print("Note: possibly used <symb> instead of <var> or wrong frame")
-        # err_exit("Variable couldnt be verified",52)
+        err_exit("Variable couldnt be verified",55)
         
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~        
@@ -303,39 +313,35 @@ def is_symb(string,sType):
         return False
 
     #is symb & not var
-    try:
         # sType = int, string, bool, nil
         # {in xml: <arg1 type="sType">string</arg1>}
 
-        #int
-        if sType == 'int':
-            try:
-                int(string)
+    #int
+    if sType == 'int':
+        try:
+            int(string)
 
-                # if y == y.__int__(): #no need, if int() fails it raises an error
-                return True
-            except:
-                print ('Note: Value of type int is not an integer')
-                return False
-        #bool    
-        elif sType == 'bool':
-            if string == 'true' or string == 'false':
-                return True
-            print ('Note: Type bool should be "bool@<true/false>"')
-            return False
-        #str
-        elif sType == 'string':
+            # if y == y.__int__(): #no need, if int() fails it raises an error
             return True
-        #nil
-        elif sType == 'nil':
-            if string == 'nil':
-                return True
-            else:
-                print('Note: Type nil supported for "nil@nil" only')
-                return False #error return + message after each check
+        except:
+            err_exit('Value of type int is not an integer',32)
+    #bool    
+    elif sType == 'bool':
+        if string == 'true' or string == 'false':
+            return True
+        print ('Note: Type bool should be "bool@<true/false>"')
+        return False
+    #str
+    elif sType == 'string':
+        return True
+    #nil
+    elif sType == 'nil':
+        if string == 'nil':
+            return True
+        else:
+            print('Note: Type nil supported for "nil@nil" only')
+            return False #error return + message after each check
 
-    except:
-        err_exit("Unsupported symbol type",52)
 
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -374,19 +380,11 @@ for arg in sys.argv[1:]: #[1:] to skip the first iteration
                 output: outputs the result of the code
             arguments:
                 --source=<file>; where <file> is file with XML representation
-                --input=<file>; where <file> is a file with input fo~~~~~~~~~~~~~~~~~ ##
-myLabelList = {} #dictionary of labels & their instr # {"label": <number>, ...}
-myCallList = [] #list of positions
-myStack = [] #for stack instructions
-stackCnt = 0 #how many 'things' are in stack
+                --input=<file>; where <file> is a file with input 
 
-#inicialized GF,LF,TF,LFcnt; fr = Frames class
-fr = Frames({},None,None,0)
-
-r interpret itself
-                    (note: atleast one of above arguments must be given, if one
-                    is missing, read from stdin)
+                (note: atleast one of above arguments must be given, if one is missing, read from stdin)
                 --help; prints out help message
+
                 """)
             sys.exit(0)
         #else end
@@ -395,11 +393,9 @@ r interpret itself
         #this would be valid w/ (sourceArg := ...)
     elif (temp := re.match(r'^--source=(.*)',arg)):
         sourceArg = temp.group(1)
-        # print ('--source= arg given: ',sourceArg)#debug
 
         #looks like os.path.isfile() checks absolute as well as relative path
         # (if absolute path is not found, search cwd)
-        # print ("path? ",os.path.isfile(sourceArg))#debug
         if not os.path.isfile(sourceArg):
             err_exit('Could not open file in --source',11)
 
@@ -424,7 +420,6 @@ r interpret itself
 
 #atleast one of --input | --source must exist
 if inputArg == sourceArg == None:
-    print ('its a no go bro nemas ani jeden sause')
     err_exit("""Atleast one of the following arguments must be provided:
     '--source', '--input'. Use --help for help""",10)
 
@@ -463,7 +458,6 @@ if root.tag != "program":
 #check root element
 if 'language' in root.attrib:
     if root.attrib["language"] == "IPPcode20":
-        # print("Hlavicka je cajk")#debug
         pass
     else:
         err_exit("value of attribute 'language' expected: IPPcode20",32)
@@ -473,11 +467,17 @@ else:
 instrlist = []
 #bubblesort
 for child in root:
-    if int(child.attrib['order']) <= 0: #check for negative values
-        err_exit("Negative instruction number in 'order' is not allowed",32)
-    instrlist.append(int(child.attrib['order']))
-bubblesort(instrlist)
+    for arg in child: #check arguments
+        if((arg.tag != 'arg1') and (arg.tag != 'arg2') and (arg.tag != 'arg3')):
+            err_exit("Arguments have set names (arg1,arg2,arg3)",32)
 
+    try:
+        if int(child.attrib['order']) <= 0: #check for negative values
+            err_exit("Negative instruction number in 'order' is not allowed",32)
+        instrlist.append(int(child.attrib['order']))
+    except:
+        err_exit("Attribute of instruction has to be 'order'",32)
+bubblesort(instrlist)
 
 #cycle to put instructions in order (from lowest (1))
 instr = []
@@ -530,28 +530,44 @@ while actLine < len(instr):
     actLine += 1
     child = instr[actLine - 1]
     
-    opp = Opperation(child.attrib['opcode'].upper(),None,None,None)
-    # opp.name = current opperation name (ex: LABEL)
-
-
-
     argcnt = 0
-    for sub in child:
-        argcnt +=1
-        if argcnt == 1:
+
+    opp = Opperation(child.attrib['opcode'].upper(),None,None,None)
+    
+    for sub in child: #load arguments into their correct possitions (ascending)
+        argcnt += 1
+        if sub.tag == 'arg1':
             opp.arg1 = {}
             opp.arg1[sub.attrib['type']] = sub.text 
-        elif argcnt == 2:
+        elif sub.tag == 'arg2':
             opp.arg2 = {}
             opp.arg2[sub.attrib['type']] = sub.text 
         else:
             opp.arg3 = {}
             opp.arg3[sub.attrib['type']] = sub.text
+        if argcnt > 3:
+            err_exit("Wrong number of arguments for instruction",32)
+            
 
-    # print('opp:',opp.name,'  ', end='')
-    # print ('arg1:',opp.arg1,'  ',end='') 
-    # print ('arg2:',opp.arg2,'  ',end='') 
-    # print ('arg3:',opp.arg3,'  \n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n') 
+    if opp.arg3 is not None: #check if no arguments are missing acordingly (if 3rd is loaded, 1st & 2nd must be as well)
+        if opp.arg2 is not None:
+            if opp.arg1 is not None:
+                pass
+            else:
+                #err arg1 is not loaded but 3 is (therefore missing argument)
+                err_exit("Missing argument 1",32)
+        else:
+            #err arg2 is not loaded but 3 is
+            err_exit("Missing argument 2 or 1",32)
+    elif opp.arg2 is not None:
+        if opp.arg1 is not None:
+            pass
+        else:
+            #err arg2 is not loaded but
+            err_exit("Missing argument 1",32)
+    else:
+        pass # first arg has no restrictions (can be by itself)
+
 
     if opp.arg1 is not None:
         for a1,a2 in opp.arg1.items():
@@ -566,9 +582,14 @@ while actLine < len(instr):
 
 #main SWITCH-like part        
     if opp.name == 'CREATEFRAME':
-            fr.TF = {} #easy enough
+        if argcnt != 0:
+            err_exit("Wrong number of arguments for instruction",32)
+        fr.TF = {} #easy enough
 
-    elif opp.name == 'PUSHFRAME': #TODO
+    elif opp.name == 'PUSHFRAME':
+        if argcnt != 0:
+            err_exit("Wrong number of arguments for instruction",32)
+
         if fr.TF == None:
             err_exit("Trying to push TF to LF buffer, but TF is undefined",55)
         if fr.LFcnt == 0: #first one
@@ -579,14 +600,19 @@ while actLine < len(instr):
         fr.TF = None
         fr.LFcnt += 1
 
-    elif opp.name == 'POPFRAME':#TODO
-        if fr.LF == []:
+    elif opp.name == 'POPFRAME':
+        if argcnt != 0:
+            err_exit("Wrong number of arguments for instruction",32)
+            
+        if fr.LF == [] or fr.LF == None:
             err_exit("Trying to pop LF, but none is available",55)
         fr.TF = fr.LF[fr.LFcnt-1]
         fr.LF.pop(fr.LFcnt-1)
         fr.LFcnt -= 1
 
     elif opp.name == 'RETURN':
+        if argcnt != 0:
+            err_exit("Wrong number of arguments for instruction",32)
 
         if myCallList == None:
             err_exit("RETURN: Trying to ret, but no 'calls' were made",56)
@@ -595,6 +621,9 @@ while actLine < len(instr):
         myCallList.pop()
 
     elif opp.name == 'BREAK': # < & ^ these take no arguments
+        if argcnt != 0:
+            err_exit("Wrong number of arguments for instruction",32)
+
         sys.stderr.write("--------------- BREAK debug ---------------\n\n")
         sys.stderr.write("Current state\n")
         sys.stderr.write("Global frame: ", fr.GF,"\n\n","Local frame: ", fr.LF,"\n\n","Temporary frame: ",fr.TF,"\n\n")
@@ -610,6 +639,8 @@ while actLine < len(instr):
         sys.stderr.write("--------------- BREAK debug end ---------------\n\n")
 
     elif opp.name == 'MOVE': # var, symb
+        if argcnt != 2:
+            err_exit("Wrong number of arguments for instruction",32)
         
         if is_var(a2,a1) is False:
             err_exit("MOVE: 1st argument type expected <var>",53)
@@ -622,7 +653,6 @@ while actLine < len(instr):
         if a.group(1) == "GF":
             for arg in fr.GF:
                 if arg == a.group(2):
-                    print(arg,b2)#debug
                     #symb = int,string,bool,nil #var = steal
                     if (b1 == 'var') and (b := re.match(r'^(.*)@(.*)',b2)):
                         if b.group(1) == "GF":
@@ -662,7 +692,8 @@ while actLine < len(instr):
                     break
 
     elif opp.name == 'DEFVAR': # var
-        
+        if argcnt != 1:
+            err_exit("Wrong number of arguments for instruction",32)
         if a1 != 'var':
             err_exit("DEFVAR: arg should be of type <var>",53)
         
@@ -688,7 +719,8 @@ while actLine < len(instr):
             fr.TF[a.group(2)] = [None,None]
             
     elif opp.name == 'CALL': #label
-    
+        if argcnt != 1:
+            err_exit("Wrong number of arguments for instruction",32)
         if label_exist(a2) is False:
             err_exit("CALL: Label refered to by CALL doesn't exist",56)
         myCallList.append(actLine)
@@ -697,13 +729,16 @@ while actLine < len(instr):
         # err_exit("CALL: requires 1 argument (label)",32) ?
 
     elif opp.name == 'PUSHS': #symb
-    
+        if argcnt != 1:
+            err_exit("Wrong number of arguments for instruction",32)
         if is_symb(a2,a1) is False:
             err_exit("PUSHS: argument is not <symb>",53)
         myStack.append([a1,a2])
         stackCnt += 1
             
     elif opp.name == 'POPS': #var
+        if argcnt != 1:
+            err_exit("Wrong number of arguments for instruction",32)
         if myStack == []: #is empty
             err_exit("POPS: stack is empty, nothing to pop",56)
 
@@ -720,14 +755,26 @@ while actLine < len(instr):
         stackCnt -= 1
 
     #separated it to multiple lines so theres not 1 line with 300 characters
-    elif opp.name == 'ADD' or opp.name == 'SUB' or opp.name == 'MUL' or opp.name == 'IDIV':        
+    elif opp.name == 'ADD' or opp.name == 'SUB' or opp.name == 'MUL' or opp.name == 'IDIV':
+        if argcnt != 3:
+            err_exit("Wrong number of arguments for instruction",32)        
         work_args()
-    elif opp.name == 'LT' or opp.name == 'GT' or opp.name == 'EQ' or opp.name == 'AND': 
+    elif opp.name == 'LT' or opp.name == 'GT' or opp.name == 'EQ' or opp.name == 'AND':
+        if argcnt != 3:
+            err_exit("Wrong number of arguments for instruction",32) 
         work_args()
     elif opp.name == 'OR' or opp.name == 'NOT' or opp.name == 'INT2CHAR' or opp.name == 'STRI2CHAR':
+        if opp.name == 'OR' or opp.name == 'STRI2INT':
+            if argcnt != 3:
+                err_exit("Wrong number of arguments for instruction",32)
+        else: 
+            if argcnt != 2:
+                err_exit("Wrong number of arguments for instruction",32)
         work_args()
         
     elif opp.name == 'READ':
+        if argcnt != 2:
+            err_exit("Wrong number of arguments for instruction",32)
         if b1 != 'type':
             err_exit("READ: second arguments must be of type <type>",53)
         if (b2 != 'int') and (b2 != 'string') and (b2 != 'bool'):
@@ -749,24 +796,47 @@ while actLine < len(instr):
             if b2 == 'int':
                 try:
                     tmp = int(tmp)
+                    temp = ['int', tmp]
                 except:
                     err_exit("READ: line read cant be converted to 'int'",57)
             elif b2 == 'string':
                 is_symb(tmp,'string')
                 tmp = str_escape_seq(tmp)
-
+                temp = ['string',tmp]
             elif b2 == 'bool':
                 # "true" -> true otherwise false
                 if tmp == 'true':
                     temp = ['bool','true']
                 else:
                     temp = ['bool','false']
+            #else je to nil@nil?
+
+            a = re.match(r'^(GF|TF|LF)@(.*)',a2)
+            if a.group(1) == "GF":
+                fr.GF[a.group(2)] = temp
+            elif a.group(1) == "LF":
+                fr.LF[fr.LFcnt-1][a.group(2)] = temp
+            else: #TF
+                fr.TF[a.group(2)] = temp
 
     elif opp.name == 'WRITE':
-        temp = str_escape_seq(a2)
+        if argcnt != 1:
+            err_exit("Wrong number of arguments for instruction",32)
+        if is_symb(a2,a1) is False:
+            err_exit("WRITE: arg must be a symbol",32)
+        if a1 == 'var':
+            if is_var(a2,a1) is False:
+                err_exit("WRITE: trying to reach uninicialized var",55)
+            a1,a2 = gib_var_val(a2)
+        if a1 == 'string':
+            temp = str_escape_seq(a2)
+        else:
+            temp = a2
         print(temp,end='')
 
     elif opp.name == 'CONCAT':
+        if argcnt != 3:
+            err_exit("Wrong number of arguments for instruction",32)
         if (is_var(a2,a1) is False) or (is_symb(b2,b1) is False) or (is_symb(c2,c1) is False):
             err_exit("CONCAT: wrong argument types. Expected: <var> <symb> <symb>",53)
         if is_var(b2,b1):
@@ -786,6 +856,8 @@ while actLine < len(instr):
             err_exit("CONCAT: only strings can be concatenated",53)
 
     elif opp.name == 'STRLEN':
+        if argcnt != 2:
+            err_exit("Wrong number of arguments for instruction",32)
         if (is_var(a2,a1) is False) or (is_symb(b2,b1) is False):
             err_exit("STRLEN: arguments should be <var> <symb>",53)
         if is_var(b2,b1):
@@ -799,6 +871,8 @@ while actLine < len(instr):
             fr.TF[a.group(2)] = ['int',len(b2)]
 
     elif opp.name == 'GETCHAR':
+        if argcnt != 3:
+            err_exit("Wrong number of arguments for instruction",32)
         if (is_var(a2,a1) is False) or (is_symb(b2,b1) is False) or (is_symb(c2,c1) is False):
             err_exit("GETCHAR: wrong argument types. Expected: <var> <symb> <symb>",53)
         if is_var(b2,b1):
@@ -820,6 +894,8 @@ while actLine < len(instr):
 
 
     elif opp.name == 'SETCHAR':
+        if argcnt != 3:
+            err_exit("Wrong number of arguments for instruction",32)
         if (is_var(a2,a1) is False) or (is_symb(b2,b1) is False) or (is_symb(c2,c1) is False):
             err_exit("SETCHAR: wrong argument types. Expected: <var> <symb> <symb>",53)
         if is_var(b2,b1):
@@ -858,6 +934,8 @@ while actLine < len(instr):
 
 
     elif opp.name == 'TYPE':
+        if argcnt != 2:
+            err_exit("Wrong number of arguments for instruction",32)
         if (is_var(a2,a1) is False) or (is_symb(b2,b1) is False):
             err_exit("TYPE: first arg expected <var>, second >symb>",53)
         if is_var(b2,b1):
@@ -881,15 +959,21 @@ while actLine < len(instr):
             fr.TF[a.group(2)] = temp
 
 
-    elif opp.name == 'LABEL':  ## this is done before the cycle, so jump on 
-        pass              ## later-defined label in code is possible
+    elif opp.name == 'LABEL':  ## this is done before the cycle, so jump on
+                                ## later-defined label in code is possible
+        if argcnt != 1:
+            err_exit("Wrong number of arguments for instruction",32) 
     elif opp.name == 'JUMP':
+        if argcnt != 1:
+            err_exit("Wrong number of arguments for instruction",32)
     
         if label_exist(a2) is False:
             err_exit("JUMP: trying to jump to non existing label",52)
         actLine = myLabelList[a2]
 
     elif opp.name == 'JUMPIFEQ':
+        if argcnt != 3:
+            err_exit("Wrong number of arguments for instruction",32)
         if label_exist(a2) is False:
             err_exit("JUMPIFEQ: trying to jump to non existing label",52)
         if is_symb(b2,b1) is False or is_symb(c2,c1) is False:
@@ -916,6 +1000,8 @@ while actLine < len(instr):
             err_exit("JUMPIFEQ: non matching types of operands(nor one of them nil)",53)
 
     elif opp.name == 'JUMPIFNEQ':
+        if argcnt != 3:
+            err_exit("Wrong number of arguments for instruction",32)
         if label_exist(a2) is False:
             err_exit("JUMPIFNEQ: trying to jump to non existing label",52)
         if is_symb(b2,b1) is False or is_symb(c2,c1) is False:
@@ -938,63 +1024,27 @@ while actLine < len(instr):
             err_exit("JUMPIFNEQ: non matching types of operands(nor one of them nil)",53)
 
     elif opp.name == 'EXIT':
+        if argcnt != 1:
+            err_exit("Wrong number of arguments for instruction",32)
         if a1 == 'int':
             try:
                 temp = int(a2)
-                if temp >= 0 and temp <= 49:
-                    sys.exit(a2)
-                else:
-                    err_exit("EXIT: int has to be in interval <0,49>",57)
             except:
                 err_exit("EXIT: argument value is not integer",57)
+
+            if temp >= 0 and temp <= 49:
+                sys.exit(temp)
+            else:
+                err_exit("EXIT: int has to be in interval <0,49>",57)
         else:
             err_exit("EXIT: argument should be of type <int>",53)
-    # elif opp.name == 'DPRINT':
-    #     pass
+    elif opp.name == 'DPRINT':
+        if argcnt != 1:
+            err_exit("Wrong number of arguments for instruction",32)
+        if is_symb(a2,a1) is False:
+            err_exit("DPRINT: argument expected type is <symb>",53)
+        if is_var(a2,a1):
+            a1,a2 = gib_var_val(a2)
+        sys.stderr.write(a2)
     else:
-        err_exit("Unknown instruction",52)
-##debug print of all frames
-# print ('\nAll frames:')
-# print ('GF: ',fr.GF)
-# print ('LF: ',fr.LF)
-# print ('TF: ',fr.TF)
-# print ('\nStack:')
-# print (myStack)
-
-
-
-# CREATEFRAME done
-# PUSHFRAME done
-# POPFRAME done
-# RETURN done
-# BREAK done
-# MOVE done
-# DEFVAR done
-# CALL done
-# PUSHS done
-# POPS done
-# ADD done
-# SUB done
-# MUL done
-# IDIV done
-# LT done
-# GT done
-# EQ done
-# AND done
-# OR done
-# NOT done
-# INT2CHAR ?
-# STRI2INT ?
-# READ done
-# WRITE done
-# CONCAT done
-# STRLEN done
-# GETCHAR done ?
-# SETCHAR done ?
-# TYPE
-# LABEL done
-# JUMP done
-# JUMPIFEQ done
-# JUMPIFNEQ done
-# EXIT done
-# DPRINT
+        err_exit("Unknown instruction",32)
