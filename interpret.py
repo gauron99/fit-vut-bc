@@ -2,7 +2,7 @@
 #          Login : xfridr08             #
 #       Jmeno : David Fridrich          #
 #      Tema  : IPP2020 interpret        #
-#     Posledni zmena : 07.04.2020       #
+#     Posledni zmena : 14.04.2020       #
 #########################################
 
 import xml.etree.ElementTree as ET #import library to work with xml
@@ -388,6 +388,7 @@ for arg in sys.argv[1:]: #[1:] to skip the first iteration
                 """)
             sys.exit(0)
         #else end
+
         #temp is used because whenever the if statement is checked and not matched
         #the value asigned by := is then 'None' therefore only as last argument
         #this would be valid w/ (sourceArg := ...)
@@ -519,10 +520,10 @@ while instCnt < len(instr):
         if child.find('arg1').text in myLabelList:
             err_exit("Redefinition of label not allowed",52)
         else:
-            #myLabelList.append(child.find('arg1').text)
             myLabelList[child.find('arg1').text] = instCnt
 
-## ~~~~~~~~~~~~~~~ Main cycle ~~~~~~~~~~~~~~~ ##
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Main cycle ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ##
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Main cycle ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ##
 
 actLine = 0
 
@@ -584,7 +585,7 @@ while actLine < len(instr):
     if opp.name == 'CREATEFRAME':
         if argcnt != 0:
             err_exit("Wrong number of arguments for instruction",32)
-        fr.TF = {} #easy enough
+        fr.TF = {} 
 
     elif opp.name == 'PUSHFRAME':
         if argcnt != 0:
@@ -725,8 +726,8 @@ while actLine < len(instr):
             err_exit("CALL: Label refered to by CALL doesn't exist",56)
         myCallList.append(actLine)
         actLine = myLabelList[a2]
-    # else: #if no iteration of for is made, do else (smart snake)
-        # err_exit("CALL: requires 1 argument (label)",32) ?
+    
+        
 
     elif opp.name == 'PUSHS': #symb
         if argcnt != 1:
@@ -767,7 +768,7 @@ while actLine < len(instr):
         if opp.name == 'OR' or opp.name == 'STRI2INT':
             if argcnt != 3:
                 err_exit("Wrong number of arguments for instruction",32)
-        else: 
+        else: #separate because NOT & INT2CHAR take only 2 arguments
             if argcnt != 2:
                 err_exit("Wrong number of arguments for instruction",32)
         work_args()
@@ -788,9 +789,10 @@ while actLine < len(instr):
             else:
                 lines = inputArg.splitlines()
             firstReading = False
+
         if lines == []:
             temp = ['nil','nil']
-        else:#read list is not empty, can be read from
+        else:#read list is not empty >> can be read from
             tmp = lines[0]
             lines.pop(0)
             if b2 == 'int':

@@ -2,7 +2,7 @@
                 ###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###
                 ###     autor: Fridrich David               ###             
                 ###     zadani: IPP20 tester                ### 
-                ###     datum posledni upravy: 29.03.2020   ###
+                ###     datum posledni upravy: 14.04.2020   ###
                 ###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~###
 
 
@@ -42,6 +42,7 @@ foreach(array_slice($argv,1) as $prgArg) { //array_slice >> dont include name of
     if($prgArg == '--help'){
         if ($argc == 2) {
         #echo print help message for test
+        exit(0);
         }
         else{
             err_exit(10,"Try '--help' as the only argument");
@@ -115,18 +116,19 @@ foreach(array_slice($argv,1) as $prgArg) { //array_slice >> dont include name of
         $_int_only = true;
     }
     // getcwd()."/jexamxml.jar"
-    elseif(preg_match('/^--jexamxml=$/',$prgArg)){
+    elseif(preg_match('/^--jexamxml=/',$prgArg)){
 
         $tmp = explode("=",$prgArg);
         $jarfile = $tmp[1];
         if(preg_match('/jexamxml.jar$/',$jarfile)){
-
+            $_jexamxml = true;
             if(file_exists($jarfile)); #absolute path found
             elseif(file_exists(getcwd() . $jarfile)){ #relative path found
                 
                 $jarfile = getcwd().$jarfile; #transform to absolute
             }
             else{ #file was not found using either absolute or relative path
+                echo($jarfile);
                 err_exit(11, "File 'jexamxml.jar' in --jexamxml not found");
             }
         }
@@ -136,6 +138,7 @@ foreach(array_slice($argv,1) as $prgArg) { //array_slice >> dont include name of
     }
     
     else{
+        echo($prgArg);
         echo ("Unknown program argument passed by cmd, exiting\n");#debug
         exit(0);
     }
@@ -158,12 +161,12 @@ if($_int_script == false){
     }
     $int_file = getcwd()."/interpret.py";
 }
-// if($_jexamxml == false){
-//     if(!file_exists("/pub/courses/ipp/jexamxml/jexamxml.jar")){
-//         err_exit(11, "File 'jexamxml.jar not found"); #path was not provided;file wasnt found in cwd
-//     }
-//     $jarfile = "/pub/courses/ipp/jexamxml/jexamxml.jar";
-// }
+if($_jexamxml == false){
+    if(!file_exists("/pub/courses/ipp/jexamxml/jexamxml.jar")){
+        err_exit(11, "File 'jexamxml.jar' not found"); #path was not provided;file wasnt found in cwd
+    }
+    $jarfile = "-jar /pub/courses/ipp/jexamxml/jexamxml.jar";
+}
 
 ##~~~~~~~~~~~~~~~ working with test dirs ~~~~~~~~~~~~~~~##
 
@@ -290,36 +293,33 @@ function getFiles($dir){ # $dir = path given by '--directory=' or cwd
     // var_dump($files); #debug
 } #end of function get files
 
-// echo "~~~~~files~~~~~\n";
-// var_dump($files);
-// echo "~~~~~out_files~~~~~\n";
-// var_dump($out_files);
-// echo "~~~~~rc_files~~~~~\n";
-// var_dump($rc_files);
-
-
 
 $tests_all = 0;
 $tests_fail = 0;
 $tests_success = 0;
 
+$out_file;
+$in_file;
+$rc_file;
+
 #-1 == not tested, parser mistake; 0 == parser was good, but int not; 1 == int was good
 $html_test_int = array();
 $html_rc = array(); 
 $to_delete = array();#temp files, to be deleted at the very end
+$xml_files = array();
 
 $nottested = "-1";
 $fail = "0";
 $ok = "1";
 $notdiffed = "2";
 
-if ($_int_only == false){
+if (!$_int_only){ #parse only / BOTH
 
 
     $html_test_par = array(); #both hold values of 0 or 1 as follows: 1 == good test; 0 == bad test
 
     // cycle to "prohnat skrz" (get input through) parse.php
-    $parse_script ="php " .$parse_file; # TODO MUST BE CHANGED TO PHP7.4 TO RUN ON MERLIN
+    $parse_script ="php7.4 " .$parse_file; # TODO MUST BE CHANGED TO PHP7.4 TO RUN ON MERLIN
 
     foreach ($files as $file) {
         
@@ -327,81 +327,93 @@ if ($_int_only == false){
 
         $xml_file = $matches[1].".xml";
         $to_delete[] = $xml_file;
-        foreach ($out_files as $f) {
-            if ( $f === $matches[1].".out")
-                $out_file_ref = $f;
+        $xml_files[] = $xml_file;
 
-        }
-        exec($parse_script . " <" . $file. " >" . $xml_file,$nic,$rc);
+        $tmp = array_search($matches[1].".out",$out_files);
+        $out_file = $out_files[$tmp];
         
-        foreach( $rc_files as $rc_file){
-            if($rc_file === $matches[1].".rc"){
-
-                $true_rc = file_get_contents($rc_file); #rc from a .rc file
+        $tmp = array_search($matches[1].".rc",$rc_files);
+        $rc_file = $rc_files[$tmp];
+        
+        $tmp = array_search($matches[1].".in",$in_files);
+        $in_file = $in_files[$tmp]; 
+        
+        #xml file contains XML representation for ippcode20 code (used for 'PARSE-ONLY' and 'BOTH' options)
+        exec($parse_script . " <" . $file. " >" . $xml_file,$nic,$rc); 
+        
+        $true_rc = file_get_contents($rc_file); #rc from a .rc file
+        
+        #trim because "$?" comes with '\n'
+        $rc = trim($rc);
+        $true_rc = trim($true_rc);
+        $tests_all++;
+        
+        if($_parse_only){# only for PARSE_ONLY
+            if($rc !== $true_rc){
+                $tests_fail ++;
+                $html_rc[] = $fail; #add 'no' at the end
+                $html_test_par[] = $notdiffed;
                 
-                #trim because "$?" comes with '\n'
-                $rc = trim($rc);
-                $true_rc = trim($true_rc);
-                $tests_all++;
+            }
+            elseif ($rc !== "0") {
+                $tests_success ++;
+                $html_rc[] = $ok;
+                $html_test_par[] = $notdiffed;
+
+            }
+            else{
+
+                $html_rc[] = $ok;
+                #cmp .xml & .out
+                $tmpDiffer = ($base_home_dir."diff");
+                file_put_contents($tmpDiffer,NULL);
                 
-                if($_parse_only){    
-                    if($rc !== $true_rc){
-                        $tests_fail ++;
-                        $html_rc[] = $fail; #add 'no' at the end
-                        $html_test_par[] = $notdiffed;
-                        
-                    }
-                    elseif ($rc !== "0") {
-                        $tests_success ++;
-                        $html_rc[] = $ok;
-                        $html_test_par[] = $notdiffed;
+                // $jarfileMerlin = "-jar /pub/courses/ipp/jexamxml/jexamxml.jar";
+                // options = (append after $tmpDiffer)
+                exec("java -jar ".$jarfile." ".$xml_file." ".$out_file." ".$tmpDiffer." /D /pub/courses/ipp/jexamxml/options",$nic,$xmlRC);
 
-                    }
-                    else{
+                #cmp of files
+                clearstatcache();
+                if(filesize($tmpDiffer)){
 
-                        $html_rc[] = $ok;
-                        #cmp .xml & .out
-                        $tmpDiffer = ($base_home_dir."diff");
-                        file_put_contents($tmpDiffer,NULL);
-                        
-                        // $jarfileMerlin = "-jar /pub/courses/ipp/jexamxml/jexamxml.jar";
-                        $jarfile = "/home/donnovan/skola/druhy/letni/IPP/IPP/jexamxml/jexamxml.jar";
-                        exec("java -jar ".$jarfile." ".$xml_file." ".$out_file_ref." ".$tmpDiffer." /jexamxml/options",$nic,$xmlRC);
-
-                        #cmp of files
-                        clearstatcache();
-                        if(filesize($tmpDiffer)){
-
-                            $tests_fail ++;
-                            $html_test_par[] = $fail; #add 0 at the end of the list
-                            
-                        } 
-                        else{
-                            $tests_success ++;
-                            $html_test_par[] = $ok;
-                        }
-                        unlink($tmpDiffer);
-                    }
-                }### only for PARSE_ONLY
-                else{# Rezim BOTH
-                    #cmp RC 0 and thats it
+                    $tests_fail ++;
+                    $html_test_par[] = $fail; #add 0 at the end of the list
+                    
+                } 
+                else{
+                    $tests_success ++;
+                    $html_test_par[] = $ok;
                 }
+                unlink($tmpDiffer);
             }
         }
+        else{# Rezim BOTH
+            if ($rc == "0"){
+                $html_test_par[] = $ok;
+                #continue to interpret testing
+            }
+            else{
+                $html_test_par[] = $fail;
+                #test doesnt need to continue, parser test failed
+            }
+        }
+            // }
+        // }
     }
 }
 // var_dump($files);
-elseif($_parse_only == false){ #Rezim BOTH/int_only
+if(!$_parse_only){ #Rezim BOTH/int_only
+
+
     $int_output = "my_int.outpt.txt";
     file_put_contents($int_output,NULL);
     $to_delete[] = $int_output;
     // var_dump($files);
-    $int_file ='python '.$int_file; #TODO MUST BE CHANGED TO WORK ON MERLIN 
+    $int_file ='python3.8 '.$int_file; # MUST BE CHANGED TO 'python3.8' TO WORK ON MERLIN 
+
     
     if($_int_only){ # use .src as xml input
         foreach ($files as $file){ #$file = file.src
-            preg_match('/(.*).src$/',$file,$matches);
-            $tests_all++;
 
             $tmp = array_search($matches[1].".out",$out_files);
             $out_file = $out_files[$tmp];
@@ -409,11 +421,14 @@ elseif($_parse_only == false){ #Rezim BOTH/int_only
             $in_file = $in_files[$tmp];
             $tmp = array_search($matches[1].".rc",$rc_files);
             $rc_file = $rc_files[$tmp];
-            
+
+            preg_match('/(.*).src$/',$file,$matches);
+            $tests_all++;
+
             $true_rc = file_get_contents($rc_file); #true rc now holds value in .rc for comparison
             #execute interpret.py
             $nic = array();
-            exec($int_file." --source=".$file. " --input=".$in_file." >".$int_output,$nic,$rc);
+            exec($int_file." --source=".$xml_file. " --input=".$in_file." >".$int_output,$nic,$rc);
             
             #trim because "$?" comes with '\n'
 
@@ -450,7 +465,61 @@ elseif($_parse_only == false){ #Rezim BOTH/int_only
         }
     }
     else{ # BOTH
+        $i = 0;
+        foreach($xml_files as $file_xml){ #$file = file.xml
+            $i++;
+            
+            if ($html_test_par[$i-1] == $fail){
+                $html_test_int[] = $nottested; #parser didnt return 0
+                $html_rc[] = $fail;
+                $tests_fail++;
+            }
+            else{ #parser did return 0, check interpret now with given .xml file
+                preg_match('/(.*).xml$/',$file_xml,$matches);
+                
+                $tmp = array_search($matches[1].".out",$out_files);
+                $out_file = $out_files[$tmp];
+                $tmp = array_search($matches[1].".in",$in_files);
+                $in_file = $in_files[$tmp];
+                $tmp = array_search($matches[1].".rc",$rc_files);
+                $rc_file = $rc_files[$tmp];
 
+                $xml_file = file_get_contents($file_xml); #true rc now holds value in .rc for comparison
+                
+                $nic = array();
+                exec($int_file." --source=".$file_xml. " --input=".$in_file." >".$int_output,$nic,$rcint);
+                $true_rc = file_get_contents($rc_file); #rc from a .rc file
+
+                $rc = trim($rcint);
+                $true_rc = trim($true_rc);
+
+                if($rc !== $true_rc){ #if Ret codes are not equal, automaticaly big bad
+                    $tests_fail++;
+                    $html_rc[] = $fail;
+                    $html_test_int[] = $notdiffed;
+                }
+                else if($rc != "0"){ #if ret codes do match AND are not 0, all good, nothing to cmp
+                    $tests_success++;
+                    $html_rc[] = $ok;
+                    $html_test_int[] = $notdiffed;
+                }
+                else{ #codes are the same and they are both 0, therefore use diff
+                    $html_rc[] = $ok;
+                    $nic = array();
+                    exec("diff ".$int_output." ".$out_file,$nic,$intDiffRc);
+                    // var_dump($nic);
+                    if (count($nic) == 0){
+                        #they are the same
+                        $tests_success++;
+                        $html_test_int[] = $ok;
+                    }
+                    else{
+                        $tests_fail++;
+                        $html_test_int[] = $fail;
+                    }
+                }
+            }
+        }#end foreach
     }
 }
 // exit(0);
@@ -460,7 +529,6 @@ if(!$_int_only){
     }
 }
 // var_dump( $html_test_par);
-
 
 
 ##~~~~~~~~~~~~ HTML output ~~~~~~~~~~~~##
@@ -537,39 +605,77 @@ else{#both
 </tr>
 <?php
 // echo ("<td>".."</td>\n");
-
-for($i = 0; $i < count($files);$i++){
-    
-    echo ("<tr>\n"); # table row
-    echo ("<td height='30' style='text-align:left'>".$files[$i]."</td>\n");
-    if ($html_rc[$i] == "1"){
-        echo ("<td height='30' style='text-align:center;color:#01b401'>OK</td>\n");
-    }
-    elseif($html_rc[$i] == "0"){
-        echo("<td height='30' style='text-align:center;color:#e6002d'>FAIL</td>\n");
-    }
-    if(!$_int_only){
-        if($html_test_par[$i] == "1"){
+if ($_int_only || $_parse_only){
+    for($i = 0; $i < count($files);$i++){
+        
+        echo ("<tr>\n"); # table row
+        echo ("<td height='30' style='text-align:left'>".$files[$i]."</td>\n");
+        if ($html_rc[$i] == "1"){
             echo ("<td height='30' style='text-align:center;color:#01b401'>OK</td>\n");
         }
-        elseif($html_test_par[$i] == "0"){
+        elseif($html_rc[$i] == "0"){
+            echo("<td height='30' style='text-align:center;color:#e6002d'>FAIL</td>\n");
+        }
+        if(!$_int_only){ #parse_only
+            if($html_test_par[$i] == "1"){
+                echo ("<td height='30' style='text-align:center;color:#01b401'>OK</td>\n");
+            }
+            elseif($html_test_par[$i] == "0"){
+                echo ("<td height='30' style='text-align:center;color:#e6002d'>Fail</td>\n");
+            }
+            else{
+                echo ("<td height='30' style='text-align:center'>Not diffed</td>\n");
+            }
+        }
+        else{#int_only
+            if($html_test_int[$i] == "1"){
+                echo ("<td height='30' style='text-align:center;color:#01b401'>OK</td>\n");
+            }
+            elseif($html_test_int[$i] == "0"){
+                echo ("<td height='30' style='text-align:center;color:#e6002d'>Fail</td>\n");
+            }
+            else{
+                echo ("<td height='30' style='text-align:center'>Not diffed</td>\n");
+            }
+        } 
+    }
+}
+else{ #both
+    for($i = 0; $i < count($xml_files);$i++){
+        
+        echo ("<tr>\n"); # table row
+        echo ("<td height='30' style='text-align:left'>".$xml_files[$i]."</td>\n");
+        #retval result
+        if ($html_rc[$i] == "1"){
+            echo ("<td height='30' style='text-align:center;color:#01b401'>OK</td>\n");
+        }
+        elseif($html_rc[$i] == "0"){
+            echo("<td height='30' style='text-align:center;color:#e6002d'>FAIL</td>\n");
+        }
+        #parse test result
+        if($html_test_par[$i] == $ok){
+            echo ("<td height='30' style='text-align:center;color:#01b401'>OK</td>\n");
+        }
+        elseif($html_test_par[$i] == $fail){
             echo ("<td height='30' style='text-align:center;color:#e6002d'>Fail</td>\n");
         }
         else{
             echo ("<td height='30' style='text-align:center'>Not diffed</td>\n");
         }
-    }
-    if(!$_parse_only){
-        if($html_test_int[$i] == "1"){
+        #int test result
+        if($html_test_int[$i] == $ok){
             echo ("<td height='30' style='text-align:center;color:#01b401'>OK</td>\n");
         }
-        elseif($html_test_int[$i] == "0"){
+        elseif($html_test_int[$i] == $fail){
             echo ("<td height='30' style='text-align:center;color:#e6002d'>Fail</td>\n");
         }
-        else{
+        elseif($html_test_int[$i] == $notdiffed){
             echo ("<td height='30' style='text-align:center'>Not diffed</td>\n");
         }
-    } 
+        else{#not tested option (if parser didnt return 0)
+            echo ("<td height='30' style='text-align:center'>Not tested</td>\n");
+        }
+    }
 }
 ?>
 </tr><!-- table row end -->
