@@ -1,51 +1,51 @@
 
 /* ******************************* c203.c *********************************** */
-/*  Pøedmìt: Algoritmy (IAL) - FIT VUT v Brnì                                 */
-/*  Úkol: c203 - Fronta znakù v poli                                          */
-/*  Referenèní implementace: Petr Pøikryl, 1994                               */
-/*  Pøepis do jazyka C: Václav Topinka, záøí 2005                             */
-/*  Úpravy: Kamil Jeøábek, záøí 2020                                          */
+/*  Pï¿½edmï¿½t: Algoritmy (IAL) - FIT VUT v Brnï¿½                                 */
+/*  ï¿½kol: c203 - Fronta znakï¿½ v poli                                          */
+/*  Referenï¿½nï¿½ implementace: Petr Pï¿½ikryl, 1994                               */
+/*  Pï¿½epis do jazyka C: Vï¿½clav Topinka, zï¿½ï¿½ï¿½ 2005                             */
+/*  ï¿½pravy: Kamil Jeï¿½ï¿½bek, zï¿½ï¿½ï¿½ 2020                                          */
 /* ************************************************************************** */
 /*
-** Implementujte frontu znakù v poli. Pøesnou definici typù naleznete
-** v hlavièkovém souboru c203.h (ADT fronta je reprezentována strukturou tQueue,
-** která obsahuje pole 'arr' pro ulo¾ení hodnot ve frontì a indexy f_index
-** a b_index. V¹echny implementované funkce musí pøedpokládat velikost pole
-** QUEUE_SIZE, i kdy¾ ve skuteènosti jsou rozmìry statického pole definovány
-** MAX_QUEUE. Hodnota QUEUE_SIZE slou¾í k simulaci fronty v rùznì velkém poli
-** a nastavuje se v testovacím skriptu c203-test.c pøed testováním
-** implementovaných funkcí. Hodnota QUEUE_SIZE mù¾e nabývat hodnot v rozsahu
-** 1 a¾ MAX_QUEUE.
+** Implementujte frontu znakï¿½ v poli. Pï¿½esnou definici typï¿½ naleznete
+** v hlaviï¿½kovï¿½m souboru c203.h (ADT fronta je reprezentovï¿½na strukturou tQueue,
+** kterï¿½ obsahuje pole 'arr' pro uloï¿½enï¿½ hodnot ve frontï¿½ a indexy f_index
+** a b_index. Vï¿½echny implementovanï¿½ funkce musï¿½ pï¿½edpoklï¿½dat velikost pole
+** QUEUE_SIZE, i kdyï¿½ ve skuteï¿½nosti jsou rozmï¿½ry statickï¿½ho pole definovï¿½ny
+** MAX_QUEUE. Hodnota QUEUE_SIZE slouï¿½ï¿½ k simulaci fronty v rï¿½znï¿½ velkï¿½m poli
+** a nastavuje se v testovacï¿½m skriptu c203-test.c pï¿½ed testovï¿½nï¿½m
+** implementovanï¿½ch funkcï¿½. Hodnota QUEUE_SIZE mï¿½ï¿½e nabï¿½vat hodnot v rozsahu
+** 1 aï¿½ MAX_QUEUE.
 **
-** Index f_index ukazuje v¾dy na první prvek ve frontì. Index b_index
-** ukazuje na první volný prvek ve frontì. Pokud je fronta prázdná, ukazují
-** oba indexy na stejné místo. Po inicializaci ukazují na první prvek pole,
-** obsahují tedy hodnotu 0. Z uvedených pravidel vyplývá, ¾e v poli je v¾dy
-** minimálnì jeden prvek nevyu¾itý.
+** Index f_index ukazuje vï¿½dy na prvnï¿½ prvek ve frontï¿½. Index b_index
+** ukazuje na prvnï¿½ volnï¿½ prvek ve frontï¿½. Pokud je fronta prï¿½zdnï¿½, ukazujï¿½
+** oba indexy na stejnï¿½ mï¿½sto. Po inicializaci ukazujï¿½ na prvnï¿½ prvek pole,
+** obsahujï¿½ tedy hodnotu 0. Z uvedenï¿½ch pravidel vyplï¿½vï¿½, ï¿½e v poli je vï¿½dy
+** minimï¿½lnï¿½ jeden prvek nevyuï¿½itï¿½.
 **
-** Pøi libovolné operaci se ¾ádný z indexù (f_index i b_index) nesni¾uje
-** vyjma pøípadu, kdy index pøesáhne hranici QUEUE_SIZE. V tom pøípadì
-** se "posunuje" znovu na zaèátek pole. Za tímto úèelem budete deklarovat
-** pomocnou funkci NextIndex, která pro kruhový pohyb pøes indexy pole
-** vyu¾ívá operaci "modulo".
+** Pï¿½i libovolnï¿½ operaci se ï¿½ï¿½dnï¿½ z indexï¿½ (f_index i b_index) nesniï¿½uje
+** vyjma pï¿½ï¿½padu, kdy index pï¿½esï¿½hne hranici QUEUE_SIZE. V tom pï¿½ï¿½padï¿½
+** se "posunuje" znovu na zaï¿½ï¿½tek pole. Za tï¿½mto ï¿½ï¿½elem budete deklarovat
+** pomocnou funkci NextIndex, kterï¿½ pro kruhovï¿½ pohyb pï¿½es indexy pole
+** vyuï¿½ï¿½vï¿½ operaci "modulo".
 **
-** Implementujte následující funkce:
+** Implementujte nï¿½sledujï¿½cï¿½ funkce:
 **
 **    queueInit ..... inicializace fronty
-**    nextIndex ..... pomocná funkce - viz popis vý¹e
-**    queueEmpty .... test na prázdnost fronty
-**    queueFull ..... test, zda je fronta zaplnìna (vyèerpána kapacita)
-**    queueFront .... pøeète hodnoty prvního prvku z fronty
-**    queueRemove ... odstraní první prvek fronty
-**    queueGet ...... pøeète a odstraní první prvek fronty
-**    queueUp ....... zaøazení prvku na konec fronty
+**    nextIndex ..... pomocnï¿½ funkce - viz popis vï¿½ï¿½e
+**    queueEmpty .... test na prï¿½zdnost fronty
+**    queueFull ..... test, zda je fronta zaplnï¿½na (vyï¿½erpï¿½na kapacita)
+**    queueFront .... pï¿½eï¿½te hodnoty prvnï¿½ho prvku z fronty
+**    queueRemove ... odstranï¿½ prvnï¿½ prvek fronty
+**    queueGet ...... pï¿½eï¿½te a odstranï¿½ prvnï¿½ prvek fronty
+**    queueUp ....... zaï¿½azenï¿½ prvku na konec fronty
 **
-** Své øe¹ení úèelnì komentujte!
+** Svï¿½ ï¿½eï¿½enï¿½ ï¿½ï¿½elnï¿½ komentujte!
 **
-** Terminologická poznámka: Jazyk C nepou¾ívá pojem procedura.
-** Proto zde pou¾íváme pojem funkce i pro operace, které by byly
-** v algoritmickém jazyce Pascalovského typu implemenovány jako
-** procedury (v jazyce C procedurám odpovídají funkce vracející typ void).
+** Terminologickï¿½ poznï¿½mka: Jazyk C nepouï¿½ï¿½vï¿½ pojem procedura.
+** Proto zde pouï¿½ï¿½vï¿½me pojem funkce i pro operace, kterï¿½ by byly
+** v algoritmickï¿½m jazyce Pascalovskï¿½ho typu implemenovï¿½ny jako
+** procedury (v jazyce C procedurï¿½m odpovï¿½dajï¿½ funkce vracejï¿½cï¿½ typ void).
 **
 **/
 
@@ -53,10 +53,10 @@
 
 void queueError (int error_code) {
 /*
-** Vytiskne upozornìní na to, ¾e do¹lo k chybì.
-** Tato funkce bude volána z nìkterých dále implementovaných operací.
+** Vytiskne upozornï¿½nï¿½ na to, ï¿½e doï¿½lo k chybï¿½.
+** Tato funkce bude volï¿½na z nï¿½kterï¿½ch dï¿½le implementovanï¿½ch operacï¿½.
 **
-** TUTO FUNKCI, PROSÍME, NEUPRAVUJTE!
+** TUTO FUNKCI, PROSï¿½ME, NEUPRAVUJTE!
 */
 	static const char* QERR_STRINGS[MAX_QERR+1] = {"Unknown error","Queue error: UP","Queue error: FRONT","Queue error: REMOVE","Queue error: GET","Queue error: INIT"};
 	if ( error_code <= 0 || error_code > MAX_QERR )
@@ -67,97 +67,121 @@ void queueError (int error_code) {
 
 void queueInit (tQueue* q) {
 /*
-** Inicializujte frontu následujícím zpùsobem:
-** - v¹echny hodnoty v poli q->arr nastavte na '*',
-** - index na zaèátek fronty nastavte na 0,
-** - index prvního volného místa nastavte také na 0.
+** Inicializujte frontu nï¿½sledujï¿½cï¿½m zpï¿½sobem:
+** - vï¿½echny hodnoty v poli q->arr nastavte na '*',
+** - index na zaï¿½ï¿½tek fronty nastavte na 0,
+** - index prvnï¿½ho volnï¿½ho mï¿½sta nastavte takï¿½ na 0.
 **
-** V pøípadì, ¾e funkce dostane jako parametr q == NULL, volejte funkci
+** V pï¿½ï¿½padï¿½, ï¿½e funkce dostane jako parametr q == NULL, volejte funkci
 ** queueError(QERR_INIT).
 */
-
-	  solved = FALSE;                  /* V pøípadì øe¹ení, sma¾te tento øádek! */
+	if(!q){
+		queueError(QERR_INIT);
+	}
+	else{
+		for(int i = 0; i < QUEUE_SIZE; ++i){
+			q->arr[i] = '*';
+		}
+		q->b_index=0;
+		q->f_index=0;
+	}
 }
 
 int nextIndex (int index) {
 /*
-** Pomocná funkce, která vrací index následujícího prvku v poli.
-** Funkci implementujte jako jediný prikaz vyu¾ívající operace '%'.
-** Funkci nextIndex budete vyu¾ívat v dal¹ích implementovaných funkcích.
+** Pomocnï¿½ funkce, kterï¿½ vracï¿½ index nï¿½sledujï¿½cï¿½ho prvku v poli.
+** Funkci implementujte jako jedinï¿½ prikaz vyuï¿½ï¿½vajï¿½cï¿½ operace '%'.
+** Funkci nextIndex budete vyuï¿½ï¿½vat v dalï¿½ï¿½ch implementovanï¿½ch funkcï¿½ch.
 */
-
-	  solved = FALSE;                  /* V pøípadì øe¹ení, sma¾te tento øádek! */
-
+	return (index+1 % QUEUE_SIZE);
 }
 
 int queueEmpty (const tQueue* q) {
 /*
-** Vrací nenulovou hodnotu, pokud je frona prázdná, jinak vrací hodnotu 0. 
-** Funkci je vhodné implementovat jedním pøíkazem return.
+** Vracï¿½ nenulovou hodnotu, pokud je frona prï¿½zdnï¿½, jinak vracï¿½ hodnotu 0. 
+** Funkci je vhodnï¿½ implementovat jednï¿½m pï¿½ï¿½kazem return.
 */
 
-	  solved = FALSE;                  /* V pøípadì øe¹ení, sma¾te tento øádek! */
+	return (q->b_index == q->f_index) ? 1 : 0;
 }
 
 int queueFull (const tQueue* q) {
 /*
-** Vrací nenulovou hodnotu, je-li fronta plná, jinak vrací hodnotu 0. 
-** Funkci je vhodné implementovat jedním pøíkazem return
-** s vyu¾itím pomocné funkce nextIndex.
+** Vracï¿½ nenulovou hodnotu, je-li fronta plnï¿½, jinak vracï¿½ hodnotu 0. 
+** Funkci je vhodnï¿½ implementovat jednï¿½m pï¿½ï¿½kazem return
+** s vyuï¿½itï¿½m pomocnï¿½ funkce nextIndex.
 */
-
-	  solved = FALSE;                  /* V pøípadì øe¹ení, sma¾te tento øádek! */
+	return (nextIndex(q->b_index) == QUEUE_SIZE+1) ? 1 : 0 ;
 }
 
 void queueFront (const tQueue* q, char* c) {
 /*
-** Prostøednictvím parametru c vrátí znak ze zaèátku fronty q.
-** Pokud je fronta prázdná, o¹etøete to voláním funkce queueError(QERR_FRONT).
-** Volání této funkce pøi prázdné frontì je v¾dy nutné pova¾ovat za nekorektní.
-** Bývá to toti¾ dùsledek ¹patného návrhu algoritmu, ve kterém je fronta
-** pou¾ita. O takové situaci se proto musí programátor-vývojáø dozvìdìt.
-** V opaèném pøípadì je ladìní programù obtí¾nìj¹í!
+** Prostï¿½ednictvï¿½m parametru c vrï¿½tï¿½ znak ze zaï¿½ï¿½tku fronty q.
+** Pokud je fronta prï¿½zdnï¿½, oï¿½etï¿½ete to volï¿½nï¿½m funkce queueError(QERR_FRONT).
+** Volï¿½nï¿½ tï¿½to funkce pï¿½i prï¿½zdnï¿½ frontï¿½ je vï¿½dy nutnï¿½ povaï¿½ovat za nekorektnï¿½.
+** Bï¿½vï¿½ to totiï¿½ dï¿½sledek ï¿½patnï¿½ho nï¿½vrhu algoritmu, ve kterï¿½m je fronta
+** pouï¿½ita. O takovï¿½ situaci se proto musï¿½ programï¿½tor-vï¿½vojï¿½ï¿½ dozvï¿½dï¿½t.
+** V opaï¿½nï¿½m pï¿½ï¿½padï¿½ je ladï¿½nï¿½ programï¿½ obtï¿½ï¿½nï¿½jï¿½ï¿½!
 **
-** Pøi implementaci vyu¾ijte døíve definované funkce queueEmpty.
+** Pï¿½i implementaci vyuï¿½ijte dï¿½ï¿½ve definovanï¿½ funkce queueEmpty.
 */
-
-	  solved = FALSE;                  /* V pøípadì øe¹ení, sma¾te tento øádek! */
+	if (queueEmpty(q)){
+		queueError(QERR_FRONT);
+	}else{
+		*c = q->arr[q->f_index];
+	}
+	
 }
 
 void queueRemove (tQueue* q) {
 /*
-** Odstraní znak ze zaèátku fronty q. Pokud je fronta prázdná, o¹etøete
-** vzniklou chybu voláním funkce queueError(QERR_REMOVE).
-** Hodnotu na uvolnìné pozici ve frontì nijak neo¹etøujte (nepøepisujte).
-** Pøi implementaci vyu¾ijte døíve definované funkce queueEmpty a nextIndex.
+** Odstranï¿½ znak ze zaï¿½ï¿½tku fronty q. Pokud je fronta prï¿½zdnï¿½, oï¿½etï¿½ete
+** vzniklou chybu volï¿½nï¿½m funkce queueError(QERR_REMOVE).
+** Hodnotu na uvolnï¿½nï¿½ pozici ve frontï¿½ nijak neoï¿½etï¿½ujte (nepï¿½episujte).
+** Pï¿½i implementaci vyuï¿½ijte dï¿½ï¿½ve definovanï¿½ funkce queueEmpty a nextIndex.
 */
+	if(queueEmpty(q)){
+		queueError(QERR_REMOVE);
+	}else{
+	q->f_index = nextIndex(q->f_index);
 
-	  solved = FALSE;                  /* V pøípadì øe¹ení, sma¾te tento øádek! */
+	}
 }
 
 void queueGet (tQueue* q, char* c) {
 /*
-** Odstraní znak ze zaèátku fronty a vrátí ho prostøednictvím parametru c.
-** Pokud je fronta prázdná, o¹etøete to voláním funkce queueError(QERR_GET).
+** Odstranï¿½ znak ze zaï¿½ï¿½tku fronty a vrï¿½tï¿½ ho prostï¿½ednictvï¿½m parametru c.
+** Pokud je fronta prï¿½zdnï¿½, oï¿½etï¿½ete to volï¿½nï¿½m funkce queueError(QERR_GET).
 **
-** Pøi implementaci vyu¾ijte døíve definovaných funkcí queueEmpty,
+** Pï¿½i implementaci vyuï¿½ijte dï¿½ï¿½ve definovanï¿½ch funkcï¿½ queueEmpty,
 ** queueFront a queueRemove.
 */
+	if(queueEmpty(q)){
+		queueError(QERR_GET);
+	}else{
+		queueFront(q,c);
+		queueRemove(q);
+	}
 
-	  solved = FALSE;                  /* V pøípadì øe¹ení, sma¾te tento øádek! */
 }
 
 void queueUp (tQueue* q, char c) {
 /*
-** Vlo¾í znak c do fronty. Pokud je fronta plná, o¹etøete chybu voláním
-** funkce queueError(QERR_UP). Vkládání do plné fronty se pova¾uje za
-** nekorektní operaci. Situace by mohla být øe¹ena i tak, ¾e by operace
-** neprovádìla nic, ale v pøípadì pou¾ití takto definované abstrakce by se
-** obtí¾nì odhalovaly chyby v algoritmech, které by abstrakci vyu¾ívaly.
+** Vloï¿½ï¿½ znak c do fronty. Pokud je fronta plnï¿½, oï¿½etï¿½ete chybu volï¿½nï¿½m
+** funkce queueError(QERR_UP). Vklï¿½dï¿½nï¿½ do plnï¿½ fronty se povaï¿½uje za
+** nekorektnï¿½ operaci. Situace by mohla bï¿½t ï¿½eï¿½ena i tak, ï¿½e by operace
+** neprovï¿½dï¿½la nic, ale v pï¿½ï¿½padï¿½ pouï¿½itï¿½ takto definovanï¿½ abstrakce by se
+** obtï¿½ï¿½nï¿½ odhalovaly chyby v algoritmech, kterï¿½ by abstrakci vyuï¿½ï¿½valy.
 **
-** Pøi implementaci vyu¾ijte døíve definovaných funkcí queueFull a nextIndex.
+** Pï¿½i implementaci vyuï¿½ijte dï¿½ï¿½ve definovanï¿½ch funkcï¿½ queueFull a nextIndex.
 */
-
-	  solved = FALSE;                  /* V pøípadì øe¹ení, sma¾te tento øádek! */
+	if(queueFull(q)){
+		queueError(QERR_UP);
+	}else{
+		printf("b_index>>>%d\n",q->b_index);
+		q->arr[q->b_index] = c;
+		q->b_index = nextIndex(q->b_index);
+	}
 }
-/* Konec pøíkladu c203.c */
+
+/* Konec pï¿½ï¿½kladu c203.c */
