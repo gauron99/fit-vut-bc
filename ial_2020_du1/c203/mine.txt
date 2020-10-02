@@ -34,11 +34,6 @@ E
 
 [TEST04] We put 'Ciao!' into the queue using queueUp.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-b_index>>>0
-b_index>>>1
-b_index>>>2
-b_index>>>3
-b_index>>>4
 
 Ciao!****
 ^    ^   
@@ -80,9 +75,6 @@ Ciao!****
 
 [TEST09] We put 1, 2, and 3 to the queue using QueueUp and check the result.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-b_index>>>5
-b_index>>>6
-b_index>>>7
 Function queueFront returned value '1'.
 Function queueEmpty returned 'FALSE'.
 Fucntion queueFull returned 'FALSE'.
@@ -106,53 +98,44 @@ Ciao!123*
 
 [TEST11] Additional queueUp should move to b_index possition 0.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-b_index>>>8
 Function queueFront returned value '4'.
 Function queueEmpty returned 'FALSE'.
-Fucntion queueFull returned 'TRUE'.
+Fucntion queueFull returned 'FALSE'.
 
 Ciao!1234
-        ^
-        F
+^       ^
+B       F
 
 [TEST12] After queueGet, the indexes should be the same as after queueInit.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Function queueGet returned value '4'.
 Queue error: FRONT
 Function queueEmpty returned 'TRUE'.
-Fucntion queueFull returned 'TRUE'.
+Fucntion queueFull returned 'FALSE'.
 
 Ciao!1234
-         
-         
+^        
+E        
 
 [TEST13] We use queueUp eight times to fill up the queue.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Queue error: UP
-Queue error: UP
-Queue error: UP
-Queue error: UP
-Queue error: UP
-Queue error: UP
-Queue error: UP
-Queue error: UP
-Queue error: FRONT
-Function queueEmpty returned 'TRUE'.
+Function queueFront returned value 'A'.
+Function queueEmpty returned 'FALSE'.
 Fucntion queueFull returned 'TRUE'.
 
-Ciao!1234
-         
-         
+ABCDEFGH4
+^       ^
+F       B
 
 [TEST14] Addition queueUp() should cause hadled error.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Queue error: UP
-Queue error: FRONT
-Function queueEmpty returned 'TRUE'.
+Function queueFront returned value 'A'.
+Function queueEmpty returned 'FALSE'.
 Fucntion queueFull returned 'TRUE'.
 
-Ciao!1234
-         
-         
+ABCDEFGH4
+^       ^
+F       B
 
 ******* The end of Basic Tests (c203-test.c) *******

@@ -1,13 +1,13 @@
 
 /* ******************************* c203.h *********************************** */
-/*  Pøedmìt: Algoritmy (IAL) - FIT VUT v Brnì                                 */
-/*  Hlavièkový soubor pro c203.c (Fronta znakù v poli)                        */
-/*  Úkol: c203 - Fronta znakù v poli                                          */
-/*  Vytvoøil: Václav Topinka, záøí 2005                                       */
-/*  Úpravy: Kamil Jeøábek, záøí 2020                                          */
+/*  Pï¿½edmï¿½t: Algoritmy (IAL) - FIT VUT v Brnï¿½                                 */
+/*  Hlaviï¿½kovï¿½ soubor pro c203.c (Fronta znakï¿½ v poli)                        */
+/*  ï¿½kol: c203 - Fronta znakï¿½ v poli                                          */
+/*  Vytvoï¿½il: Vï¿½clav Topinka, zï¿½ï¿½ï¿½ 2005                                       */
+/*  ï¿½pravy: Kamil Jeï¿½ï¿½bek, zï¿½ï¿½ï¿½ 2020                                          */
 /* ************************************************************************** */
 
-/* TENTO SOUBOR, PROSÍME, NEUPRAVUJTE! */
+/* TENTO SOUBOR, PROSï¿½ME, NEUPRAVUJTE! */
 
 #ifndef _QUEUE_H_
 #define _QUEUE_H_
@@ -18,33 +18,33 @@
 #define MAX_QUEUE 50
 extern int QUEUE_SIZE; 
 /* 
- * Hodnota MAX_QUEUE udává skuteènou velikost statického pole pro ulo¾ení
- * hodnot fronty. Pøi implementaci operací nad ADT fronta v¹ak pøedpokládejte,
- * ¾e velikost tohoto pole je pouze QUEUE_SIZE. Umo¾ní nám to jednodu¹e 
- * mìnit velikost fronty v prùbìhu testování. Pøi implementaci ADT fronta byste
- * tedy hodnotu MAX_QUEUE nemìli vùbec pou¾ít. Pamatujte, ¾e do fronty se vejde
- * maximálnì (QUEUE_SIZE - 1) prvkù. Jedna pozice ve frontì bude v¾dy nevyu¾itá,
- * aby bylo mo¾né odli¹it prázdnou frontu od plné. 
+ * Hodnota MAX_QUEUE udï¿½vï¿½ skuteï¿½nou velikost statickï¿½ho pole pro uloï¿½enï¿½
+ * hodnot fronty. Pï¿½i implementaci operacï¿½ nad ADT fronta vï¿½ak pï¿½edpoklï¿½dejte,
+ * ï¿½e velikost tohoto pole je pouze QUEUE_SIZE. Umoï¿½nï¿½ nï¿½m to jednoduï¿½e 
+ * mï¿½nit velikost fronty v prï¿½bï¿½hu testovï¿½nï¿½. Pï¿½i implementaci ADT fronta byste
+ * tedy hodnotu MAX_QUEUE nemï¿½li vï¿½bec pouï¿½ï¿½t. Pamatujte, ï¿½e do fronty se vejde
+ * maximï¿½lnï¿½ (QUEUE_SIZE - 1) prvkï¿½. Jedna pozice ve frontï¿½ bude vï¿½dy nevyuï¿½itï¿½,
+ * aby bylo moï¿½nï¿½ odliï¿½it prï¿½zdnou frontu od plnï¿½. 
  */
 
 extern int err_flag;                   /* Indikuje, zda operace volala chybu. */
-extern int solved;                      /* Indikuje, zda byla operace øe¹ena. */
+extern int solved;                      /* Indikuje, zda byla operace ï¿½eï¿½ena. */
 
-                                        /* Chybové kódy pro funkci queueError */
-#define MAX_QERR    5                                   /* poèet mo¾ných chyb */
-#define QERR_UP     1                                   /* chyba pøi stackTop */
-#define QERR_FRONT  2                                   /* chyba pøi stackPop */
-#define QERR_REMOVE 3                                  /* chyba pøi stackPush */
-#define QERR_GET    4                                  /* chyba pøi stackPush */
-#define QERR_INIT   5                                     /* chyba pøi malloc */
+                                        /* Chybovï¿½ kï¿½dy pro funkci queueError */
+#define MAX_QERR    5                                   /* poï¿½et moï¿½nï¿½ch chyb */
+#define QERR_UP     1                                   /* chyba pï¿½i stackTop */
+#define QERR_FRONT  2                                   /* chyba pï¿½i stackPop */
+#define QERR_REMOVE 3                                  /* chyba pï¿½i stackPush */
+#define QERR_GET    4                                  /* chyba pï¿½i stackPush */
+#define QERR_INIT   5                                     /* chyba pï¿½i malloc */
 
-                               /* ADT fronta implementovaný ve statickém poli */
+                               /* ADT fronta implementovanï¿½ ve statickï¿½m poli */
 typedef struct {
-    char arr[MAX_QUEUE];                           /* pole pro ulo¾ení hodnot */
-    int f_index;                                       /* index prvního prvku */
-    int b_index;                                  /* index první volné pozice */
+    char arr[MAX_QUEUE];                           /* pole pro uloï¿½enï¿½ hodnot */
+    int f_index;                                       /* index prvnï¿½ho prvku */
+    int b_index;                                  /* index prvnï¿½ volnï¿½ pozice */
 } tQueue;
-                                      /* Hlavièky funkcí pro práci s frontou. */
+                                      /* Hlaviï¿½ky funkcï¿½ pro prï¿½ci s frontou. */
 void queueError (int error_code);
 void queueInit (tQueue* q);
 int queueEmpty (const tQueue* q);
@@ -56,4 +56,4 @@ void queueUp (tQueue* q, char c);
 
 #endif
 
-/* Konec hlavièkového souboru c203.h */
+/* Konec hlaviï¿½kovï¿½ho souboru c203.h */
