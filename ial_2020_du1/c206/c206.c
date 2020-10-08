@@ -89,20 +89,13 @@ void DLDisposeList (tDLList *L) {
 **/
 
     if(L->First){
-        tDLElemPtr temp;
-        while (L->First != L->Last){
-            temp = L->First;
-            L->First = L->First->rptr;
-
-            temp->lptr = NULL;
-            temp->rptr = NULL;
-
-            L->First->lptr = NULL;
-
-            free(temp);
-        }
+        tDLElemPtr temp,next;
         temp = L->First;
-        free(temp);
+        while (temp != NULL){
+            next = temp->rptr;            
+            free(temp);
+            temp = next;
+        }
 
         L->First = NULL;
         L->Last = NULL;
@@ -116,28 +109,26 @@ void DLInsertFirst (tDLList *L, int val) {
 ** V případě, že není dostatek paměti pro nový prvek při operaci malloc,
 ** volá funkci DLError().
 **/
-    tDLElemPtr new = malloc(sizeof(tDLElemPtr));
+    tDLElemPtr new,first;
+    new = malloc(sizeof(struct tDLElem));
 	if (!new){
         DLError();
         return;
     }
+    first = L->First;
 
     new->data = val;
     new->lptr = NULL;
+    new->rptr = first; //if its the first node, NULL ~ otherwise its L->First
 
     //if it is the first node
-    if(!L->First){
+    if(!first){
         L->First = new;
         L->Last = new;
 
-        L->Last->rptr = NULL;
-        L->First->lptr = NULL;
-        
-        new->rptr = NULL;
     }
-    else{
-        new->rptr = L->First;
-        L->First->lptr = new;
+    else{//not the first node in the list
+        first->lptr = new;
         L->First = new;
     }
 }
@@ -148,28 +139,26 @@ void DLInsertLast(tDLList *L, int val) {
 ** V případě, že není dostatek paměti pro nový prvek při operaci malloc,
 ** volá funkci DLError().
 **/ 	
-	tDLElemPtr new = malloc(sizeof(tDLElemPtr));
+	tDLElemPtr new,last;
+    new = malloc(sizeof(struct tDLElem));
 	if (!new){
         DLError();
         return;
     }
 
+    last = L->Last;
+
     new->data = val;
     new->rptr = NULL;
+    new->lptr = last;
 
     //if it is the first node
-    if(!L->First){
+    if(!L->First && !L->Last){
         L->First = new;
         L->Last = new;
-
-        L->Last->rptr = NULL;
-        L->First->lptr = NULL;
-
-        new->lptr = NULL;
     }
     else{
-        new->lptr = L->Last;
-        L->Last->rptr = new;
+        last->rptr = new;
         L->Last = new;
     }
 }
@@ -344,7 +333,7 @@ void DLPostInsert (tDLList *L, int val) {
 **/
     //list must be active, otherwise do nothing
     if(L->Act){
-        tDLElemPtr new = malloc(sizeof(tDLElemPtr));
+        tDLElemPtr new = malloc(sizeof(struct tDLElem));
         if (!new){
             DLError();
             return;
@@ -388,7 +377,7 @@ void DLPreInsert (tDLList *L, int val) {
 **/
     //list must be active, otherwise do nothing
     if(L->Act){
-        tDLElemPtr new = malloc(sizeof(tDLElemPtr));
+        tDLElemPtr new = malloc(sizeof(struct tDLElem));
         if (!new){
             DLError();
             return;
