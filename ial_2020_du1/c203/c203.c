@@ -93,6 +93,7 @@ int nextIndex (int index) {
 ** Funkci implementujte jako jedin� prikaz vyu��vaj�c� operace '%'.
 ** Funkci nextIndex budete vyu��vat v dal��ch implementovan�ch funkc�ch.
 */
+	//return next index, so just add 1 to the current one
 	return ((index+1) % QUEUE_SIZE);
 }
 
@@ -112,12 +113,12 @@ int queueFull (const tQueue* q) {
 ** s vyu�it�m pomocn� funkce nextIndex.
 */
 
-	//this is done without using the nextIndex func (like a circular queue)
-	//( (end == QUEUE_SIZE-1 && front == 0) || (end == front-1 )).
-	return ((q->b_index == QUEUE_SIZE-1 && q->f_index == 0) || (q->b_index == q->f_index-1));
+	//this is without using the nextIndex func (like a standard circular queue)
+	//~~~ ( (end == QUEUE_SIZE-1 && front == 0) || (end == front-1 )). ~~~//
+	// return ((q->b_index == QUEUE_SIZE-1 && q->f_index == 0) || (q->b_index == q->f_index-1));
 
 	//using the nextIndex function
-	// return ((nextIndex(q->b_index) == (QUEUE_SIZE)) ? 1 : 0);
+	return ((nextIndex(q->b_index) == (q->f_index)) ? 1 : 0);
 }
 
 void queueFront (const tQueue* q, char* c) {
@@ -184,10 +185,8 @@ void queueUp (tQueue* q, char c) {
 	if(queueFull(q)){
 		queueError(QERR_UP);
 	}else{
-		// printf("b_index_bef>>>%d\n",q->b_index); //debug
 		q->arr[q->b_index] = c;
 		q->b_index = nextIndex(q->b_index);
-		// printf("b_index_aft>>>%d\n",q->b_index); //debug
 
 	}
 }

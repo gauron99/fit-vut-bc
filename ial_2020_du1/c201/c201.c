@@ -66,7 +66,7 @@ void InitList (tList *L) {
 ** seznamem, a proto tuto možnost neošetřujte. Vždy předpokládejte,
 ** že neinicializované proměnné mají nedefinovanou hodnotu.
 **/
-	L = malloc(sizeof(L));
+
     L->First = NULL;
     L->Act = NULL;
 }
@@ -78,15 +78,19 @@ void DisposeList (tList *L) {
 ** uvolněna voláním operace free.
 ***/
 	
-    tElemPtr todel = L->First;
-    while(L->First != NULL){
-        todel = L->First;
-        L->First = L->First->ptr; // move first-pointer to the next to in order to
-                                  // delete it
-        free(todel);
+    if(L->First){
+        tElemPtr todel, next;
+        todel  = L->First;
+        while(todel != NULL){
+            // todel = L->First;
+            next = todel->ptr; // move first-pointer to the next to in order to
+                                    // delete it
+            free(todel);
+            todel = next;
+        }
+        L->First = NULL;
+        L->Act = NULL;
     }
-    L->First = NULL;
-    L->Act = NULL;
 }
 
 void InsertFirst (tList *L, int val) {
@@ -96,7 +100,7 @@ void InsertFirst (tList *L, int val) {
 ** volá funkci Error().
 **/
     tElemPtr ptr;
-    ptr = malloc(sizeof(tElemPtr));
+    ptr = malloc(sizeof(struct tElem));
     if(ptr == NULL){
         Error();
     }
@@ -173,7 +177,7 @@ void PostInsert (tList *L, int val) {
 ** zavolá funkci Error().
 **/
 	if(L->First && L->Act){
-        tElemPtr new = malloc(sizeof(tElemPtr));
+        tElemPtr new = malloc(sizeof(struct tElem));
         if (!new){Error();}
         new->data = val;
         new->ptr = L->Act->ptr;
