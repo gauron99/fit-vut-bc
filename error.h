@@ -14,6 +14,15 @@
 #ifndef ERROR_H 
 #define ERROR_H
 
+
+/* ------------------ NO ERRORS ------------------*/
+/**
+ *  error code: 0
+ *  description: when everything goes how it should
+ */
+
+#define SUCCESS 0
+
 /* ------------------ LEXICAL ERRORS -------------------*/
 
 /**
