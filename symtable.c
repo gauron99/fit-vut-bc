@@ -1,11 +1,9 @@
-/*
-    @filename   symtable.c
-*
+/**
+        ~~ IFJ-20 ~~
+    @file   symtable.c
     @brief  symbol table with hash fuction for faster data storage (using linked lists)  
-*
-    @date   21/10/20
-* 
-        IFJ-20
+    @date   30/10/20
+    @author David Fridrich
 */
 
 #include <stdio.h>
@@ -28,7 +26,7 @@ hashFunc(char *key){
     return (final % SYMTABLE_SIZE);
 }
 
-//create the symtable
+
 int 
 symtableCreate(symtable *tab){
     *tab = calloc(SYMTABLE_SIZE,sizeof(***tab));
@@ -40,50 +38,48 @@ symtableCreate(symtable *tab){
     }
 
 }
-//delete everything ~ whole symtable
+
+
 void 
 symtableDestroy(symtable *tab){
 
-    symtable_item *del,*temp;
-    for (int i = 0; i < SYMTABLE_SIZE; ++i)
-    {
+    symtableItem *del,*temp;
+    for (int i = 0; i < SYMTABLE_SIZE; ++i){
         temp = (*tab)[i];
         while(temp){
             del = temp;
             temp = temp->next;
             free(del);
         }
+        (*tab)[i] = NULL;
     }
     free(*tab);
+    *tab= NULL;
 }
 
 
-/*
- * add item(node) to the symtable
- * if the key is already in table, do nothing, return SUCCESS 
- * if key is not in the table, add it, return SUCCESS
- * 
-*/
 int 
-symtableItemInsert(symtable *tab, char *key, int data){
+symtableItemInsert(symtable *tab, char *key,symtableItem **inserted, int data){
     int hash = hashFunc(key);
 
-    symtable_item *temp;
-    temp = (*tab)[hash];
-
+    symtableItem *first,*temp;
+    first = (*tab)[hash];
+    temp = first;
     //check if key is already in the table
     while(temp){
         //key is already in table, no need to do anything
         if(!strcmp(temp->key,key)){
+            //return pointer to the item anyways? //TODO
+            *inserted = temp;
             return SUCCESS;
         }
         temp=temp->next;
     }
 
-    symtable_item *new;
-    new = malloc(sizeof(symtable_item));
+    symtableItem *new;
+    new = malloc(sizeof(symtableItem));
     if(!new){
-        fprintf(stderr,">> Malloc in symtable_item_insert() failed\n");
+        fprintf(stderr,">> Malloc in symtableItemInsert() failed\n");
         return INTERNAL_ERROR;
     }
     
@@ -94,49 +90,44 @@ symtableItemInsert(symtable *tab, char *key, int data){
 
     //insert item to the beggining of the list
     //if its not first insterted item in the list
-    if(temp){
-        new->next = temp;
+    if(first){
+        new->next = first;
     }
 
     (*tab)[hash] = new;
-
+    //return pointer to newly created item by argument 'inserted'
+    *inserted = new;
     return SUCCESS;
 }
 
 
-/*
- * delete item by given key
- * if item was found, delete it
- * if not, do nothing
- */
 void 
 symtableItemDelete(symtable *tab, char *key){
     int hash = hashFunc(key);
-    symtable_item *todel,*next = NULL,*prev = NULL;
+    symtableItem *todel,*next = NULL,*prev = NULL;
     todel = (*tab)[hash];
 
     while(todel){
         next = todel->next;
+
         if(!strcmp(todel->key,key)){
             free(todel);
 
             //if deleted node is the first one
             if(!prev){
                 (*tab)[hash] = next;
-            } else {// else its not
-                prev->next = next;
+                return;
             }
-            return;
+            prev->next = next;
+            
         }
         prev = todel;
         todel = next;
     }
 }
 
-
-//get an item(node) from the symtable
 int 
-symtableItemGet(symtable *tab, symtable_item **found, char *key){
+symtableItemGet(symtable *tab, symtableItem **found, char *key){
 
     int hash = hashFunc(key);
     *found = (*tab)[hash];
@@ -150,30 +141,94 @@ symtableItemGet(symtable *tab, symtable_item **found, char *key){
     return SUCCESS;
 }
 
-/*
+
 void
 printSymtable(symtable *tab){
-    
+
+    int count = 0;
+    printf("~~~ Table ~~~\n");
+    if (*tab){
+        symtableItem *temp;
+        for (int i = 0; i < SYMTABLE_SIZE; ++i){
+            temp = (*tab)[i];
+            printf("%d >> [ ",i);
+
+            while(temp){
+                count++;
+                if(temp->next){
+                    printf("%s,",temp->key);
+                } else {
+                    printf("%s",temp->key);
+                    
+                }
+                temp = temp->next;
+            }
+            printf(" ]\n");
+        }
+        printf("~~~ # of items |%d| ~~~ ~~~\n\n",count);
+    }    
 }
-*/
+
 
 
 int 
 main(void){
 
+    //create a symtable
     symtable tab;
-    int retcode = symtableCreate(&tab);
+    
+    printf("~!~ Create symtable\n\n");
+    //catch the return code (if calloc returned error)
+    if(symtableCreate(&tab) != SUCCESS){
 
-    symtableItemInsert(&tab,"bam",10);
-    symtable_item *item;
-    symtableItemGet(&tab,&item,"bam");
-    printf("should be 10 ->> |%d|\n",item->data);
-
-    if(retcode == 0){
-        printf("all good\n");
-        return 0;
-    } else {
-        printf("not good\n");
-        return retcode;
+        fprintf(stderr,"chybka nebo co pri vytvareni tabulky\n");
+        return 1;
     }
+    
+    printSymtable(&tab);
+
+    symtableItem *item,*temp;
+
+    printf("~!~ Insert one item\n\n");
+    //item insertion
+    symtableItemInsert(&tab,"bam",&item,10);
+
+    printSymtable(&tab);
+
+    printf("~!~ Insert items\n\n");
+    // insert some items
+    symtableItemInsert(&tab,"louda",&temp,69);
+    symtableItemInsert(&tab,"hustoles",&temp,49);
+    symtableItemInsert(&tab,"bramburka",&temp,49);
+    symtableItemInsert(&tab,"bramburek",&temp,13);
+    symtableItemInsert(&tab,"tri",&temp,565);
+    symtableItemInsert(&tab,"osm",&temp,654);
+    symtableItemInsert(&tab,"dva",&temp,96);
+    symtableItemInsert(&tab,"faker",&temp,99);
+    symtableItemInsert(&tab,"maker",&temp,444);
+    symtableItemInsert(&tab,"baker",&temp,97);
+    symtableItemInsert(&tab,"dejmivic",&temp,98);
+    symtableItemInsert(&tab,"notakcoo",&temp,455);
+    
+    printSymtable(&tab);
+
+
+    symtableItem *gimme;
+    //get some
+    printf("~!~ Get louda's value\n");
+    symtableItemGet(&tab,&gimme,"louda");
+    printf(" >>> node's key -- %s; his value -- %d\n\n",gimme->key,gimme->data);
+    
+    printf ("\n~!~ Delete bramburek,faker,dejmivic,baker~~~ \n");
+    symtableItemDelete(&tab,"bramburek");
+    symtableItemDelete(&tab,"faker");
+    symtableItemDelete(&tab,"dejmivic");
+    symtableItemDelete(&tab,"baker");
+    printSymtable(&tab);
+
+    printf ("\n~!~ Destroy all~~~ \n");
+    symtableDestroy(&tab);
+    printSymtable(&tab);
+
+    return 0;
 }
