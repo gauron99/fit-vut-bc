@@ -14,15 +14,11 @@ int rdBody(){
 
 int main(){
 
-    CHECK(rdBody());
-
-    FILE *input;
-    input = stdin; //source code
     int lexicalResult = 0; //Scanner return code
     Token token;
 
     while(token.type != EOF_) {
-        lexicalResult = getToken(input, &token);
+        lexicalResult = getToken(&token);
         //printf(" \n Recognized token: %d, with value: %s with error code: %d \n", token.type, token.value.stringValue, result); 
         if(lexicalResult == 1) {
             return LEXICAL_ERROR;
@@ -34,6 +30,6 @@ int main(){
         CHECK(Get_Token(wrap.tkn))
     }*/
 
-    printf("pohoda\n");
+    printf("pohoda jahoda\n");
     return 0;
 }

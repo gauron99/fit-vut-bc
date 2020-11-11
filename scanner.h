@@ -114,8 +114,8 @@ typedef enum { /*state num, read lexeme*/
     ST_SLASH,           /*C_0 , / */
     ST_SLASH_EQ,        /*O_16 , /= */
     ST_SINGLE_L_COMMENT,/*C_3, // */
-    ST_MULTI_L_COMMENT, /*C_1, /* */
-    ST_MULTI_LC_PRE_END,/*C_3, /*..* */
+    ST_MULTI_L_COMMENT, /*C_1, /~* */
+    ST_MULTI_LC_PRE_END,/*C_3, /~*..* */
     ST_STRING_START,    /*S_1, " */
     ST_STRING_END,      /*S_2, "" */
     ST_STRING_ESC_START,/*S_3, "../ */
@@ -145,7 +145,7 @@ typedef enum { /*state num, read lexeme*/
  * 
  */
 /* vracia navratovy kod */
-int getToken(FILE *input, Token *token);
+int getToken(Token *token);
 
 
 #endif // !SCANNER_H
