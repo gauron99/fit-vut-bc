@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ifj20.h"
+#include "error.h"
+#include "scanner.h"
 
 int rdBody(){
     return 0;
@@ -12,7 +14,20 @@ int rdBody(){
 
 int main(){
 
-    CHECK(rdBody())
+    CHECK(rdBody());
+
+    FILE *input;
+    input = stdin; //source code
+    int lexicalResult = 0; //Scanner return code
+    Token token;
+
+    while(token.type != EOF_) {
+        lexicalResult = getToken(input, &token);
+        //printf(" \n Recognized token: %d, with value: %s with error code: %d \n", token.type, token.value.stringValue, result); 
+        if(lexicalResult == 1) {
+            return LEXICAL_ERROR;
+        }
+    }
 
     /*while (token->type != T_EOF)
     {
