@@ -8,9 +8,6 @@
 #include "error.h"
 #include "scanner.h"
 
-int rdBody(){
-    return 0;
-}
 
 int main(){
 
