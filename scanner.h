@@ -17,7 +17,7 @@
  * 
  */
 typedef enum { 
-    KEYWORD,                // {if, else, ..}
+    KEYWORD,                // {else, float64, for, func, if, int, package, return, string, ?bool, true, false}
     IDENTIFIER,             // variable,..
 
     INTEGER,                // 7
@@ -139,6 +139,23 @@ typedef enum { /*state num, read lexeme*/
     ST_HEXA_SEPARATOR           /*L_14, 0xA_ */
 
 } stateType;
+
+
+char *alphaNumToken;
+
+char *keyWords[] = {
+                    "else",
+                    "float64",
+                    "for",
+                    "func",
+                    "if",
+                    "int",
+                    "package",
+                    "return",
+                    "string"
+                  };
+
+int numOfKeywords = 9;
 
 /**
  * 

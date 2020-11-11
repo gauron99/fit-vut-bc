@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "scanner.h"
 #include "error.h"
@@ -107,6 +108,10 @@ int getToken(Token *token) {
             }
             break;   
 
+            if(c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+                alphaNumToken[0] = c;
+                currentState = ST_IDENTIF_KEYWORD;
+            } 
         /*--------------------------ADDITION---------------+-----------*/
         case ST_PLUS:
             token->type = PLUS;
@@ -238,6 +243,28 @@ int getToken(Token *token) {
             token->type = DEFINITION;
             token->value.stringValue = ":=";
             return SUCCESS;  
+
+        /*----------------------IDENTIFIER/KEYWORD---------------------*/
+        case ST_IDENTIF_KEYWORD:
+        if((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= 0 && c <= 9) || c == '_') {
+            strncat(alphaNumToken, &c, 1);
+            currentState = ST_DEFINITION;
+        } else {
+            ungetc(c, input);
+
+            for(int i = 0; i < numOfKeywords; i++) {
+                if(!strcmp(keyWords[i], alphaNumToken)) {
+                    token->type = KEYWORD;
+                    strcpy(token->value.stringValue, alphaNumToken);
+                } else {
+                    token->type = IDENTIFIER;
+                    strcpy(token->value.stringValue, alphaNumToken);
+                }
+            } 
+            alphaNumToken[0] = '\0';
+            return SUCCESS;
+        }
+             
 
         default:
             break;
