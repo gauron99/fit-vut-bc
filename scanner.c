@@ -16,13 +16,11 @@
 #define EOL '\n'
 
 
-int getToken(FILE *input, Token *token) {
+int getToken(Token *token) {
    
+    FILE *input;
+    input = stdin; //source code
     int returnVal = 0;
-
-    // while(token.type != EOF_) {
-    //     returnVal = getNextToken(&token);
-    // } 
 
     stateType currentState = INIT_ST;
 

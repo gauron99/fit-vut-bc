@@ -5,7 +5,7 @@
     @date   30/10/20
     @author David Fridrich
 */
-
+//Yoyooo louda ma boi
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
