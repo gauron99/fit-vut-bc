@@ -1,3 +1,6 @@
+#ifndef PREC
+#define PREC
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -129,3 +132,5 @@ bool sElemGetData(Token *token, sElemType *data);
 Token * get_token(Token t_stream[15], int pos);
 
 bool analyzePrecedence();
+
+#endif
