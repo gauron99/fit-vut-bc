@@ -232,6 +232,8 @@ int getToken(Token *token) {
                 currentState = INIT_ST;
             } else if (c == EOF) {
                 return LEXICAL_ERROR;
+            } else if (c == '*') {
+                currentState = ST_MULTI_LC_PRE_END;
             } else {
                 currentState = ST_MULTI_L_COMMENT;
             }
@@ -522,14 +524,25 @@ int getToken(Token *token) {
             break;
 
         case ST_NUM_EXPONENT:
-            if(isdigit(c) || c == '+' || c == '-') {
+            if(isdigit(c)) {
                 appendChar(content, c);
                 currentState = ST_NUM_EXPONENT_POWER;
+            } else if (c == '+' || c == '-') {
+                appendChar(content, c);
+                currentState = ST_NUM_EXPONENT_MUST;
             } else {
                 return LEXICAL_ERROR;
             }
 
             break;
+
+        case ST_NUM_EXPONENT_MUST:
+            if(isdigit(c)) {
+                appendChar(content, c);
+                currentState = ST_NUM_EXPONENT_POWER;
+            } else {
+                return LEXICAL_ERROR;
+            }
 
         case ST_NUM_EXPONENT_POWER:
             if(isdigit(c)) {

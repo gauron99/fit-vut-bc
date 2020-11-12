@@ -130,6 +130,7 @@ typedef enum { /*state num, read lexeme*/
     ST_NUM_DECIMAL_POINT,       /*L_2, 1. */
     ST_NUM_FRACTIONAL_PART,     /*L_3, 1.8 */
     ST_NUM_EXPONENT,            /*L_4, 1.3E,e */
+    ST_NUM_EXPONENT_MUST,
     ST_NUM_EXPONENT_POWER,      /*L_5, 1.3e1 */
     ST_IDENTIF_KEYWORD,         /*I_0, _a.. */
     ST_BINARY_BASE,             /*L_6, 0b */
