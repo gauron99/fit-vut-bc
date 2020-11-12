@@ -126,7 +126,6 @@ int compareRules(int *rule);
 
 bool sElemGetData(Token *token, sElemType *data);
 
-Token * get_token(Token **t_stream, int pos);
+Token * get_token(Token t_stream[15], int pos);
 
-bool analyze_precedence(Token **t_stream);
-
+bool analyzePrecedence(Token t_stream[15]);

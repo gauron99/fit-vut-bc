@@ -262,10 +262,6 @@ bool sCopyAll(s_t *src, s_t *dest, sElemType *tmp) {
     return true;
 }
 
-Token *get_token(Token **t_stream, int pos) {
-    return t_stream[pos];
-}
-
 bool cmp_rules(int *stackay1, int *stackay2) {
     for (int i = 0; i < 3; i++) {
     	if (stackay1[i] != stackay2[i])
@@ -301,7 +297,11 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal) {
     return generateRule(ruleOnStack);
 }
 
-int main() {
+Token *get_token(Token tStream[15], int j) {
+    return &tStream[j];
+}
+
+bool analyzePrecedence(Token tStream[15]) {
     Token *paToken;
     sElemType *mainTerminal;
 
@@ -329,16 +329,17 @@ int main() {
     pTableInit(prec_tab);
 
     int i = 0;
+    int j = 0;
     Token * t;
-    getToken(t);
+    t = get_token(tStream, j);
     
     int action = 0;
     sElemGetData(t, mainTerminal);
 
     while(!(mainTerminal->paType == OP_DOLLAR && sGetTopTerminal(mainStack) == OP_DOLLAR)) {
         action = prec_tab[sGetTopTerminal(mainStack)][mainTerminal->paType];
-        printf("\n\nstack top: %i, input: %i", sGetTopTerminal(mainStack), mainTerminal->paType);
-        printf("\nAction: %i", action);
+        //printf("\n\nstack top: %i, input: %i", sGetTopTerminal(mainStack), mainTerminal->paType);
+        //printf("\nAction: %i", action);
         switch(action) {
             case(PA_GREATER):
                 sFindRule(mainStack, tmpStack, &tmpTerminal);
@@ -360,12 +361,13 @@ int main() {
 		sPush(mainStack, &tmpTerminal);
                 sCopyAll(tmpStack, mainStack, &tmpTerminal);
                 sPush(mainStack, mainTerminal);
-               
-                getToken(t);
+                j++;
+                t = get_token(tStream, j);
                 break;
             case(PA_SHIFT):
                 sPush(mainStack, mainTerminal);
-                getToken(t);
+                j++;
+                get_token(tStream, j);
             //case(PA_EMPTY):
               //  printf("INVALID INPUT");
                 //return -1;

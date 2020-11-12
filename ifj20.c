@@ -8,6 +8,7 @@
 #include "error.h"
 #include "scanner.h"
 #include "dynamic_string.h"
+#include "precanalysis.h"
 
 int rdBody(){
     return 0;
@@ -17,6 +18,9 @@ int main(){
 
     int lexicalResult = 0; //Scanner return code
     Token token;
+
+    Token tStream[15];
+    int i = 0;
 
     while(token.type != EOF_) {
         lexicalResult = getToken(&token);
@@ -30,7 +34,11 @@ int main(){
         } else {
             printf(" \n Recognized token: %d, with value: %s with error code: %d \n", token.type, token.value.stringValue, lexicalResult); 
         }
+        tStream[i] = token;
+        i++;
     }
+
+    analyzePrecedence(tStream);
 
     /*while (token->type != T_EOF)
     {
