@@ -163,6 +163,10 @@ int getToken(Token *token) {
                 addChar(content, c);
                 currentState = ST_NUM_WHOLE_PART_NONZERO;
             } 
+
+            if(c == '/') {
+                currentState = ST_SLASH;
+            }
         
             break;
         /*--------------------------ADDITION---------------+-----------*/
@@ -183,6 +187,50 @@ int getToken(Token *token) {
             token->type = MUL;
             token->value.stringValue = "*";
             return SUCCESS;
+
+        case ST_SLASH:
+            if (c == '/') {
+                currentState = ST_SINGLE_L_COMMENT;
+            } else if (c == '*') {
+                currentState = ST_MULTI_L_COMMENT;
+            } else {
+                ungetc(c, input);
+                token->type = DIV;
+                token->value.stringValue = "/";
+
+                return SUCCESS;
+            }
+            break;
+
+        case ST_SINGLE_L_COMMENT:
+            if(c != EOL) {
+                currentState = ST_SINGLE_L_COMMENT;
+            } else {
+                token->type = EOL_;
+                token->value.stringValue = "EOL";
+                return SUCCESS;
+            }
+            break;
+
+        case ST_MULTI_L_COMMENT:
+            if(c == '*') {
+                currentState = ST_MULTI_LC_PRE_END;
+            } else if (c == EOF) {
+                return LEXICAL_ERROR;
+            } else {
+                currentState = ST_MULTI_L_COMMENT;
+            }
+            break;   
+
+        case ST_MULTI_LC_PRE_END:
+            if(c == '/') {
+                currentState = INIT_ST;
+            } else if (c == EOF) {
+                return LEXICAL_ERROR;
+            } else {
+                currentState = ST_MULTI_L_COMMENT;
+            }
+            break;     
 
         /*-----------------------ROUND BRACKETS-----------()-----------*/
         case ST_R_ROUND_BRACKET:
@@ -409,7 +457,7 @@ int getToken(Token *token) {
                 currentState = ST_NUM_EXPONENT;
             } else {
                 ungetc(c, input);
-                
+
                 token->type = INTEGER;
                 int iNumber = atoi(content->str);
                 token->value.intValue = iNumber; 
