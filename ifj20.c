@@ -1,4 +1,4 @@
-.//
+//
 // Created by louda on 11/10/20.
 //
 
@@ -7,7 +7,11 @@
 #include "ifj20.h"
 #include "error.h"
 #include "scanner.h"
+#include "dynamic_string.h"
 
+int rdBody(){
+    return 0;
+}
 
 int main(){
 
@@ -16,9 +20,15 @@ int main(){
 
     while(token.type != EOF_) {
         lexicalResult = getToken(&token);
-        //printf(" \n Recognized token: %d, with value: %s with error code: %d \n", token.type, token.value.stringValue, result); 
         if(lexicalResult == 1) {
-            return LEXICAL_ERROR;
+            break;
+        }
+        if(token.type == INTEGER) {
+            printf(" \n Recognized token: %d, with value: %d with error code: %d \n", token.type, token.value.intValue, lexicalResult); 
+        } else if(token.type == FLOAT) {
+            printf(" \n Recognized token: %d, with value: %f with error code: %d \n", token.type, token.value.floatValue, lexicalResult); 
+        } else {
+            printf(" \n Recognized token: %d, with value: %s with error code: %d \n", token.type, token.value.stringValue, lexicalResult); 
         }
     }
 
@@ -27,6 +37,6 @@ int main(){
         CHECK(Get_Token(wrap.tkn))
     }*/
 
-    printf("pohoda\n");
-    return 0;
+    printf("--- Status code: %d\n", lexicalResult);
+    return lexicalResult;
 }

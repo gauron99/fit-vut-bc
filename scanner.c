@@ -409,9 +409,10 @@ int getToken(Token *token) {
                 currentState = ST_NUM_EXPONENT;
             } else {
                 ungetc(c, input);
-
+                
                 token->type = INTEGER;
-                token->value.stringValue = content->str;        // TODO prerobit zo string na int
+                int iNumber = atoi(content->str);
+                token->value.intValue = iNumber; 
 
                 return SUCCESS;
             }
@@ -431,7 +432,8 @@ int getToken(Token *token) {
             else {
                 ungetc(c, input);
                 token->type = INTEGER;
-                token->value.stringValue = content->str;        // TODO prerobit zo string na int
+                int iNumber = atoi(content->str);
+                token->value.intValue = iNumber;        // TODO prerobit zo string na int
 
                 return SUCCESS;
             }
@@ -458,7 +460,9 @@ int getToken(Token *token) {
             } else {
                 ungetc(c, input);
                 token->type = FLOAT;
-                token->value.stringValue = content->str;        //TODO to float
+
+                double fNumber = atof(content->str);
+                token->value.floatValue = fNumber; 
 
                 return SUCCESS;
             }
@@ -481,17 +485,16 @@ int getToken(Token *token) {
                 currentState = ST_NUM_EXPONENT_POWER;
             } else {
                 ungetc(c, input);
-                int i;
-                float f;
-                if(sscanf(content->str, "%d", &i) != 0) {
-                    token->type = INTEGER;             // TODO: nevieme ci ide o INT(10e3) alebo FLOAT(0.2e2)
-                } //It's an int.
+                double fNumber = atof(content->str);
+                int truncated = (int)fNumber;
 
-                if(sscanf(content->str, "%f", &f) != 0) {
+                if (fNumber == truncated) {
+                    token->type = INTEGER;
+                    token->value.intValue = truncated;        //TODO to float
+                } else {
                     token->type = FLOAT;
-                } //It's a float.
-
-                token->value.stringValue = content->str;        //TODO to float
+                    token->value.floatValue = fNumber;        //TODO to float
+                }
 
                 return SUCCESS;
             }
