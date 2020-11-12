@@ -148,6 +148,6 @@ typedef enum { /*state num, read lexeme*/
  */
 /* vracia navratovy kod */
 int getToken(Token *token);
-
+int ungetToken(Token *token);
 
 #endif // !SCANNER_H

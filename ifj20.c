@@ -10,10 +10,6 @@
 #include "dynamic_string.h"
 #include "precanalysis.h"
 
-int rdBody(){
-    return 0;
-}
-
 int main(){
 
     int lexicalResult = 0; //Scanner return code
@@ -32,11 +28,6 @@ int main(){
             printf(" \n Recognized token: %d, with value: %s with error code: %d \n", token.type, token.value.stringValue, lexicalResult); 
         }
     }
-
-    /*while (token->type != T_EOF)
-    {
-        CHECK(Get_Token(wrap.tkn))
-    }*/
 
     printf("--- Status code: %d\n", lexicalResult);
     return lexicalResult;
