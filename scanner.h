@@ -59,6 +59,7 @@ typedef enum {
     DIV_EQ,                 // /=
 
     COMMA,                  //,
+    SEMICOLON,              // ;
 
     EOL_,
     EOF_
@@ -97,6 +98,7 @@ typedef enum { /*state num, read lexeme*/
     ST_R_CURLY_BRACKET, /*P_2 , } */
     ST_L_CURLY_BRACKET, /*P_3 , { */
     ST_COMMA,           /*P_4 , , */
+    ST_SEMICOLON,
     ST_LESS,            /*O_0 , < */
     ST_LESS_EQUAL,      /*O_1 , <= */
     ST_GREATER,         /*O_2 , > */
@@ -139,23 +141,6 @@ typedef enum { /*state num, read lexeme*/
     ST_HEXA_SEPARATOR           /*L_14, 0xA_ */
 
 } stateType;
-
-
-char *alphaNumToken;
-
-char *keyWords[] = {
-                    "else",
-                    "float64",
-                    "for",
-                    "func",
-                    "if",
-                    "int",
-                    "package",
-                    "return",
-                    "string"
-                  };
-
-int numOfKeywords = 9;
 
 /**
  * 
