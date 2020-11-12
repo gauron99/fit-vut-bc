@@ -8,6 +8,8 @@
 #include "error.h"
 #include "scanner.h"
 #include "custom_string.h"
+#include "precanalysis.h"
+#include "parser.h"
 
 int rdBody(){
     return 0;
@@ -24,11 +26,11 @@ int main(){
             break;
         }
         if(token.type == INTEGER) {
-            printf(" \n Recognized token: %d, with value: %d with error code: %d \n", token.type, token.value.intValue, lexicalResult); 
+            printf(" \n Recognized token: %d, with value: %d with error code: %d \n", token.type, token.value.intValue, lexicalResult);
         } else if(token.type == FLOAT) {
-            printf(" \n Recognized token: %d, with value: %f with error code: %d \n", token.type, token.value.floatValue, lexicalResult); 
+            printf(" \n Recognized token: %d, with value: %f with error code: %d \n", token.type, token.value.floatValue, lexicalResult);
         } else {
-            printf(" \n Recognized token: %d, with value: %s with error code: %d \n", token.type, token.value.stringValue, lexicalResult); 
+            printf(" \n Recognized token: %d, with value: %s with error code: %d \n", token.type, token.value.stringValue, lexicalResult);
         }
     }
 
