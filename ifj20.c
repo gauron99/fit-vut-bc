@@ -16,7 +16,7 @@ int main(){
     int lexicalResult = 0; //Scanner return code
     Token token;
 
-
+    // CHECK(prolog())
     while(token.type != EOF_) {
         lexicalResult = getToken(&token);
         if(lexicalResult == 1) {

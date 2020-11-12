@@ -378,6 +378,8 @@ int rdExprsOrCall(){
         ungetToken(&token);
         precedence();
         getToken(&token);
+        if (TTYPE==COMMA)
+            CHECK(rdExprSekv())
     }
 
     return EC_GOOD;
@@ -398,7 +400,7 @@ int rdExprSekv(){
     precedence();
     getToken(&token);
     if(TTYPE==COMMA)
-    CHECK(rdExprSekv());
+        CHECK(rdExprSekv());
 
     return EC_GOOD;
 }
