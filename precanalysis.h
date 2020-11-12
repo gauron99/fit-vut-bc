@@ -128,4 +128,4 @@ bool sElemGetData(Token *token, sElemType *data);
 
 Token * get_token(Token t_stream[15], int pos);
 
-bool analyzePrecedence(Token t_stream[15]);
+bool analyzePrecedence();

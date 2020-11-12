@@ -19,9 +19,6 @@ int main(){
     int lexicalResult = 0; //Scanner return code
     Token token;
 
-    Token tStream[15];
-    int i = 0;
-
     while(token.type != EOF_) {
         lexicalResult = getToken(&token);
         if(lexicalResult == 1) {
@@ -34,11 +31,7 @@ int main(){
         } else {
             printf(" \n Recognized token: %d, with value: %s with error code: %d \n", token.type, token.value.stringValue, lexicalResult); 
         }
-        tStream[i] = token;
-        i++;
     }
-
-    analyzePrecedence(tStream);
 
     /*while (token->type != T_EOF)
     {
