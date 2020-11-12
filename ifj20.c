@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "ifj20.h"
 #include "error.h"
+#include "parser.h"
 #include "scanner.h"
 #include "dynamic_string.h"
 #include "precanalysis.h"
@@ -14,6 +15,7 @@ int main(){
 
     int lexicalResult = 0; //Scanner return code
     Token token;
+
 
     while(token.type != EOF_) {
         lexicalResult = getToken(&token);
@@ -29,6 +31,6 @@ int main(){
         }
     }
 
-    printf("--- Status code: %d\n", lexicalResult);
+    // printf("--- Status code: %d\n", lexicalResult);
     return lexicalResult;
 }

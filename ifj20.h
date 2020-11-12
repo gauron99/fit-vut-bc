@@ -7,7 +7,7 @@
 
 #define CHECK(arg) {int ret = arg; \
         if (ret) return ret;}
-#define CHECK_R(exp,rc) if (!exp) return rc;
+#define CHECK_R(exp,rc) if (!(exp)) return rc;
 
 #define TTYPE token.type
 #define TSTR token.value.stringValue
