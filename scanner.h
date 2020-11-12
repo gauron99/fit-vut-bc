@@ -85,6 +85,8 @@ typedef struct {
  * 
  */
 typedef enum { /*state num, read lexeme*/
+
+/*TODO PRIDAT EOF DO MULTILINE KOMENTARU, TEDA VYLUCIT HO*/
     INIT_ST,            /*S*/
     ST_EOL,             /*P_5*/
     ST_PLUS,            /*O_10, + */
@@ -142,6 +144,9 @@ typedef enum { /*state num, read lexeme*/
 
 } stateType;
 
+
+
+
 /**
  * 
  * 
@@ -149,5 +154,6 @@ typedef enum { /*state num, read lexeme*/
 /* vracia navratovy kod */
 int getToken(Token *token);
 int ungetToken(Token *token);
+
 
 #endif // !SCANNER_H

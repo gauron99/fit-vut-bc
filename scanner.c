@@ -15,7 +15,7 @@
 
 #include "scanner.h"
 #include "error.h"
-#include "dynamic_string.h"
+#include "custom_string.h"
 
 #define EOL '\n'
 
@@ -27,6 +27,7 @@ int ungetToken(Token *token) {
 };
 
 int getToken(Token *token) {
+
     if(ungot) {
         *token = tkns[--ungot];
         return 0;
@@ -49,17 +50,15 @@ int getToken(Token *token) {
     input = stdin; //source code
     int returnVal = 0;
 
-    // char *alphaNumToken = NULL;
-
-    dstring string;
-    dstring *content = &string;
-    if (initDstring(content) == -1) {
+    dynamicString string;
+    dynamicString *content = &string;
+    if (initDynamicString(content) == -1) {
         return INTERNAL_ERROR;
     }
 
     stateType currentState = INIT_ST;
 
-    char c = '\0'; //TODO: mal by byt ako int?
+    char c = '\0'; 
 
     while((c = getc(input))) {
         switch (currentState) {
@@ -145,26 +144,26 @@ int getToken(Token *token) {
                 currentState = ST_COLON;
             }   
 
-            if(c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
-                addChar(content, c);
+            if(c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) { /*identifier*/
+                appendChar(content, c);
                 currentState = ST_IDENTIF_KEYWORD;
             } 
 
-            if(c == '\"') {
+            if(c == '\"') { /*string*/
                 currentState = ST_STRING_START;
             }
 
-            if(isdigit(c) && c == '0') {
-                addChar(content, c);
+            if(isdigit(c) && c == '0') { /*literal*/
+                appendChar(content, c);
                 currentState = ST_NUM_WHOLE_PART_ZERO;
             }
 
-            if(isdigit(c) && c != '0') {
-                addChar(content, c);
+            if(isdigit(c) && c != '0') { /*literal*/
+                appendChar(content, c);
                 currentState = ST_NUM_WHOLE_PART_NONZERO;
             } 
 
-            if(c == '/') {
+            if(c == '/') {  /*division/comment*/
                 currentState = ST_SLASH;
             }
         
@@ -203,12 +202,18 @@ int getToken(Token *token) {
             break;
 
         case ST_SINGLE_L_COMMENT:
-            if(c != EOL) {
-                currentState = ST_SINGLE_L_COMMENT;
-            } else {
+            if(c == EOL) {
                 token->type = EOL_;
                 token->value.stringValue = "EOL";
+
                 return SUCCESS;
+            } else if(c == EOF) {
+                token->type = EOF_;
+                token->value.stringValue = "EOF";
+
+                return SUCCESS;
+            } else {
+                currentState = ST_SINGLE_L_COMMENT;
             }
             break;
 
@@ -361,28 +366,28 @@ int getToken(Token *token) {
         /*----------------------IDENTIFIER/KEYWORD---------------------*/
         case ST_IDENTIF_KEYWORD:
             if((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_') {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_IDENTIF_KEYWORD;
             } else {
                 ungetc(c, input);
                 
-                char *stored = dynamic_to_string(content);
+                char *stored = convertToString(content);
 
                 for(int i = 0; i < numOfKeywords; i++) {            
                     if(strcmp(keyWords[i], stored) == 0) {
                         token->type = KEYWORD;
                         token->value.stringValue = stored;
 
-                        dynamic_string_clear(content);
-                        dynamic_string_free(content);
+                        eraseDynamicString(content);
+                        freeDynamicString(content);
                         return SUCCESS;
                     }
                 } 
                 token->type = IDENTIFIER;
                 token->value.stringValue = stored;
                 
-                dynamic_string_clear(content);
-                dynamic_string_free(content);
+                eraseDynamicString(content);
+                freeDynamicString(content);
 
                 return SUCCESS;
             }
@@ -393,12 +398,12 @@ int getToken(Token *token) {
             if(c == '\"') {
                 currentState = ST_STRING_END;
             } else if(c == '\\') {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_STRING_ESC_START;
             } else if(c == EOL || (c >= 0 && c <= 31) || c == EOF){
                 return LEXICAL_ERROR;
             } else {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_STRING_START;
             }
 
@@ -414,10 +419,10 @@ int getToken(Token *token) {
              
         case ST_STRING_ESC_START:
             if(c == '\"' || c == 'n' || c == 't' || c == '\\') {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_STRING_START;
             } else if(c == 'x') {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_STRING_HEXA_1;
             } else {
                 return LEXICAL_ERROR;
@@ -427,7 +432,7 @@ int getToken(Token *token) {
 
         case ST_STRING_HEXA_1:
             if(isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_STRING_HEXA_2;
             } else {
                 return LEXICAL_ERROR;
@@ -437,23 +442,23 @@ int getToken(Token *token) {
 
         case ST_STRING_HEXA_2:
             if(isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_STRING_START;
             } else {
                 return LEXICAL_ERROR;
             }
 
-             break;
+            break;
 
         case ST_NUM_WHOLE_PART_NONZERO:
             if(isdigit(c)) {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_NUM_WHOLE_PART_NONZERO;
             } else if(c == '.') {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_NUM_DECIMAL_POINT;
             } else if(c == 'e' || c == 'E') {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_NUM_EXPONENT;
             } else {
                 ungetc(c, input);
@@ -469,19 +474,18 @@ int getToken(Token *token) {
 
         case ST_NUM_WHOLE_PART_ZERO:
             if(c == '.') {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_NUM_DECIMAL_POINT;
             } else if(c == 'e' || c == 'E') {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_NUM_EXPONENT;
             } else if(isdigit(c)) {
                 return LEXICAL_ERROR;
-            } 
-            else {
+            } else {
                 ungetc(c, input);
                 token->type = INTEGER;
                 int iNumber = atoi(content->str);
-                token->value.intValue = iNumber;        // TODO prerobit zo string na int
+                token->value.intValue = iNumber;        
 
                 return SUCCESS;
             }
@@ -490,7 +494,7 @@ int getToken(Token *token) {
 
         case ST_NUM_DECIMAL_POINT:
             if(isdigit(c)) {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_NUM_FRACTIONAL_PART;
             } else {
                 return LEXICAL_ERROR;
@@ -500,10 +504,10 @@ int getToken(Token *token) {
 
         case ST_NUM_FRACTIONAL_PART:
             if(isdigit(c)) {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_NUM_FRACTIONAL_PART;
             } else if(c == 'e' || c == 'E') {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_NUM_EXPONENT;
             } else {
                 ungetc(c, input);
@@ -519,7 +523,7 @@ int getToken(Token *token) {
 
         case ST_NUM_EXPONENT:
             if(isdigit(c) || c == '+' || c == '-') {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_NUM_EXPONENT_POWER;
             } else {
                 return LEXICAL_ERROR;
@@ -529,7 +533,7 @@ int getToken(Token *token) {
 
         case ST_NUM_EXPONENT_POWER:
             if(isdigit(c)) {
-                addChar(content, c);
+                appendChar(content, c);
                 currentState = ST_NUM_EXPONENT_POWER;
             } else {
                 ungetc(c, input);
@@ -538,10 +542,10 @@ int getToken(Token *token) {
 
                 if (fNumber == truncated) {
                     token->type = INTEGER;
-                    token->value.intValue = truncated;        //TODO to float
+                    token->value.intValue = truncated;        
                 } else {
                     token->type = FLOAT;
-                    token->value.floatValue = fNumber;        //TODO to float
+                    token->value.floatValue = fNumber;        
                 }
 
                 return SUCCESS;
@@ -550,10 +554,9 @@ int getToken(Token *token) {
             break;
         
         default:
-            break;
+            return LEXICAL_ERROR;
         }
     }
 
     return returnVal;
 }
-
