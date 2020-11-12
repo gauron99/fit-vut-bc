@@ -27,6 +27,6 @@ int main(){
         CHECK(Get_Token(wrap.tkn))
     }*/
 
-    printf("pohoda jahoda\n");
+    printf("pohoda\n");
     return 0;
 }
