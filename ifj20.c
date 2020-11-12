@@ -11,10 +11,6 @@
 #include "precanalysis.h"
 #include "parser.h"
 
-int rdBody(){
-    return 0;
-}
-
 int main(){
 
     int lexicalResult = 0; //Scanner return code
@@ -34,10 +30,6 @@ int main(){
         }
     }
 
-    /*while (token->type != T_EOF)
-    {
-        CHECK(Get_Token(wrap.tkn))
-    }*/
 
     printf("--- Status code: %d\n", lexicalResult);
     return lexicalResult;
