@@ -38,33 +38,28 @@ enum {
     OP_MORE_EQUAL,  // 9
     OP_EQUAL,       // 10
     OP_NOT_EQUAL,   // 11
-    
-    OP_DOLLAR,      // 12
-    
-    OP_DATATYPE,    // 13
-    OP_ID,          // 14
-    
-    OP_EXPRESSION,  // 15
 
-    OP_TABLE_LESS,  // 16
+    OP_NOT,         // 12
+    OP_AND,         // 13
+    OP_OR,          // 14
+
+    OP_COMMA,       // 15
+    
+    OP_FUN,         // 16
+
+    OP_DOLLAR,      // 17
+    
+    OP_DATATYPE,    // 18
+    OP_ID,          // 19
+    
+    OP_EXPRESSION,  // 20
+
+    OP_TABLE_LESS,  // 21
 };
 
 // ***RULES***
-extern int rule1[3];   // E -> E + E
-extern int rule2[3];   // E -> E - E
-extern int rule3[3];   // E -> E * E
-extern int rule4[3];   // E -> E / E
+extern int rules[15][15];
 
-extern int rule5[3];   // E -> E <  E
-extern int rule6[3];   // E -> E <= E
-extern int rule7[3];   // E -> E >  E
-extern int rule8[3];   // E -> E >= E
-extern int rule9[3];   // E -> E == E
-extern int rule10[3];  // E -> E != E
-
-extern int rule11[3];  // E -> ID
-extern int rule12[3];  // E -> (E)
-extern int rule13[3];  // E -> i
 
 enum {
     PA_LESS = 420,
@@ -74,7 +69,7 @@ enum {
 };
 
 // initializes precedence table
-int pTableInit(int table[15][15]);   // v prec_table_init.c
+int pTableInit(int table[20][20]);   // v prec_table_init.c
 
 // determines paType of a token
 int getPaType(Token *t);
