@@ -1,7 +1,7 @@
 all: ifj20 clean
 
-ifj20: parser.o scanner.o precanalysis.o prectableandrules.o custom_string.o ifj20.o
-	gcc parser.o precanalysis.o prectableandrules.o scanner.o custom_string.o ifj20.o -o ifj20
+ifj20: parser.o prectableandrules.o precanalysis.o scanner.o custom_string.o ifj20.o
+	gcc parser.o scanner.o precanalysis.o prectableandrules.o custom_string.o ifj20.o -o ifj20
 
 ifj20.o: ifj20.c ifj20.h
 

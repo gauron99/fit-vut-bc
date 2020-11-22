@@ -50,21 +50,21 @@ enum {
 };
 
 // ***RULES***
-int rule1[3];   // E -> E + E
-int rule2[3];   // E -> E - E
-int rule3[3];   // E -> E * E
-int rule4[3];   // E -> E / E
+extern int rule1[3];   // E -> E + E
+extern int rule2[3];   // E -> E - E
+extern int rule3[3];   // E -> E * E
+extern int rule4[3];   // E -> E / E
 
-int rule5[3];   // E -> E <  E
-int rule6[3];   // E -> E <= E
-int rule7[3];   // E -> E >  E
-int rule8[3];   // E -> E >= E
-int rule9[3];   // E -> E == E
-int rule10[3];  // E -> E != E
+extern int rule5[3];   // E -> E <  E
+extern int rule6[3];   // E -> E <= E
+extern int rule7[3];   // E -> E >  E
+extern int rule8[3];   // E -> E >= E
+extern int rule9[3];   // E -> E == E
+extern int rule10[3];  // E -> E != E
 
-int rule11[3];  // E -> ID
-int rule12[3];  // E -> (E)
-int rule13[3];  // E -> i
+extern int rule11[3];  // E -> ID
+extern int rule12[3];  // E -> (E)
+extern int rule13[3];  // E -> i
 
 enum {
     PA_LESS = 420,
@@ -131,6 +131,6 @@ bool sElemGetData(Token *token, sElemType *data);
 
 Token * get_token(Token t_stream[15], int pos);
 
-bool analyzePrecedence();
+int analyzePrecedence();
 
 #endif

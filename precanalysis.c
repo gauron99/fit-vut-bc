@@ -210,7 +210,7 @@ void sElemFree(sElemType *data, Token *paToken) {
 
 int sFindFirstTerminal(s_t *s) {
     int tmp = s->top;
-    
+     
     while ((s->stack[tmp])->paType == OP_EXPRESSION || (s->stack[tmp])->paType == OP_LESS) {
         tmp--;
     }
@@ -218,15 +218,15 @@ int sFindFirstTerminal(s_t *s) {
 }
 
 void fill_token(Token *token, int type, int integer, double floating, char *string) {
-	token->type;
 	if (type == INTEGER) token->value.intValue = integer;
 	else if (type == FLOAT) token->value.floatValue = floating;
-	else if (type == STRING) memcpy(token->value.stringValue, string , sizeof(string));
+	//else if (type == STRING) //memcpy(token->value.stringValue, string, sizeof(string));
+        //strcpy(token->value.stringValue, string);
 }
 
 bool sElemGetData(Token *token, sElemType *data) {
     data->paType = getPaType(token);
-    
+    //printf("%s\n", token->value.stringValue);
     if(data->paType == OP_DATATYPE) {
         if(token->type == STRING)
             fill_token(data->paToken, STRING, 0, 0, token->value.stringValue);
@@ -271,7 +271,7 @@ bool cmp_rules(int *stackay1, int *stackay2) {
 }
 
 int generateRule(int *rule) {
-        printf("\nRule used: %i %i %i", rule[0], rule[1],rule[2]);
+        //printf("\nRule used: %i %i %i\n", rule[0], rule[1],rule[2]);
 	if (cmp_rules(rule, rule1)) return 1;
 	else if (cmp_rules(rule, rule2)) return 2;
 	else if (cmp_rules(rule, rule3)) return 3;
@@ -279,7 +279,13 @@ int generateRule(int *rule) {
 	else if (cmp_rules(rule, rule5)) return 5;
 	else if (cmp_rules(rule, rule6)) return 6;
 	else if (cmp_rules(rule, rule7)) return 7;
-	else return 0;
+	else if (cmp_rules(rule, rule8)) return 8;
+	else if (cmp_rules(rule, rule9)) return 9;
+	else if (cmp_rules(rule, rule10)) return 10;
+	else if (cmp_rules(rule, rule11)) return 11;
+	else if (cmp_rules(rule, rule12)) return 12;
+	else if (cmp_rules(rule, rule13)) return 13;
+	else return -1;
 }
 
 int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal) {
@@ -294,10 +300,12 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal) {
     int ruleOnStack[3] = {0, 0, 0};
     for (int i = tmpStack->top; i > -1; i--)
         ruleOnStack[i] = (tmpStack->stack[i])->paType;
-    return generateRule(ruleOnStack);
+    int usedRule = generateRule(ruleOnStack);
+    return usedRule;
 }
 
-bool analyzePrecedence() {
+int analyzePrecedence() {
+    //printf("zavolana fun");
     Token *paToken;
     sElemType *mainTerminal;
 
@@ -326,17 +334,21 @@ bool analyzePrecedence() {
 
     int i = 0;
     int j = 0;
-    Token * t;
+    Token t;
     getToken(&t);
-    
+    //printf("%i\n", t.type);
     int action = 0;
-    sElemGetData(t, mainTerminal);
-
+    sElemGetData(&t, mainTerminal);
+    
     while(!(mainTerminal->paType == OP_DOLLAR && sGetTopTerminal(mainStack) == OP_DOLLAR)) {
+            //printf("\ntop stack: %i, mainterm: %i\n", sGetTopTerminal(mainStack), mainTerminal->paType);
+        i++;
         action = prec_tab[sGetTopTerminal(mainStack)][mainTerminal->paType];
+        //printf("%i\n", action);
         switch(action) {
             case(PA_GREATER):
-                sFindRule(mainStack, tmpStack, &tmpTerminal);
+                if(sFindRule(mainStack, tmpStack, &tmpTerminal) == -1)
+                    return 2;
                 sPopPointer(mainStack);
 
                 tmpTerminal.paType = OP_EXPRESSION;
@@ -355,18 +367,20 @@ bool analyzePrecedence() {
 		sPush(mainStack, &tmpTerminal);
                 sCopyAll(tmpStack, mainStack, &tmpTerminal);
                 sPush(mainStack, mainTerminal);
-                ungetToken(&t);
                 getToken(&t);
+                //printf("it->type: %i", t.type);
                 break;
             case(PA_SHIFT):
                 sPush(mainStack, mainTerminal);
-                ungetToken(&t);
                 getToken(&t);
-            //case(PA_EMPTY):
-              //  printf("INVALID INPUT");
-                //return -1;
+            case(PA_EMPTY):
+                //printf("RETURNING 2");
+                return 2;
         }
-        sElemGetData(t, mainTerminal);
+        sElemGetData(&t, mainTerminal);
     }
+    ungetToken(&t);
+    //printf("RETURNING 0");
+
     return 0;
 }

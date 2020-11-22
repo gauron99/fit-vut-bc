@@ -58,7 +58,7 @@ int getToken(Token *token) {
 
     stateType currentState = INIT_ST;
 
-    char c = '\0'; 
+    char c = '\0';
 
     while((c = getc(input))) {
         switch (currentState) {
@@ -66,113 +66,72 @@ int getToken(Token *token) {
             if(c == EOF) { /* end of file */
                 token->type = EOF_;
                 token->value.stringValue = "EOF";
-                return SUCCESS; 
-            } 
-
-            if(c == EOL) {  /* end of line */
+                return SUCCESS;
+            } else if(c == EOL) {  /* end of line */
                 token->type = EOL_;
                 token->value.stringValue = "EOL";
                 return SUCCESS;
-            } 
-
-            if(c == ' ' || c == '\t') { /*whitespace*/
+            } else if(c == ' ' || c == '\t') { /*whitespace*/
                 break;
-            } 
-
-            if(c == '+') { /*addition operator*/
+            } else if(c == '+') { /*addition operator*/
                 currentState = ST_PLUS;
                 ungetc(c, input);
-            } 
-
-            if(c == '-') { /*subtraction operator*/
+            } else if(c == '-') { /*subtraction operator*/
                 currentState = ST_MINUS;
                 ungetc(c, input);
-            } 
-
-            if(c == '*') { /*multiplication operator*/
+            } else if(c == '*') { /*multiplication operator*/
                 currentState = ST_MUL;
                 ungetc(c, input);
-            } 
-
-            if(c == ')') { 
+            } else if(c == ')') {
                 currentState = ST_R_ROUND_BRACKET;
                 ungetc(c, input);
-            } 
-
-            if(c == '(') {
+            } else if(c == '(') {
                 currentState = ST_L_ROUND_BRACKET;
                 ungetc(c, input);
-            } 
-
-            if(c == '}') {
+            } else if(c == '}') {
                 currentState = ST_R_CURLY_BRACKET;
                 ungetc(c, input);
-            } 
-
-            if(c == '{') {
+            } else if(c == '{') {
                 currentState = ST_L_CURLY_BRACKET;
                 ungetc(c, input);
-            } 
-
-            if(c == ',') {
+            } else if(c == ',') {
                 currentState = ST_COMMA;
                 ungetc(c, input);
-            } 
-
-            if(c == ';') {
+            } else if(c == ';') {
                 currentState = ST_SEMICOLON;
                 ungetc(c, input);
-            } 
-
-            if(c == '<') { /*less than*/
+            } else if(c == '<') { /*less than*/
                 currentState = ST_LESS;
-            } 
-
-            if(c == '>') { /*greater than*/
+            } else if(c == '>') { /*greater than*/
                 currentState = ST_GREATER;
-            }
-
-            if(c == '=') { /*assignment/comparison/definition*/
+            } else if(c == '=') { /*assignment/comparison/definition*/
                 currentState = ST_ASSIGNMENT;
-            }
-
-            if(c == '!') { 
+            } else if(c == '!') {
                 currentState = ST_EXCL_MARK;
-            }
-
-            if(c == ':') {
+            } else if(c == ':') {
                 currentState = ST_COLON;
-            }   
-
-            if(c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) { /*identifier*/
+            } else if(c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) { /*identifier*/
                 appendChar(content, c);
                 currentState = ST_IDENTIF_KEYWORD;
-            } 
-
-            if(c == '\"') { /*string*/
+            } else if(c == '\"') { /*string*/
                 currentState = ST_STRING_START;
-            }
-
-            if(isdigit(c) && c == '0') { /*literal*/
+            } else if(isdigit(c) && c == '0') { /*literal*/
                 appendChar(content, c);
                 currentState = ST_NUM_WHOLE_PART_ZERO;
-            }
-
-            if(isdigit(c) && c != '0') { /*literal*/
+            } else if(isdigit(c) && c != '0') { /*literal*/
                 appendChar(content, c);
                 currentState = ST_NUM_WHOLE_PART_NONZERO;
-            } 
-
-            if(c == '/') {  /*division/comment*/
+            } else if(c == '/') {  /*division/comment*/
                 currentState = ST_SLASH;
+            } else {
+              currentState = ST_ERROR;
             }
-        
             break;
         /*--------------------------ADDITION---------------+-----------*/
         case ST_PLUS:
             token->type = PLUS;
             token->value.stringValue = "+";
-            return SUCCESS; 
+            return SUCCESS;
 
 
         /*-------------------------SUBTRACTION-------------------------*/
@@ -225,7 +184,7 @@ int getToken(Token *token) {
             } else {
                 currentState = ST_MULTI_L_COMMENT;
             }
-            break;   
+            break;
 
         case ST_MULTI_LC_PRE_END:
             if(c == '/') {
@@ -237,7 +196,7 @@ int getToken(Token *token) {
             } else {
                 currentState = ST_MULTI_L_COMMENT;
             }
-            break;     
+            break;
 
         /*-----------------------ROUND BRACKETS-----------()-----------*/
         case ST_R_ROUND_BRACKET:
@@ -272,7 +231,7 @@ int getToken(Token *token) {
             token->type = SEMICOLON;
             token->value.stringValue = ";";
             return SUCCESS;
-            
+
         /*-------------------------COMPARISON--------------------------*/
         /*------------------------------<------------------------------*/
         case ST_LESS:
@@ -286,7 +245,7 @@ int getToken(Token *token) {
             }
 
             break;
-        
+
         /*-----------------------------<=------------------------------*/
         case ST_LESS_EQUAL:
             token->type = LESS_OR_EQUAL;
@@ -303,14 +262,14 @@ int getToken(Token *token) {
                 ungetc(c, input);
                 return SUCCESS;
             }
-            
+
             break;
 
         /*----------------------------->=------------------------------*/
         case ST_GREATER_EQUAL:
             token->type = GREATER_OR_EQUAL;
             token->value.stringValue = ">=";
-            return SUCCESS; 
+            return SUCCESS;
 
         /*-------------------------ASSIGNMENT----------=---------------*/
         case ST_ASSIGNMENT:
@@ -321,7 +280,7 @@ int getToken(Token *token) {
                 token->value.stringValue = "=";
                 ungetc(c, input);
                 return SUCCESS;
-            } 
+            }
 
             break;
 
@@ -329,7 +288,7 @@ int getToken(Token *token) {
         case ST_EQUAL:
             token->type = EQUAL;
             token->value.stringValue = "==";
-            return SUCCESS; 
+            return SUCCESS;
 
         /*------------------------------!------------------------------*/
         case ST_EXCL_MARK:
@@ -338,7 +297,7 @@ int getToken(Token *token) {
             } else {
                 ungetc(c, input);
                 return LEXICAL_ERROR;
-            } 
+            }
 
             break;
 
@@ -346,7 +305,7 @@ int getToken(Token *token) {
         case ST_NOT_EQUAL:
             token->type = NOT_EQUAL;
             token->value.stringValue = "!=";
-            return SUCCESS; 
+            return SUCCESS;
 
         /*------------------------------:------------------------------*/
         case ST_COLON:
@@ -355,15 +314,16 @@ int getToken(Token *token) {
             } else {
                 ungetc(c, input);
                 return LEXICAL_ERROR;
-            } 
+            }
 
             break;
 
         /*-------------------------DEFINITION-------------:=-----------*/
         case ST_DEFINITION:
+            ungetc(c, input);
             token->type = DEFINITION;
             token->value.stringValue = ":=";
-            return SUCCESS;  
+            return SUCCESS;
 
         /*----------------------IDENTIFIER/KEYWORD---------------------*/
         case ST_IDENTIF_KEYWORD:
@@ -372,10 +332,10 @@ int getToken(Token *token) {
                 currentState = ST_IDENTIF_KEYWORD;
             } else {
                 ungetc(c, input);
-                
+
                 char *stored = convertToString(content);
 
-                for(int i = 0; i < numOfKeywords; i++) {            
+                for(int i = 0; i < numOfKeywords; i++) {
                     if(strcmp(keyWords[i], stored) == 0) {
                         token->type = KEYWORD;
                         token->value.stringValue = stored;
@@ -384,10 +344,10 @@ int getToken(Token *token) {
                         freeDynamicString(content);
                         return SUCCESS;
                     }
-                } 
+                }
                 token->type = IDENTIFIER;
                 token->value.stringValue = stored;
-                
+
                 eraseDynamicString(content);
                 freeDynamicString(content);
 
@@ -418,7 +378,7 @@ int getToken(Token *token) {
             token->value.stringValue = content->str;
 
             return SUCCESS;
-             
+
         case ST_STRING_ESC_START:
             if(c == '\"' || c == 'n' || c == 't' || c == '\\') {
                 appendChar(content, c);
@@ -467,7 +427,7 @@ int getToken(Token *token) {
 
                 token->type = INTEGER;
                 int iNumber = atoi(content->str);
-                token->value.intValue = iNumber; 
+                token->value.intValue = iNumber;
 
                 return SUCCESS;
             }
@@ -487,7 +447,7 @@ int getToken(Token *token) {
                 ungetc(c, input);
                 token->type = INTEGER;
                 int iNumber = atoi(content->str);
-                token->value.intValue = iNumber;        
+                token->value.intValue = iNumber;
 
                 return SUCCESS;
             }
@@ -516,7 +476,7 @@ int getToken(Token *token) {
                 token->type = FLOAT;
 
                 double fNumber = atof(content->str);
-                token->value.floatValue = fNumber; 
+                token->value.floatValue = fNumber;
 
                 return SUCCESS;
             }
@@ -555,17 +515,18 @@ int getToken(Token *token) {
 
                 if (fNumber == truncated) {
                     token->type = INTEGER;
-                    token->value.intValue = truncated;        
+                    token->value.intValue = truncated;
                 } else {
                     token->type = FLOAT;
-                    token->value.floatValue = fNumber;        
+                    token->value.floatValue = fNumber;
                 }
 
                 return SUCCESS;
             }
 
             break;
-        
+        case ST_ERROR:
+          return LEXICAL_ERROR;
         default:
             return LEXICAL_ERROR;
         }

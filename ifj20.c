@@ -8,15 +8,14 @@
 #include "error.h"
 #include "scanner.h"
 #include "custom_string.h"
-#include "precanalysis.h"
 #include "parser.h"
 
 int main(){
 
     int lexicalResult = 0; //Scanner return code
     Token token;
-
-    while(token.type != EOF_) {
+    
+    /*while(token.type != EOF_) {
         lexicalResult = getToken(&token);
         if(lexicalResult == 1) {
             break;
@@ -28,9 +27,10 @@ int main(){
         } else {
             printf(" \n Recognized token: %d, with value: %s with error code: %d \n", token.type, token.value.stringValue, lexicalResult);
         }
-    }
+    }*/
+    CHECK(prolog())
 
-
-    printf("--- Status code: %d\n", lexicalResult);
+    //printf("--- Status code: %d\n", lexicalResult);
     return lexicalResult;
+    return 0;
 }

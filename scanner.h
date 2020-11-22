@@ -7,16 +7,16 @@
  *                            *
  *      @date 17/10/20        *
  *                            *
- * * * * * * * * * * * * * *  */ 
+ * * * * * * * * * * * * * *  */
 
-#ifndef SCANNER_H 
+#ifndef SCANNER_H
 #define SCANNER_H
 
 /**
- * 
- * 
+ *
+ *
  */
-typedef enum { 
+typedef enum {
     KEYWORD,                // {else, float64, for, func, if, int, package, return, string, ?bool, true, false}
     IDENTIFIER,             // variable,..
 
@@ -67,8 +67,8 @@ typedef enum {
 } tokenType;
 
 /**
- * 
- * 
+ *
+ *
  */
 typedef struct {
     tokenType type;
@@ -78,11 +78,11 @@ typedef struct {
         float floatValue;
         char* stringValue;
     } value;
-} Token;   
+} Token;
 
 /**
- * 
- * 
+ *
+ *
  */
 typedef enum { /*state num, read lexeme*/
 
@@ -124,7 +124,7 @@ typedef enum { /*state num, read lexeme*/
     ST_STRING_END,      /*S_2, "" */
     ST_STRING_ESC_START,/*S_3, "../ */
     ST_STRING_HEXA_1,   /*S_4, /x */
-    ST_STRING_HEXA_2,   /*S_5, /x. */ 
+    ST_STRING_HEXA_2,   /*S_5, /x. */
     ST_NUM_WHOLE_PART_ZERO,     /*L_0, 0 */
     ST_NUM_WHOLE_PART_NONZERO,  /*L_1, 1 */
     ST_NUM_DECIMAL_POINT,       /*L_2, 1. */
@@ -141,16 +141,16 @@ typedef enum { /*state num, read lexeme*/
     ST_OCTAL_SEPARATOR,         /*L_11, 0o7_ */
     ST_HEXA_BASE,               /*L_12, 0x */
     ST_HEXA_CORE,               /*L_13, 0xA */
-    ST_HEXA_SEPARATOR           /*L_14, 0xA_ */
-
+    ST_HEXA_SEPARATOR,           /*L_14, 0xA_ */
+    ST_ERROR
 } stateType;
 
 
 
 
 /**
- * 
- * 
+ *
+ *
  */
 /* vracia navratovy kod */
 int getToken(Token *token);

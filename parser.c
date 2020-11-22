@@ -8,12 +8,13 @@
 #include "ifj20.h"
 #include "scanner.h"
 #include "parser.h"
+#include "precanalysis.h"
 
 Token token;
 
 int precedence(){
     while (1){
-        getToken(&token);
+        CHECK(getToken(&token));
         if (TTYPE==EOL_||TTYPE==SEMICOLON||TTYPE==COMMA||TTYPE==LEFT_CURLY_BRACKET) {
             ungetToken(&token);
             break;
@@ -31,12 +32,12 @@ int isType(char* string){
 }
 
 int prolog(){
-    getToken(&token);
+    CHECK(getToken(&token));
     if (TTYPE == EOL_)
     CHECK(prolog())
     else if (TTYPE == KEYWORD){
         CHECK_R(!strcmp(TSTR,"package"),EC_SYN)
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK_R(TTYPE == IDENTIFIER && !strcmp(TSTR,"main"),EC_SYN)
         CHECK(rdBody())
     }
@@ -46,7 +47,7 @@ int prolog(){
 }
 
 int rdBody(){
-    getToken(&token);
+    CHECK(getToken(&token));
     if (TTYPE==EOF_)
         return EC_GOOD;
     else if (TTYPE == EOL_)
@@ -61,29 +62,29 @@ int rdBody(){
 }
 
 int rdDef(){
-    getToken(&token);
+    CHECK(getToken(&token));
 
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
 
-    getToken(&token);
+    CHECK(getToken(&token));
 
     CHECK_R(TTYPE==LEFT_ROUND_BRACKET,EC_SYN)
 
-    getToken(&token);
+    CHECK(getToken(&token));
 
     if (TTYPE!=RIGHT_ROUND_BRACKET)
     CHECK(rdParams())
 
-    getToken(&token);
+    CHECK(getToken(&token));
 
     if (TTYPE!=LEFT_CURLY_BRACKET)
     CHECK(rdReturns())
 
-    getToken(&token);
+    CHECK(getToken(&token));
 
     CHECK_R(TTYPE==EOL_,EC_SYN)
 
-    getToken(&token);
+    CHECK(getToken(&token));
 
     if (TTYPE!=RIGHT_CURLY_BRACKET)
     CHECK(rdComm())
@@ -94,14 +95,14 @@ int rdDef(){
 int rdParams(){
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
 
-    getToken(&token);
+    CHECK(getToken(&token));
 
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
-    getToken(&token);
+    CHECK(getToken(&token));
 
     if (TTYPE == COMMA) {
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK(rdParamsN())
     }
     else
@@ -112,18 +113,18 @@ int rdParams(){
 
 int rdParamsN(){
     if (TTYPE==EOL_)
-        getToken(&token);
+        CHECK(getToken(&token));
 
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
 
-    getToken(&token);
+    CHECK(getToken(&token));
 
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
-    getToken(&token);
+    CHECK(getToken(&token));
 
     if (TTYPE==COMMA) {
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK(rdParamsN())
     }
 
@@ -134,13 +135,13 @@ int rdParamsN(){
 
 int rdReturns(){
     CHECK_R(TTYPE==LEFT_ROUND_BRACKET,EC_SYN)
-    getToken(&token);
+    CHECK(getToken(&token));
     if (TTYPE!=RIGHT_ROUND_BRACKET) {
         CHECK(rdReturnsNamed())
-        getToken(&token);
+        CHECK(getToken(&token));
     }
     else
-        getToken(&token);
+        CHECK(getToken(&token));
 
 
     CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
@@ -150,15 +151,15 @@ int rdReturns(){
 
 int rdReturnsNamed(){
     if (TTYPE==IDENTIFIER){
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
-        getToken(&token);
+        CHECK(getToken(&token));
         if (TTYPE==COMMA)
         CHECK(rdReturnsNamedN())
     }
     else {
         CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
-        getToken(&token);
+        CHECK(getToken(&token));
         if (TTYPE==COMMA)
         CHECK(rdReturnsN())
     }
@@ -168,17 +169,17 @@ int rdReturnsNamed(){
 }
 
 int rdReturnsNamedN(){
-    getToken(&token);
+    CHECK(getToken(&token));
     if (TTYPE==EOL_)
-        getToken(&token);
+        CHECK(getToken(&token));
 
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
 
-    getToken(&token);
+    CHECK(getToken(&token));
 
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
-    getToken(&token);
+    CHECK(getToken(&token));
 
     if (TTYPE==COMMA)
     CHECK(rdReturnsNamedN())
@@ -187,13 +188,13 @@ int rdReturnsNamedN(){
 }
 
 int rdReturnsN(){
-    getToken(&token);
+    CHECK(getToken(&token));
     if (TTYPE==EOL_)
-        getToken(&token);
+        CHECK(getToken(&token));
 
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
-    getToken(&token);
+    CHECK(getToken(&token));
 
     if (TTYPE==COMMA)
     CHECK(rdReturnsNamedN())
@@ -204,105 +205,105 @@ int rdReturnsN(){
 int rdComm(){
 
     if (TTYPE==EOL_){
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK(rdComm())
     }
     else if (TTYPE==KEYWORD && !(strcmp(TSTR,"if"))){
-        precedence();
-        getToken(&token);
+        CHECK(analyzePrecedence());
+        CHECK(getToken(&token));
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
 
-        getToken(&token);
+        CHECK(getToken(&token));
 
         CHECK_R(TTYPE==EOL_,EC_SYN)
 
-        getToken(&token);
+        CHECK(getToken(&token));
 
         if (TTYPE!=RIGHT_CURLY_BRACKET)
         CHECK(rdComm())
 
-        getToken(&token);
+        CHECK(getToken(&token));
 
         if (TTYPE!=EOL_)
         CHECK(rdElseOrNot())
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK(rdComm())
     }
     else if (TTYPE==KEYWORD && !(strcmp(TSTR,"for"))){
-        getToken(&token);
+        CHECK(getToken(&token));
         if (TTYPE!=SEMICOLON){
             CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
 
-            getToken(&token);
+            CHECK(getToken(&token));
 
             if (TTYPE!=DEFINITION){
                 CHECK_R(TTYPE==COMMA,EC_SYN)
-                getToken(&token);
+                CHECK(getToken(&token));
                 CHECK(rdIdsekv())
             }
             CHECK_R(TTYPE==DEFINITION,EC_SYN)
-            getToken(&token);
+            CHECK(getToken(&token));
             CHECK(rdExprsOrCall())
         }
         CHECK_R(TTYPE==SEMICOLON,EC_SYN)
-        precedence();
+        CHECK(analyzePrecedence());
 
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK_R(TTYPE==SEMICOLON,EC_SYN)
 
-        getToken(&token);
+        CHECK(getToken(&token));
         if (TTYPE!=LEFT_CURLY_BRACKET) {
             CHECK(rdIdsekv())
             CHECK_R(TTYPE==ASSIGNMENT,EC_SYN)
-            getToken(&token);
+            CHECK(getToken(&token));
             CHECK(rdExprsOrCall())
         }
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK_R(TTYPE==EOL_,EC_SYN)
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK(rdComm())
         CHECK_R(TTYPE==RIGHT_CURLY_BRACKET,EC_SYN)
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK_R(TTYPE==EOL_,EC_SYN)
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK(rdComm())
     }
     else if (TTYPE==KEYWORD && !strcmp(TSTR,"return")){
-        getToken(&token);
+        CHECK(getToken(&token));
         if (TTYPE!=EOL_){
             CHECK(rdExprSekv())
             CHECK_R(TTYPE==EOL_,EC_SYN)
         }
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK(rdComm())
     }
     else if (TTYPE==IDENTIFIER){
-        getToken(&token);
+        CHECK(getToken(&token));
         if (TTYPE==COMMA || TTYPE == ASSIGNMENT || TTYPE == DEFINITION){
             if (TTYPE==COMMA){
-                getToken(&token);
+                CHECK(getToken(&token));
                 CHECK(rdIdsekv())
                 CHECK_R(TTYPE==ASSIGNMENT||TTYPE==DEFINITION,EC_SYN)
             }
-            getToken(&token);
+            CHECK(getToken(&token));
             CHECK(rdExprsOrCall())
         }
         else if (TTYPE==LEFT_ROUND_BRACKET){
-            getToken(&token);
+            CHECK(getToken(&token));
             if (TTYPE!=RIGHT_ROUND_BRACKET)
             CHECK(rdInParams())
             CHECK_R(TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
-            getToken(&token);
+            CHECK(getToken(&token));
         }
         else if (TTYPE==PLUS_EQ||TTYPE==MINUS_EQ||TTYPE==MUL_EQ||TTYPE==DIV_EQ){
-            precedence();
-            getToken(&token);
+            CHECK(analyzePrecedence());
+            CHECK(getToken(&token));
         }
         CHECK_R(TTYPE==EOL_,EC_SYN)
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK(rdComm())
     }
     else
@@ -317,33 +318,33 @@ int rdComm(){
 
 int rdElseOrNot(){
     CHECK_R(TTYPE==KEYWORD && !strcmp(TSTR,"else"),EC_SYN)
-    getToken(&token);
+    CHECK(getToken(&token));
 
     if (TTYPE==LEFT_CURLY_BRACKET){
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK_R(TTYPE==EOL_,EC_SYN)
 
-        getToken(&token);
+        CHECK(getToken(&token));
         if(TTYPE!=RIGHT_CURLY_BRACKET)
         CHECK(rdComm())
     }
     else {
         CHECK_R(TTYPE == KEYWORD && !strcmp(TSTR, "if"), EC_SYN)
-        precedence();
-        getToken(&token);
+        CHECK(analyzePrecedence());
+        CHECK(getToken(&token));
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
 
-        getToken(&token);
+        CHECK(getToken(&token));
 
         CHECK_R(TTYPE==EOL_,EC_SYN)
 
-        getToken(&token);
+        CHECK(getToken(&token));
 
         if (TTYPE!=RIGHT_CURLY_BRACKET)
         CHECK(rdComm())
 
-        getToken(&token);
+        CHECK(getToken(&token));
 
         if (TTYPE!=EOL_)
         CHECK(rdElseOrNot())
@@ -356,28 +357,28 @@ int rdExprsOrCall(){
     if (TTYPE==IDENTIFIER){
         Token tmpToken;
         tmpToken = token;
-        getToken(&token);
+        CHECK(getToken(&token));
         if (TTYPE!=LEFT_ROUND_BRACKET){
             ungetToken(&token);
             ungetToken(&tmpToken);
-            precedence();
-            getToken(&token);
+            CHECK(analyzePrecedence());
+            CHECK(getToken(&token));
             if (TTYPE==COMMA)
             CHECK(rdExprSekv())
         }
         else {
-            getToken(&token);
+            CHECK(getToken(&token));
             if (TTYPE!=RIGHT_ROUND_BRACKET) {
                 CHECK(rdInParams())
                 CHECK_R(TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
             }
-            getToken(&token);
+            CHECK(getToken(&token));
         }
     }
     else {
         ungetToken(&token);
-        precedence();
-        getToken(&token);
+        CHECK(analyzePrecedence());
+        CHECK(getToken(&token));
         if (TTYPE==COMMA)
             CHECK(rdExprSekv())
     }
@@ -387,9 +388,9 @@ int rdExprsOrCall(){
 
 int rdIdsekv(){
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
-    getToken(&token);
+    CHECK(getToken(&token));
     if (TTYPE==COMMA) {
-        getToken(&token);
+        CHECK(getToken(&token));
         CHECK(rdIdsekv())
     }
 
@@ -397,8 +398,8 @@ int rdIdsekv(){
 }
 
 int rdExprSekv(){
-    precedence();
-    getToken(&token);
+    CHECK(analyzePrecedence());
+    CHECK(getToken(&token));
     if(TTYPE==COMMA)
         CHECK(rdExprSekv());
 
@@ -407,7 +408,7 @@ int rdExprSekv(){
 
 int rdInParams(){
     CHECK_R(TTYPE==IDENTIFIER || TTYPE==STRING || TTYPE==FLOAT || TTYPE==INTEGER,EC_SYN)
-    getToken(&token);
+    CHECK(getToken(&token));
     if (TTYPE==COMMA)
     CHECK(rdInParamsN())
 
@@ -415,9 +416,9 @@ int rdInParams(){
 }
 
 int rdInParamsN(){
-    getToken(&token);
+    CHECK(getToken(&token));
     CHECK_R(TTYPE==IDENTIFIER || TTYPE==STRING || TTYPE==FLOAT || TTYPE==INTEGER,EC_SYN)
-    getToken(&token);
+    CHECK(getToken(&token));
     if (TTYPE==COMMA)
     CHECK(rdInParamsN())
 
