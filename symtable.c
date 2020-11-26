@@ -5,19 +5,22 @@
     @date   30/10/20
     @author David Fridrich
 */
-//Yoyooo louda ma boi
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include "symtable.h"
 
+extern symtableGI symGlobal;
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 int 
 hashFunc(char *key){
     int final = 1;
 
     //cycle through the key by chars
-    for (int i = 0; i < strlen(key); ++i)
+    for (size_t i = 0; i < strlen(key); ++i)
     {
         //add a numerical value of given letter(ex.: 's' == 115)
         final += key[i];
@@ -27,10 +30,12 @@ hashFunc(char *key){
 }
 
 
-int 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+int //dont even use this anymore
 symtableCreate(symtable *tab){
     *tab = calloc(SYMTABLE_SIZE,sizeof(***tab));
     if(!tab){
+        fprintf(stderr,">> Calloc in symtableCreate() failed\n");
         return INTERNAL_ERROR;
     } else {
 
@@ -39,52 +44,36 @@ symtableCreate(symtable *tab){
 
 }
 
-
-void 
-symtableDestroy(symtable *tab){
-
-    symtableItem *del,*temp;
-    for (int i = 0; i < SYMTABLE_SIZE; ++i){
-        temp = (*tab)[i];
-        while(temp){
-            del = temp;
-            temp = temp->next;
-            free(del);
-        }
-        (*tab)[i] = NULL;
-    }
-    free(*tab);
-    *tab= NULL;
-}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 
-int 
-symtableItemInsert(symtable *tab, char *key,symtableItem **inserted, int data){
+int
+symtableItemInsert(char *funcKey, char *key, itemType type, itemValue value){
+    symtableGlobalItem *func = symtableItemGetGlobal(funcKey);
+    symtable tab = func->localTabs[func->countTabs-1];
+    symtableItem *first,*temp;
+
     int hash = hashFunc(key);
 
-    symtableItem *first,*temp;
-    first = (*tab)[hash];
+    first = tab[hash];
     temp = first;
     //check if key is already in the table
     while(temp){
         //key is already in table, no need to do anything
         if(!strcmp(temp->key,key)){
-            //return pointer to the item anyways? //TODO
-            *inserted = temp;
             return SUCCESS;
         }
         temp=temp->next;
     }
 
-    symtableItem *new;
-    new = malloc(sizeof(symtableItem));
+    symtableItem *new = malloc(sizeof(symtableItem));
     if(!new){
         fprintf(stderr,">> Malloc in symtableItemInsert() failed\n");
         return INTERNAL_ERROR;
     }
-    
-    //copy data inside the struct
-    new->data = data;
+
+    new->type = type;
+    new->value = value;
     new->key = key;
     new->next = NULL; //if its the first one, it will be the end of the list and always point to NULL
 
@@ -94,18 +83,17 @@ symtableItemInsert(symtable *tab, char *key,symtableItem **inserted, int data){
         new->next = first;
     }
 
-    (*tab)[hash] = new;
-    //return pointer to newly created item by argument 'inserted'
-    *inserted = new;
+    func->localTabs[func->countTabs-1][hash] = new;
     return SUCCESS;
 }
 
 
-void 
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+void //don need it
 symtableItemDelete(symtable *tab, char *key){
     int hash = hashFunc(key);
-    symtableItem *todel,*next = NULL,*prev = NULL;
-    todel = (*tab)[hash];
+    symtableItem *todel = (*tab)[hash],*next=NULL,*prev=NULL;
 
     while(todel){
         next = todel->next;
@@ -116,42 +104,55 @@ symtableItemDelete(symtable *tab, char *key){
             //if deleted node is the first one
             if(!prev){
                 (*tab)[hash] = next;
-                return;
+                return; // break;
             }
             prev->next = next;
-            
+
+            /*error with reading already freed memory
+            probably because of the next 2 lines of
+            assignment to 'todel' after reaching this point of
+            already freeing the memory, that's what this return is here
+            for --> to eliminate such error*/
+            return; // break;   
         }
         prev = todel;
-        todel = next;
+        todel = todel->next;
     }
 }
 
-int 
-symtableItemGet(symtable *tab, symtableItem **found, char *key){
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+symtableItem* 
+symtableItemGet(char *funcKey, char *key){
+    symtableGlobalItem *func = symtableItemGetGlobal(funcKey);
+    symtable *tab = &(func->localTabs[func->countTabs-1]);
 
+    symtableItem *found;
     int hash = hashFunc(key);
-    *found = (*tab)[hash];
-    while(*found){
-        if(!strcmp(key,(*found)->key)){
-            return SUCCESS;
+    found = (*tab)[hash];
+    while(found){
+        if(!strcmp(key,found->key)){
+            return found;
         }
-        *found=(*found)->next;
+        found=found->next;
     }
-    //returns *found as NULL when nothing is found (reaches the end of the list)
-    return SUCCESS;
+    //returns NULL when nothing is found
+    return NULL;
 }
 
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 void
-printSymtable(symtable *tab){
-
+printSymtable(char *funcKey){
+    symtableGlobalItem *func = symtableItemGetGlobal(funcKey);
+    symtable *tab = &(func->localTabs[func->countTabs-1]);
     int count = 0;
-    printf("~~~ Table ~~~\n");
-    if (*tab){
+
+    // printf("Table daddy is %s\n",func->key);
+    if(tab){
         symtableItem *temp;
         for (int i = 0; i < SYMTABLE_SIZE; ++i){
             temp = (*tab)[i];
-            printf("%d >> [ ",i);
+            printf("        %d --- [ ",i);
 
             while(temp){
                 count++;
@@ -165,70 +166,388 @@ printSymtable(symtable *tab){
             }
             printf(" ]\n");
         }
-        printf("~~~ # of items |%d| ~~~ ~~~\n\n",count);
+        printf("        ~~~ # of items |%d| ~~~ ~~~\n\n",count);
     }    
+}
+
+void
+printAll(){
+    symtableGI *tabtab = &symGlobal;
+    symtableGlobalItem *item;
+    int count = 0;
+    printf("~~~ EVERYTHIN ~~~\n");
+    for(int i = 0; i < SYMTABLE_SIZE;++i){
+        item = (*tabtab)[i];
+        printf("%d >> [ ",i);
+
+            while(item){
+                count++;
+                if(item->next){
+                    printf("%s,",item->key);
+                } else {
+                    printf("%s",item->key);
+                }
+                printf("\n          |");
+                printf("\n----------local----------\n");
+                printSymtable(item->key);
+                item = item->next;
+            }
+            printf(" ]\n");
+        }
+        printf("~~~ # of items |%d| ~~~ ~~~\n\n",count);
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+//create global symtable
+int
+symtableCreateGlobal(symtableGI *tab){
+       *tab = calloc(SYMTABLE_SIZE,sizeof(***tab));
+    if(!tab){
+        return INTERNAL_ERROR;
+    } else {
+
+        return SUCCESS;
+    }
+}
+
+void
+symtableDestroyGlobal(){
+
+    if (symGlobal){
+        symtableGI *tabtab = &symGlobal;
+        
+        symtableGlobalItem *delGl, *tempGl;
+        //destroy global symtable
+        for(int k = 0; k < SYMTABLE_SIZE; ++k){
+            tempGl = (*tabtab)[k];
+            while(tempGl){
+                delGl = tempGl;
+                tempGl = tempGl->next;
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+                //free array of arg types if any was allocated
+                if(delGl->countArgs){
+                    free(delGl->args);
+                }
+                //free array of return types
+                if(delGl->countRets){
+                    free(delGl->returns);
+                }
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+                //destroy array of local symtables
+                for (int j = delGl->countTabs; j > 0 ; --j)    
+                {
+                    symtable *tab;
+                    tab = &(delGl->localTabs[j-1]);
+                    symtableItem *del,*temp;
+                    //destroy one inner(local) symtable
+                    for (int i = 0; i < SYMTABLE_SIZE; ++i){
+                        temp = (*tab)[i];
+                        while(temp){
+                            del = temp;
+                            temp = temp->next;
+                            free(del);
+                        }
+                        (*tab)[i] = NULL;
+                    }
+                    free(*tab);
+                    (*tab)= NULL;
+                }
+                free(delGl->localTabs);
+                free(delGl);
+                delGl = NULL;
+            }
+
+        }
+        free(symGlobal);
+    }
+}
+
+
+int 
+symtableItemInsertGlobal(char *key){
+    symtableGlobalItem *first,*temp;
+    int hash = hashFunc(key);
+
+    first = symGlobal[hash];
+    temp = first;
+    //check if key is already in the table
+    while(temp){
+        //key is already in table, no need to do anything
+        if(!strcmp(temp->key,key)){
+            return SUCCESS;
+        }
+        temp=temp->next;
+    }
+
+    symtableGlobalItem *new = malloc(sizeof(symtableGlobalItem));
+    if(!new){
+        fprintf(stderr,">> Malloc in symtableItemInsertGlobal() failed\n");
+        return INTERNAL_ERROR;
+    }
+
+    new->key = key;
+    //initialize values
+    new->countArgs = 0;
+    new->countRets = 0;
+    new->countTabs = 1; // put one symtable in already
+
+    new->localTabs = malloc(sizeof(symtable));
+    if(!new->localTabs){
+        fprintf(stderr,">> Malloc in symtableItemInsertGlobal() failed [symtable.c]\n");
+        return INTERNAL_ERROR;
+    }
+
+    new->localTabs[0] = calloc(SYMTABLE_SIZE,sizeof(symtableItem));
+    if(!new->localTabs[0]){
+        fprintf(stderr,">> Calloc in symtableItemInsertGlobal() failed [symtable.c]\n");
+        return INTERNAL_ERROR;
+    }
+
+    new->next = NULL; //if its the first one, it will be the end of the list and always point to NULL
+
+    //insert item to the beggining of the list if its not first insterted item in the list
+    if(first){
+        new->next = first;
+    }
+
+    symGlobal[hash] = new;
+    return SUCCESS;
+}
+
+symtableGlobalItem* 
+symtableItemGetGlobal(char *key){
+
+    symtableGlobalItem *found;
+    int hash = hashFunc(key);
+    found = symGlobal[hash];
+    while(found){
+        if(!strcmp(key,found->key)){
+            return found;
+        }
+        found=found->next;
+    }
+    //returns NULL when nothing is found
+    return NULL;
+}
+
+int
+pushArg(char *key, itemType type){
+    symtableGI tab = symGlobal;
+
+    bool found = false;
+    int hash = hashFunc(key);
+    symtableGlobalItem *item = tab[hash];
+
+    while(item){
+        if(!strcmp(key,item->key)){
+            found = true;
+            break;
+        }
+        item = item->next;
+    }
+    if(found){
+
+        if(!item->countArgs){
+            //first argument push
+            item->args = malloc(2*sizeof(itemType));
+            if(!item->args){
+                fprintf(stderr,">> Error in pushArg() ~ malloc failed\n");
+                return INTERNAL_ERROR;
+            }
+            item->args[0] = type;
+        } else {
+            item->args = realloc(item->args,(item->countArgs+2)*sizeof(itemType));
+            if(!item->args){
+                fprintf(stderr,">> Error in pushArg() ~ realloc failed\n");
+                return INTERNAL_ERROR;
+            }
+            item->args[item->countArgs] = type; //there is not countArgs-1 because its not incremented yet
+        }
+            item->countArgs++;
+            item->args[item->countArgs] = TYPE_NULL; //end can be checked by TYPE_NULL(-1) or countArgs
+
+        return SUCCESS;
+    }
+        //didnt find element by key (function of name by key)
+        printf("loudo you basic bitch, neumíš ani psát stringy už jo, sem tě vychoval teda jinak, soustřed se vole\n");
+        return 666; //return error
 }
 
 
 
+int
+pushRet(char *key,itemType type){
+    symtableGI tab = symGlobal;
+
+    bool found = false;
+    int hash = hashFunc(key);
+    symtableGlobalItem *item = tab[hash];
+
+    while(item){
+        if(!strcmp(key,item->key)){
+            found = true;
+            break;
+        }
+        item = item->next;
+    }
+    if(found){
+
+        if(!item->countRets){
+            //first argument push
+            item->returns = malloc(2*sizeof(itemType));
+            if(!item->returns){
+                fprintf(stderr,">> Error in pushArg() ~ malloc failed\n");
+                return INTERNAL_ERROR;
+            }
+            item->returns[0] = type;
+        } else {
+            item->returns = realloc(item->returns,(item->countRets+2)*sizeof(itemType));
+            if(!item->returns){
+                fprintf(stderr,">> Error in pushArg() ~ realloc failed\n");
+                return INTERNAL_ERROR;
+            }
+            item->returns[item->countRets] = type;//no -1 because not incremented yet
+        }
+            item->countRets++;
+            item->returns[item->countRets] = TYPE_NULL;
+
+        return SUCCESS;
+    }
+        //didnt find element by key
+        printf("loudo you basic bitch, neumíš ani psát stringy už jo, sem tě vychoval teda jinak, soustřed se vole\n");
+        return 666; //return error
+}
+
+
+int
+addScope(char *funcKey){
+    symtableGlobalItem *func = symtableItemGetGlobal(funcKey);
+    func->countTabs++;
+    func->localTabs = realloc(func->localTabs, sizeof(symtable) * (func->countTabs));
+    if(!func->localTabs){
+        fprintf(stderr,">> Error in addScope(), realloc failed [symtable.c]\n");
+        return INTERNAL_ERROR;
+    }
+    func->localTabs[func->countTabs-1] = calloc(SYMTABLE_SIZE,sizeof(symtableItem));
+    if(!func->localTabs[func->countTabs-1]){
+        fprintf(stderr,">> Error in addScope(), calloc failed[symtable.c]\n");
+        return INTERNAL_ERROR;
+    }
+    return SUCCESS;
+}
+
+int
+delScope(char *funcKey){
+    symtableGlobalItem *func = symtableItemGetGlobal(funcKey);
+    func->countTabs--;
+
+    symtable *tab;
+    tab = &(func->localTabs[func->countTabs]);
+    symtableItem *del,*temp;
+    //destroy one inner(local) symtable
+    for (int i = 0; i < SYMTABLE_SIZE; ++i){
+        temp = (*tab)[i];
+        while(temp){
+            del = temp;
+            temp = temp->next;
+            free(del);
+        }
+        (*tab)[i] = NULL;
+    }
+    free(*tab);
+    (*tab)= NULL;
+
+    free(func->localTabs[func->countTabs]);
+    func->localTabs = realloc(func->localTabs,sizeof(symtable)*func->countTabs);
+    if(!func->localTabs){
+        fprintf(stderr,">> Error, realloc failed in delScope() [symtable.c]\n");
+        return INTERNAL_ERROR;
+    }
+
+    return SUCCESS;
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 int 
 main(void){
+    //create global symtable
+    symtableCreateGlobal(&symGlobal); //works
 
-    //create a symtable
-    symtable tab;
+    //insert items into global symtable (functions)
+    symtableItemInsertGlobal("main");
+    symtableItemInsertGlobal("loudikBoi");
+    symtableItemInsertGlobal("sabina_scenuje");
+    symtableItemInsertGlobal("MAAAAAACEEEEEEE"); //works
     
-    printf("~!~ Create symtable\n\n");
-    //catch the return code (if calloc returned error)
-    if(symtableCreate(&tab) != SUCCESS){
+    //add some arguments & retvals
+    if(pushArg("main",TYPE_INT64))return 1;
+    if(pushArg("main",TYPE_FLOAT64))return 1;
+    if(pushArg("main",TYPE_STRING))return 1;
 
-        fprintf(stderr,"chybka nebo co pri vytvareni tabulky\n");
-        return 1;
-    }
-    
-    printSymtable(&tab);
+    if(pushArg("loudikBoi",TYPE_FLOAT64))return 1;
+    if(pushArg("sabina_scenuje",TYPE_BOOL))return 1;
+    if(pushArg("MAAAAAACEEEEEEE",TYPE_STRING))return 1; //works
 
-    symtableItem *item,*temp;
+    // -- DEBUG
+    // symtableGlobalItem *item = symtableItemGetGlobal("main");
+    // printf("func: %s; countArgs: %d; args:",item->key,item->countArgs);
+    // for (int i = 0; i < item->countArgs; i++)
+    // {
+    //     if(i != (item->countArgs-1)){
+    //         printf("%d,", item->args[i]);
+    //     } else {
+    //         printf("%d\n", item->args[i]);
+    //     }
+    // } //works
 
-    printf("~!~ Insert one item\n\n");
-    //item insertion
-    symtableItemInsert(&tab,"bam",&item,10);
+    if(pushRet("main",TYPE_BOOL))return 1;
+    if(pushRet("main",TYPE_STRING))return 1;
+    if(pushRet("main",TYPE_INT64))return 1;
+    if(pushRet("loudikBoi",TYPE_INT64))return 1;
+    if(pushRet("sabina_scenuje",TYPE_BOOL))return 1;
+    if(pushRet("MAAAAAACEEEEEEE",TYPE_STRING))return 1; //works
 
-    printSymtable(&tab);
+    // -- DEBUG
+    // printf("should be 5,2,3 >> ");
+    // for (int i = 0; i < item->countRets; i++)
+    // {
+    //     printf(" %d,",item->returns[i]);
+    // } //works
 
-    printf("~!~ Insert items\n\n");
-    // insert some items
-    symtableItemInsert(&tab,"louda",&temp,69);
-    symtableItemInsert(&tab,"hustoles",&temp,49);
-    symtableItemInsert(&tab,"bramburka",&temp,49);
-    symtableItemInsert(&tab,"bramburek",&temp,13);
-    symtableItemInsert(&tab,"tri",&temp,565);
-    symtableItemInsert(&tab,"osm",&temp,654);
-    symtableItemInsert(&tab,"dva",&temp,96);
-    symtableItemInsert(&tab,"faker",&temp,99);
-    symtableItemInsert(&tab,"maker",&temp,444);
-    symtableItemInsert(&tab,"baker",&temp,97);
-    symtableItemInsert(&tab,"dejmivic",&temp,98);
-    symtableItemInsert(&tab,"notakcoo",&temp,455);
-    
-    printSymtable(&tab);
+    // symtableGlobalItem *i = symtableItemGetGlobal("main");
+    itemType type = TYPE_INT64;
+    itemValue val;
+    val.int_ = 69;
+    symtableItemInsert("main","variable",type,val);
+    symtableItemInsert("main","variable2",type,val);
+    symtableItemInsert("main","variable3",type,val);
 
+    symtableItemInsert("loudikBoi","va1",type,val);
+    symtableItemInsert("sabina_scenuje","ve1",type,val);
+    symtableItemInsert("MAAAAAACEEEEEEE","aw2",type,val);
 
-    symtableItem *gimme;
-    //get some
-    printf("~!~ Get louda's value\n");
-    symtableItemGet(&tab,&gimme,"louda");
-    printf(" >>> node's key -- %s; his value -- %d\n\n",gimme->key,gimme->data);
-    
-    printf ("\n~!~ Delete bramburek,faker,dejmivic,baker~~~ \n");
-    symtableItemDelete(&tab,"bramburek");
-    symtableItemDelete(&tab,"faker");
-    symtableItemDelete(&tab,"dejmivic");
-    symtableItemDelete(&tab,"baker");
-    printSymtable(&tab);
+    // printSymtable("main");
+    printAll();
 
-    printf ("\n~!~ Destroy all~~~ \n");
-    symtableDestroy(&tab);
-    printSymtable(&tab);
+    addScope("main");
+    symtableItemInsert("main","lalala",type,val);
+    // symtableItem *it;
+    // it = symtableItemGet("main","lalala");
+    // printf("%s; %d\n",it->key,it->type);
+    printAll();
 
+    delScope("main");
+    printAll();
+
+    symtableDestroyGlobal();
+
+    // printf(">> %ld\n",sizeof(itemType));
     return 0;
 }
