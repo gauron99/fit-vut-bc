@@ -17,7 +17,7 @@
 
 #include <stdbool.h>
 //to include error codes as return values for functions
-#include "../error.h"
+#include "error.h"
 
 /**
  * @brief enum for item type used in symtable to identify what item is held
@@ -30,17 +30,6 @@ typedef enum itemType{
     TYPE_BOOL,
 
 }itemType;
-
-/**
- * @brief Holds a value of item in symtable
- */
-typedef union itemValue
-{
-    int int_;
-    float float_;
-    char *string_;
-    bool bool_;
-}itemValue;
 
 
 /**
@@ -57,7 +46,7 @@ typedef struct symtableItem{
     char *key;
 
     itemType type;
-    itemValue value;
+    char* data;
 
     struct symtableItem *next;
 
@@ -85,22 +74,6 @@ typedef symtableGlobalItem **symtableGI;
 //function prototypes start here //
 
 /**
- * @brief create symtable
- * @param tab pointer to the whole symtable
- */
-int
-symtableCreate(symtable *tab);
-
-/**
- * @brief destroy whole symtable
- *  destroys what can be destroyed, ignore otherwise
- * @param tab pointer to the whole symtable
- */
-
-// void
-// symtableDestroy();
-
-/**
  * @brief insert item into the (inner) symtable
  * @param funcKey name of function (in higher symtable)
  * @param key value of the item (used in hashing)
@@ -108,17 +81,8 @@ symtableCreate(symtable *tab);
  * @param value item value (int,float,string,bool...)
  */
 
-
 int
-symtableItemInsert(char *funcKey, char *key, itemType type, itemValue value);
-
-/**
- * @brief destroy one item by given key value
- * @param tab pointer to the whole symtable
- * @param key value given by user, what node to destroy (if none found, do nothing)
- */
-void
-symtableItemDelete(symtable *tab, char *key);
+symtableItemInsert(char *funcKey, char *key, itemType type, char *value);
 
 /**
  * @brief get item from symtable by key
@@ -154,5 +118,11 @@ addScope(char *funcKey);
 
 int
 delScope(char *funcKey);
+
+void
+printAll();
+
+void
+printSymtable(char *funcKey);
 
 #endif

@@ -29,26 +29,11 @@ hashFunc(char *key){
     return (final % SYMTABLE_SIZE);
 }
 
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-int //dont even use this anymore
-symtableCreate(symtable *tab){
-    *tab = calloc(SYMTABLE_SIZE,sizeof(***tab));
-    if(!tab){
-        fprintf(stderr,">> Calloc in symtableCreate() failed\n");
-        return INTERNAL_ERROR;
-    } else {
-
-        return SUCCESS;
-    }
-
-}
-
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 
 int
-symtableItemInsert(char *funcKey, char *key, itemType type, itemValue value){
+symtableItemInsert(char *funcKey, char *key, itemType type, char *value){
     symtableGlobalItem *func = symtableItemGetGlobal(funcKey);
     symtable tab = func->localTabs[func->countTabs-1];
     symtableItem *first,*temp;
@@ -73,7 +58,7 @@ symtableItemInsert(char *funcKey, char *key, itemType type, itemValue value){
     }
 
     new->type = type;
-    new->value = value;
+    new->data = value;
     new->key = key;
     new->next = NULL; //if its the first one, it will be the end of the list and always point to NULL
 
@@ -87,38 +72,6 @@ symtableItemInsert(char *funcKey, char *key, itemType type, itemValue value){
     return SUCCESS;
 }
 
-
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-void //don need it
-symtableItemDelete(symtable *tab, char *key){
-    int hash = hashFunc(key);
-    symtableItem *todel = (*tab)[hash],*next=NULL,*prev=NULL;
-
-    while(todel){
-        next = todel->next;
-
-        if(!strcmp(todel->key,key)){
-            free(todel);
-
-            //if deleted node is the first one
-            if(!prev){
-                (*tab)[hash] = next;
-                return; // break;
-            }
-            prev->next = next;
-
-            /*error with reading already freed memory
-            probably because of the next 2 lines of
-            assignment to 'todel' after reaching this point of
-            already freeing the memory, that's what this return is here
-            for --> to eliminate such error*/
-            return; // break;   
-        }
-        prev = todel;
-        todel = todel->next;
-    }
-}
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 symtableItem* 
@@ -196,13 +149,7 @@ printAll(){
         }
         printf("~~~ # of items |%d| ~~~ ~~~\n\n",count);
 }
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 //create global symtable
@@ -230,7 +177,7 @@ symtableDestroyGlobal(){
             while(tempGl){
                 delGl = tempGl;
                 tempGl = tempGl->next;
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
                 //free array of arg types if any was allocated
                 if(delGl->countArgs){
                     free(delGl->args);
@@ -239,7 +186,7 @@ symtableDestroyGlobal(){
                 if(delGl->countRets){
                     free(delGl->returns);
                 }
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
                 //destroy array of local symtables
                 for (int j = delGl->countTabs; j > 0 ; --j)    
                 {
@@ -376,7 +323,7 @@ pushArg(char *key, itemType type){
         return SUCCESS;
     }
         //didnt find element by key (function of name by key)
-        printf("loudo you basic bitch, neumíš ani psát stringy už jo, sem tě vychoval teda jinak, soustřed se vole\n");
+        printf("\n\nloudo you basic bitch, neumíš ani psát stringy už jo, sem tě vychoval teda jinak, soustřed se vole\n\n");
         return 666; //return error
 }
 
@@ -523,21 +470,20 @@ delScope(char *funcKey){
 
 //     // symtableGlobalItem *i = symtableItemGetGlobal("main");
 //     itemType type = TYPE_INT64;
-//     itemValue val;
-//     val.int_ = 69;
-//     symtableItemInsert("main","variable",type,val);
-//     symtableItemInsert("main","variable2",type,val);
-//     symtableItemInsert("main","variable3",type,val);
+    
+//     symtableItemInsert("main","variable",type,"5");
+//     symtableItemInsert("main","variable2",type,"10");
+//     symtableItemInsert("main","variable3",type,"18");
 
-//     symtableItemInsert("loudikBoi","va1",type,val);
-//     symtableItemInsert("sabina_scenuje","ve1",type,val);
-//     symtableItemInsert("MAAAAAACEEEEEEE","aw2",type,val);
+//     symtableItemInsert("loudikBoi","va1",type,"18");
+//     symtableItemInsert("sabina_scenuje","ve1",type,"18");
+//     symtableItemInsert("MAAAAAACEEEEEEE","aw2",type,"18");
 
 //     // printSymtable("main");
 //     printAll();
 
 //     addScope("main");
-//     symtableItemInsert("main","lalala",type,val);
+//     symtableItemInsert("main","lalala",type,"18");
 //     // symtableItem *it;
 //     // it = symtableItemGet("main","lalala");
 //     // printf("%s; %d\n",it->key,it->type);
