@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -511,9 +512,9 @@ int getToken(Token *token) {
             }
 
             break;
-        /*----------------------------STRING---------------------------*/
-        /*----------------------------O_16-----------------------------*/
 
+        /*----------------------------STRING---------------------------*/
+        /*-----------------------------S_1-----------------------------*/
 
         case ST_STRING_START:
             if(c == '\"') {
@@ -529,7 +530,7 @@ int getToken(Token *token) {
             }
 
             break;
-        /*----------------------------O_16-----------------------------*/
+        /*-----------------------------S_2-----------------------------*/
 
         case ST_STRING_END:
             ungetc(c, input);
@@ -538,7 +539,8 @@ int getToken(Token *token) {
             token->value.stringValue = content->str;
 
             return SUCCESS;
-        /*----------------------------O_16-----------------------------*/
+
+        /*-----------------------------S_3-----------------------------*/
 
         case ST_STRING_ESC_START:
             if(c == '\"' || c == 'n' || c == 't' || c == '\\') {
@@ -552,7 +554,8 @@ int getToken(Token *token) {
             }
 
             break;
-        /*----------------------------O_16-----------------------------*/
+
+        /*-----------------------------S_4-----------------------------*/
 
         case ST_STRING_HEXA_1:
             if(isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
@@ -563,7 +566,8 @@ int getToken(Token *token) {
             }
 
             break;
-        /*----------------------------O_16-----------------------------*/
+
+        /*-----------------------------S_5-----------------------------*/
 
         case ST_STRING_HEXA_2:
             if(isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
@@ -574,11 +578,9 @@ int getToken(Token *token) {
             }
 
             break;
-        /*-------------------------------------------------------------*/
 
-        /*------------------------LITERALS-----------------------------*/
-        /*----------------------------O_16-----------------------------*/
-
+        /*--------------------------LITERALS---------------------------*/
+        /*----------------------------L_1------------------------------*/
 
         case ST_NUM_WHOLE_PART_NONZERO:
             if(isdigit(c)) {
@@ -601,7 +603,8 @@ int getToken(Token *token) {
             }
 
             break;
-        /*----------------------------O_16-----------------------------*/
+
+        /*----------------------------L_0------------------------------*/
             
         case ST_NUM_WHOLE_PART_ZERO:
             if(c == '.') {
@@ -630,7 +633,8 @@ int getToken(Token *token) {
                 return SUCCESS;
             }
             break;
-        /*----------------------------O_16-----------------------------*/
+
+        /*-----------------------------L_2-----------------------------*/
 
         case ST_NUM_DECIMAL_POINT:
             if(isdigit(c)) {
@@ -641,7 +645,8 @@ int getToken(Token *token) {
             }
 
             break;
-        /*----------------------------O_16-----------------------------*/
+
+        /*-----------------------------L_3-----------------------------*/
 
         case ST_NUM_FRACTIONAL_PART:
             if(isdigit(c)) {
@@ -661,7 +666,8 @@ int getToken(Token *token) {
             }
 
             break;
-        /*----------------------------O_16-----------------------------*/
+
+        /*-----------------------------L_4-----------------------------*/
 
         case ST_NUM_EXPONENT:
             if(isdigit(c)) {
@@ -675,7 +681,8 @@ int getToken(Token *token) {
             }
 
             break;
-        /*----------------------------O_16-----------------------------*/
+
+        /*-----------------------------L_6-----------------------------*/
 
         case ST_NUM_EXPONENT_MUST:
             if(isdigit(c)) {
@@ -684,7 +691,8 @@ int getToken(Token *token) {
             } else {
                 return LEXICAL_ERROR;
             }
-        /*----------------------------O_16-----------------------------*/
+
+        /*-----------------------------L_5-----------------------------*/
 
         case ST_NUM_EXPONENT_POWER:
             if(isdigit(c)) {
@@ -708,8 +716,8 @@ int getToken(Token *token) {
 
             break; 
 
-        /*------------------------BINARY-----------------------------*/
-        /*----------------------------O_16-----------------------------*/
+        /*---------------------------BINARY----------------------------*/
+        /*----------------------------L_7------------------------------*/
 
         case ST_BINARY_BASE:
             if(isBinary(c)) {
@@ -721,7 +729,7 @@ int getToken(Token *token) {
                 return LEXICAL_ERROR;
             }
             break;
-        /*----------------------------O_16-----------------------------*/
+        /*-----------------------------L_8-----------------------------*/
 
         case ST_BINARY_CORE:
             if(isBinary(c)) {
@@ -737,7 +745,7 @@ int getToken(Token *token) {
                 return SUCCESS;
             }
             break; 
-        /*----------------------------O_16-----------------------------*/
+        /*-----------------------------L_9-----------------------------*/
 
         case ST_BINARY_SEPARATOR:
             if(isBinary(c)) {
@@ -748,8 +756,8 @@ int getToken(Token *token) {
             }
             break;    
             
-        /*--------------------------OCTAL------------------------------*/
-        /*----------------------------O_16-----------------------------*/
+        /*----------------------------OCTAL----------------------------*/
+        /*----------------------------L-10-----------------------------*/
 
         case ST_OCTAL_BASE:
             if(isOctal(c)) {
@@ -761,7 +769,8 @@ int getToken(Token *token) {
                 return LEXICAL_ERROR;
             }
             break; 
-        /*----------------------------O_16-----------------------------*/
+
+        /*----------------------------L_11-----------------------------*/
 
         case ST_OCTAL_CORE:
             if(isOctal(c)) {
@@ -776,8 +785,9 @@ int getToken(Token *token) {
 
                 return SUCCESS;
             }
-            break;   
-        /*----------------------------O_16-----------------------------*/
+            break;  
+
+        /*----------------------------L_12-----------------------------*/
 
         case ST_OCTAL_SEPARATOR:
             if(isOctal(c)) {
@@ -788,8 +798,8 @@ int getToken(Token *token) {
             }
             break;     
 
-        /*------------------------HEXADECIMAL--------------------------*/
-        /*----------------------------O_16-----------------------------*/
+        /*-------------------------HEXADECIMAL-------------------------*/
+        /*----------------------------L_13-----------------------------*/
 
         case ST_HEXA_BASE:
             if(isHexa(c)) {
@@ -801,11 +811,11 @@ int getToken(Token *token) {
                 return LEXICAL_ERROR;
             }
             break;
-        /*----------------------------O_16-----------------------------*/
+        /*----------------------------L_14-----------------------------*/
 
         case ST_HEXA_CORE:
             if(isHexa(c)) {
-                appendChar(c, content);
+                appendChar(content, c);
                 currentState = ST_HEXA_CORE;
             } else if (c == '_') {
                 currentState = ST_HEXA_SEPARATOR;
@@ -816,11 +826,11 @@ int getToken(Token *token) {
                 return SUCCESS;
             }
             break;    
-        /*----------------------------O_16-----------------------------*/
+        /*----------------------------L_15-----------------------------*/
 
         case ST_HEXA_SEPARATOR:
             if(isHexa(c)) {
-                appendChar(c, content);
+                appendChar(content, c);
                 currentState = ST_OCTAL_CORE;
             } else {
                 return LEXICAL_ERROR;
@@ -829,7 +839,6 @@ int getToken(Token *token) {
 
         /*-------------------------------------------------------------*/    
         /*-------------------------------------------------------------*/
-
 
         case ST_ERROR:
           return LEXICAL_ERROR;
@@ -842,26 +851,26 @@ int getToken(Token *token) {
     return returnVal;
 } 
 
-bool isBinary(char c) {
+int isBinary(char c) {
     if(isdigit(c) && (c == '0' || c == '1')) {
-        return true;
+        return 1;
     } else {
-        return false;
+        return 0;
     }
 }
 
-bool isOctal(char c) {
+int isOctal(char c) {
     if(isdigit(c) && (c >= '0' && c <= '7')) {
-        return true;
+        return 1;
     } else {
-        return false;
+        return 0;
     }
 }
 
-bool isHexa(char c) {
+int isHexa(char c) {
     if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-        return true;
+        return 1;
     } else {
-        return false;
+        return 0;
     }
 }

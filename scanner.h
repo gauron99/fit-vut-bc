@@ -12,6 +12,7 @@
 #ifndef SCANNER_H
 #define SCANNER_H
 
+
 /**
  *
  *
@@ -159,13 +160,13 @@ int getToken(Token *token);
 int ungetToken(Token *token);
 
 /*returns true if c has binary value*/
-bool isBinary(char c);
+int isBinary(char c);
 
 /*returns true if c has octal value*/
-bool isOctal(char c);
-
+int isOctal(char c);
+ 
 /*returns true if c has hexadecimal value*/
-bool isHexa(char c);
+int isHexa(char c);
 
 /*frees up the memory*/
 //int cleanUp();
