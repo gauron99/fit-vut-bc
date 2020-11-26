@@ -62,7 +62,9 @@ typedef enum {
     SEMICOLON,              // ;
 
     EOL_,
-    EOF_
+    EOF_,
+
+    BOOL                    // true / false
 
 } tokenType;
 
@@ -86,7 +88,6 @@ typedef struct {
  */
 typedef enum { /*state num, read lexeme*/
 
-/*TODO PRIDAT EOF DO MULTILINE KOMENTARU, TEDA VYLUCIT HO*/
     INIT_ST,            /*S*/
     ST_EOL,             /*P_5*/
     ST_PLUS,            /*O_10, + */
@@ -130,18 +131,18 @@ typedef enum { /*state num, read lexeme*/
     ST_NUM_DECIMAL_POINT,       /*L_2, 1. */
     ST_NUM_FRACTIONAL_PART,     /*L_3, 1.8 */
     ST_NUM_EXPONENT,            /*L_4, 1.3E,e */
-    ST_NUM_EXPONENT_MUST,
+    ST_NUM_EXPONENT_MUST,       /*L_6, 1.3e+ */
     ST_NUM_EXPONENT_POWER,      /*L_5, 1.3e1 */
     ST_IDENTIF_KEYWORD,         /*I_0, _a.. */
-    ST_BINARY_BASE,             /*L_6, 0b */
-    ST_BINARY_CORE,             /*L_7, 0b0 */
-    ST_BINARY_SEPARATOR,        /*L_8, 0b0_ */
-    ST_OCTAL_BASE,              /*L_9 0o */
-    ST_OCTAL_CORE,              /*L_10, 0o7 */
-    ST_OCTAL_SEPARATOR,         /*L_11, 0o7_ */
-    ST_HEXA_BASE,               /*L_12, 0x */
-    ST_HEXA_CORE,               /*L_13, 0xA */
-    ST_HEXA_SEPARATOR,           /*L_14, 0xA_ */
+    ST_BINARY_BASE,             /*L_7, 0b */
+    ST_BINARY_CORE,             /*L_8, 0b0 */
+    ST_BINARY_SEPARATOR,        /*L_9, 0b0_ */
+    ST_OCTAL_BASE,              /*L_10, 0o */
+    ST_OCTAL_CORE,              /*L_11, 0o7 */
+    ST_OCTAL_SEPARATOR,         /*L_12, 0o7_ */
+    ST_HEXA_BASE,               /*L_13, 0x */
+    ST_HEXA_CORE,               /*L_14, 0xA */
+    ST_HEXA_SEPARATOR,          /*L_15, 0xA_ */
     ST_ERROR
 } stateType;
 
@@ -154,7 +155,20 @@ typedef enum { /*state num, read lexeme*/
  */
 /* vracia navratovy kod */
 int getToken(Token *token);
+
 int ungetToken(Token *token);
+
+/*returns true if c has binary value*/
+bool isBinary(char c);
+
+/*returns true if c has octal value*/
+bool isOctal(char c);
+
+/*returns true if c has hexadecimal value*/
+bool isHexa(char c);
+
+/*frees up the memory*/
+//int cleanUp();
 
 
 #endif // !SCANNER_H
