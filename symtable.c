@@ -475,79 +475,79 @@ delScope(char *funcKey){
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-int 
-main(void){
-    //create global symtable
-    symtableCreateGlobal(&symGlobal); //works
+// int 
+// main(void){
+//     //create global symtable
+//     symtableCreateGlobal(&symGlobal); //works
 
-    //insert items into global symtable (functions)
-    symtableItemInsertGlobal("main");
-    symtableItemInsertGlobal("loudikBoi");
-    symtableItemInsertGlobal("sabina_scenuje");
-    symtableItemInsertGlobal("MAAAAAACEEEEEEE"); //works
+//     //insert items into global symtable (functions)
+//     symtableItemInsertGlobal("main");
+//     symtableItemInsertGlobal("loudikBoi");
+//     symtableItemInsertGlobal("sabina_scenuje");
+//     symtableItemInsertGlobal("MAAAAAACEEEEEEE"); //works
     
-    //add some arguments & retvals
-    if(pushArg("main",TYPE_INT64))return 1;
-    if(pushArg("main",TYPE_FLOAT64))return 1;
-    if(pushArg("main",TYPE_STRING))return 1;
+//     //add some arguments & retvals
+//     if(pushArg("main",TYPE_INT64))return 1;
+//     if(pushArg("main",TYPE_FLOAT64))return 1;
+//     if(pushArg("main",TYPE_STRING))return 1;
 
-    if(pushArg("loudikBoi",TYPE_FLOAT64))return 1;
-    if(pushArg("sabina_scenuje",TYPE_BOOL))return 1;
-    if(pushArg("MAAAAAACEEEEEEE",TYPE_STRING))return 1; //works
+//     if(pushArg("loudikBoi",TYPE_FLOAT64))return 1;
+//     if(pushArg("sabina_scenuje",TYPE_BOOL))return 1;
+//     if(pushArg("MAAAAAACEEEEEEE",TYPE_STRING))return 1; //works
 
-    // -- DEBUG
-    // symtableGlobalItem *item = symtableItemGetGlobal("main");
-    // printf("func: %s; countArgs: %d; args:",item->key,item->countArgs);
-    // for (int i = 0; i < item->countArgs; i++)
-    // {
-    //     if(i != (item->countArgs-1)){
-    //         printf("%d,", item->args[i]);
-    //     } else {
-    //         printf("%d\n", item->args[i]);
-    //     }
-    // } //works
+//     // -- DEBUG
+//     // symtableGlobalItem *item = symtableItemGetGlobal("main");
+//     // printf("func: %s; countArgs: %d; args:",item->key,item->countArgs);
+//     // for (int i = 0; i < item->countArgs; i++)
+//     // {
+//     //     if(i != (item->countArgs-1)){
+//     //         printf("%d,", item->args[i]);
+//     //     } else {
+//     //         printf("%d\n", item->args[i]);
+//     //     }
+//     // } //works
 
-    if(pushRet("main",TYPE_BOOL))return 1;
-    if(pushRet("main",TYPE_STRING))return 1;
-    if(pushRet("main",TYPE_INT64))return 1;
-    if(pushRet("loudikBoi",TYPE_INT64))return 1;
-    if(pushRet("sabina_scenuje",TYPE_BOOL))return 1;
-    if(pushRet("MAAAAAACEEEEEEE",TYPE_STRING))return 1; //works
+//     if(pushRet("main",TYPE_BOOL))return 1;
+//     if(pushRet("main",TYPE_STRING))return 1;
+//     if(pushRet("main",TYPE_INT64))return 1;
+//     if(pushRet("loudikBoi",TYPE_INT64))return 1;
+//     if(pushRet("sabina_scenuje",TYPE_BOOL))return 1;
+//     if(pushRet("MAAAAAACEEEEEEE",TYPE_STRING))return 1; //works
 
-    // -- DEBUG
-    // printf("should be 5,2,3 >> ");
-    // for (int i = 0; i < item->countRets; i++)
-    // {
-    //     printf(" %d,",item->returns[i]);
-    // } //works
+//     // -- DEBUG
+//     // printf("should be 5,2,3 >> ");
+//     // for (int i = 0; i < item->countRets; i++)
+//     // {
+//     //     printf(" %d,",item->returns[i]);
+//     // } //works
 
-    // symtableGlobalItem *i = symtableItemGetGlobal("main");
-    itemType type = TYPE_INT64;
-    itemValue val;
-    val.int_ = 69;
-    symtableItemInsert("main","variable",type,val);
-    symtableItemInsert("main","variable2",type,val);
-    symtableItemInsert("main","variable3",type,val);
+//     // symtableGlobalItem *i = symtableItemGetGlobal("main");
+//     itemType type = TYPE_INT64;
+//     itemValue val;
+//     val.int_ = 69;
+//     symtableItemInsert("main","variable",type,val);
+//     symtableItemInsert("main","variable2",type,val);
+//     symtableItemInsert("main","variable3",type,val);
 
-    symtableItemInsert("loudikBoi","va1",type,val);
-    symtableItemInsert("sabina_scenuje","ve1",type,val);
-    symtableItemInsert("MAAAAAACEEEEEEE","aw2",type,val);
+//     symtableItemInsert("loudikBoi","va1",type,val);
+//     symtableItemInsert("sabina_scenuje","ve1",type,val);
+//     symtableItemInsert("MAAAAAACEEEEEEE","aw2",type,val);
 
-    // printSymtable("main");
-    printAll();
+//     // printSymtable("main");
+//     printAll();
 
-    addScope("main");
-    symtableItemInsert("main","lalala",type,val);
-    // symtableItem *it;
-    // it = symtableItemGet("main","lalala");
-    // printf("%s; %d\n",it->key,it->type);
-    printAll();
+//     addScope("main");
+//     symtableItemInsert("main","lalala",type,val);
+//     // symtableItem *it;
+//     // it = symtableItemGet("main","lalala");
+//     // printf("%s; %d\n",it->key,it->type);
+//     printAll();
 
-    delScope("main");
-    printAll();
+//     delScope("main");
+//     printAll();
 
-    symtableDestroyGlobal();
+//     symtableDestroyGlobal();
 
-    // printf(">> %ld\n",sizeof(itemType));
-    return 0;
-}
+//     // printf(">> %ld\n",sizeof(itemType));
+//     return 0;
+// }
