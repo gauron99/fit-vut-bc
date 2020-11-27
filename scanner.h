@@ -25,10 +25,6 @@ typedef enum {
     FLOAT,                  // 1.2
     STRING,                 // hello
 
-    BINARY,                 // 0b111
-    OCTAL,                  // 0o12345
-    HEXA,                   // oxAF
-
     ASSIGNMENT,             // =
     DEFINITION,             // :=
 
@@ -74,13 +70,10 @@ typedef enum {
  *
  */
 typedef struct {
+    
     tokenType type;
+    char* value;
 
-    union {
-        int intValue;
-        float floatValue;
-        char* stringValue;
-    } value;
 } Token;
 
 /**

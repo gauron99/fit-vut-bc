@@ -66,11 +66,11 @@ int getToken(Token *token) {
         case INIT_ST:
             if(c == EOF) { /* end of file */
                 token->type = EOF_;
-                token->value.stringValue = "EOF";
+                token->value = "EOF";
                 return SUCCESS;
             } else if(c == EOL) {  /* end of line */
                 token->type = EOL_;
-                token->value.stringValue = "EOL";
+                token->value = "EOL";
                 return SUCCESS;
             } else if(c == ' ' || c == '\t') { /*whitespace*/
                 break;
@@ -137,7 +137,7 @@ int getToken(Token *token) {
                 currentState = ST_PLUS_EQ;
             } else {
                 token->type = PLUS;
-                token->value.stringValue = "+";
+                token->value = "+";
                 ungetc(c, input);
                 return SUCCESS;
             }
@@ -148,7 +148,7 @@ int getToken(Token *token) {
 
         case ST_PLUS_EQ:
             token->type = PLUS_EQ;
-            token->value.stringValue = "+=";
+            token->value = "+=";
             ungetc(c, input);
             return SUCCESS;
 
@@ -160,7 +160,7 @@ int getToken(Token *token) {
                 currentState = ST_MINUS_EQ;
             } else {
                 token->type = MINUS;
-                token->value.stringValue = "-";
+                token->value = "-";
                 ungetc(c,input);
                 return SUCCESS;
             }
@@ -171,7 +171,7 @@ int getToken(Token *token) {
 
         case ST_MINUS_EQ:
             token->type = MINUS_EQ;
-            token->value.stringValue = "-=";
+            token->value = "-=";
             ungetc(c, input);
             return SUCCESS;
 
@@ -183,7 +183,7 @@ int getToken(Token *token) {
                 currentState = ST_MUL_EQ;
             } else {
                 token->type = MUL;
-                token->value.stringValue = "*";
+                token->value = "*";
                 ungetc(c, input);
                 return SUCCESS;
             }
@@ -195,7 +195,7 @@ int getToken(Token *token) {
 
         case ST_MUL_EQ:
             token->type = MUL_EQ;
-            token->value.stringValue = "*=";
+            token->value = "*=";
             ungetc(c, input);
             return SUCCESS;
 
@@ -210,7 +210,7 @@ int getToken(Token *token) {
                 currentState = ST_SLASH_EQ;
             } else {
                 token->type = DIV;
-                token->value.stringValue = "/";
+                token->value = "/";
                 ungetc(c, input);
                 return SUCCESS;
             }
@@ -221,12 +221,12 @@ int getToken(Token *token) {
         case ST_SINGLE_L_COMMENT:
             if(c == EOL) {
                 token->type = EOL_;
-                token->value.stringValue = "EOL";
+                token->value = "EOL";
 
                 return SUCCESS;
             } else if(c == EOF) {
                 token->type = EOF_;
-                token->value.stringValue = "EOF";
+                token->value = "EOF";
 
                 return SUCCESS;
             } else {
@@ -252,7 +252,7 @@ int getToken(Token *token) {
 
         case ST_SLASH_EQ:
             token->type = DIV_EQ;
-            token->value.stringValue = "/=";
+            token->value = "/=";
             ungetc(c, input);
             return SUCCESS;
 
@@ -275,14 +275,14 @@ int getToken(Token *token) {
 
         case ST_R_ROUND_BRACKET:
             token->type = RIGHT_ROUND_BRACKET;
-            token->value.stringValue = ")";
+            token->value = ")";
             return SUCCESS;
 
         /*----------------------------P_1------------------------------*/
 
         case ST_L_ROUND_BRACKET:
             token->type = LEFT_ROUND_BRACKET;
-            token->value.stringValue = "(";
+            token->value = "(";
             return SUCCESS;
 
         /*-----------------------CURLY BRACKETS------------{}----------*/
@@ -290,14 +290,14 @@ int getToken(Token *token) {
 
         case ST_R_CURLY_BRACKET:
             token->type = RIGHT_CURLY_BRACKET;
-            token->value.stringValue = "}";
+            token->value = "}";
             return SUCCESS;
 
         /*----------------------------P_3------------------------------*/
 
         case ST_L_CURLY_BRACKET:
             token->type = LEFT_CURLY_BRACKET;
-            token->value.stringValue = "{";
+            token->value = "{";
             return SUCCESS;
 
         /*-----------------------COMMA SEPARATOR-------------,---------*/
@@ -305,7 +305,7 @@ int getToken(Token *token) {
 
         case ST_COMMA:
             token->type = COMMA;
-            token->value.stringValue = ",";
+            token->value = ",";
             return SUCCESS;
 
         /*-------------------------SEMICOLON----------------;----------*/
@@ -313,7 +313,7 @@ int getToken(Token *token) {
 
         case ST_SEMICOLON:
             token->type = SEMICOLON;
-            token->value.stringValue = ";";
+            token->value = ";";
             return SUCCESS;
 
         /*-------------------------COMPARISON--------------------------*/
@@ -324,7 +324,7 @@ int getToken(Token *token) {
                 currentState = ST_LESS_EQUAL;
             } else {
                 token->type = LESS;
-                token->value.stringValue = "<";
+                token->value = "<";
                 ungetc(c, input);
                 return SUCCESS;
             }
@@ -335,7 +335,7 @@ int getToken(Token *token) {
 
         case ST_LESS_EQUAL:
             token->type = LESS_OR_EQUAL;
-            token->value.stringValue = "<=";
+            token->value = "<=";
             return SUCCESS;
 
         /*----------------------------O_2--------------------->--------*/
@@ -345,7 +345,7 @@ int getToken(Token *token) {
                 currentState = ST_GREATER_EQUAL;
             } else {
                 token->type = GREATER;
-                token->value.stringValue = ">";
+                token->value = ">";
                 ungetc(c, input);
                 return SUCCESS;
             }
@@ -356,7 +356,7 @@ int getToken(Token *token) {
 
         case ST_GREATER_EQUAL:
             token->type = GREATER_OR_EQUAL;
-            token->value.stringValue = ">=";
+            token->value = ">=";
             return SUCCESS;
 
         /*-------------------------ASSIGNMENT-----------------=--------*/
@@ -367,7 +367,7 @@ int getToken(Token *token) {
                 currentState = ST_EQUAL;
             } else {
                 token->type = ASSIGNMENT;
-                token->value.stringValue = "=";
+                token->value = "=";
                 ungetc(c, input);
                 return SUCCESS;
             }
@@ -378,7 +378,7 @@ int getToken(Token *token) {
 
         case ST_EQUAL:
             token->type = EQUAL;
-            token->value.stringValue = "==";
+            token->value = "==";
             ungetc(c, input);
             return SUCCESS;
 
@@ -389,7 +389,7 @@ int getToken(Token *token) {
                 currentState = ST_NOT_EQUAL;
             } else {
                 token->type = NOT;
-                token->value.stringValue = "!";
+                token->value = "!";
                 ungetc(c, input);
                 return SUCCESS;
             }
@@ -400,7 +400,7 @@ int getToken(Token *token) {
 
         case ST_NOT_EQUAL:
             token->type = NOT_EQUAL;
-            token->value.stringValue = "!=";
+            token->value = "!=";
             ungetc(c, input);
             return SUCCESS;
 
@@ -419,7 +419,7 @@ int getToken(Token *token) {
 
         case ST_AND:
             token->type = AND;
-            token->value.stringValue = "&&";
+            token->value = "&&";
             ungetc(c, input);
             return SUCCESS;
         /*----------------------------O_19----------------------|------*/
@@ -437,7 +437,7 @@ int getToken(Token *token) {
 
         case ST_OR:
             token->type = OR;
-            token->value.stringValue = "||"; 
+            token->value = "||"; 
             ungetc(c, input);
             return SUCCESS; 
 
@@ -459,7 +459,7 @@ int getToken(Token *token) {
         case ST_DEFINITION:
             ungetc(c, input); //TODO
             token->type = DEFINITION;
-            token->value.stringValue = ":=";
+            token->value = ":=";
             return SUCCESS;
 
         /*----------------------IDENTIFIER/KEYWORD---------------------*/
@@ -476,7 +476,7 @@ int getToken(Token *token) {
                 
                 if(strcmp("true", stored) == 0) {
                     token->type = BOOL;
-                    token->value.stringValue = stored;
+                    token->value = stored;
 
                     eraseDynamicString(content);
                     freeDynamicString(content);
@@ -485,7 +485,7 @@ int getToken(Token *token) {
 
                 if(strcmp("false", stored) == 0) {
                     token->type = BOOL;
-                    token->value.stringValue = stored;
+                    token->value = stored;
 
                     eraseDynamicString(content);
                     freeDynamicString(content);
@@ -495,7 +495,7 @@ int getToken(Token *token) {
                 for(int i = 0; i < numOfKeywords; i++) {
                     if(strcmp(keyWords[i], stored) == 0) {
                         token->type = KEYWORD;
-                        token->value.stringValue = stored;
+                        token->value = stored;
 
                         eraseDynamicString(content);
                         freeDynamicString(content);
@@ -503,7 +503,7 @@ int getToken(Token *token) {
                     }
                 }
                 token->type = IDENTIFIER;
-                token->value.stringValue = stored;
+                token->value = stored;
 
                 eraseDynamicString(content);
                 freeDynamicString(content);
@@ -536,7 +536,7 @@ int getToken(Token *token) {
             ungetc(c, input);
 
             token->type = STRING;
-            token->value.stringValue = content->str;
+            token->value = content->str;
 
             return SUCCESS;
 
@@ -596,8 +596,7 @@ int getToken(Token *token) {
                 ungetc(c, input);
 
                 token->type = INTEGER;
-                int iNumber = atoi(content->str);
-                token->value.intValue = iNumber;
+                token->value = content->str;
 
                 return SUCCESS;
             }
@@ -614,24 +613,20 @@ int getToken(Token *token) {
                 appendChar(content, c);
                 currentState = ST_NUM_EXPONENT;
             } else if(c == 'b' || c == 'B'){
-               // appendChar(content, c);
-               eraseDynamicString(content);
+                eraseDynamicString(content);
                 currentState = ST_BINARY_BASE;
             } else if(c == 'o' || c == 'O') {
-               // appendChar(content, c);
-               eraseDynamicString(content);
+                eraseDynamicString(content);
                 currentState = ST_OCTAL_BASE;
             } else if(c == 'x' || c == 'X') {
-              //  appendChar(content, c);
-               eraseDynamicString(content);
+                eraseDynamicString(content);
                 currentState = ST_HEXA_BASE;
             } else if(isdigit(c)) {
                 return LEXICAL_ERROR;
             } else {
                 ungetc(c, input);
                 token->type = INTEGER;
-                int iNumber = atoi(content->str);
-                token->value.intValue = iNumber;
+                token->value = content->str;
 
                 return SUCCESS;
             }
@@ -662,8 +657,8 @@ int getToken(Token *token) {
                 ungetc(c, input);
                 token->type = FLOAT;
 
-                double fNumber = atof(content->str);
-                token->value.floatValue = fNumber;
+                // double fNumber = atof(content->str);
+                token->value = content->str;
 
                 return SUCCESS;
             }
@@ -703,16 +698,18 @@ int getToken(Token *token) {
                 currentState = ST_NUM_EXPONENT_POWER;
             } else {
                 ungetc(c, input);
-                double fNumber = atof(content->str);
-                int truncated = (int)fNumber;
+                // double fNumber = atof(content->str);
+                // int truncated = (int)fNumber;
 
-                if (fNumber == truncated) {
-                    token->type = INTEGER;
-                    token->value.intValue = truncated;
-                } else {
-                    token->type = FLOAT;
-                    token->value.floatValue = fNumber;
-                }
+                // if (fNumber == truncated) {
+                //     token->type = INTEGER;
+                //     token->value.intValue = truncated;
+                // } else {
+                //     token->type = FLOAT;
+                //     token->value.floatValue = fNumber;
+                // }
+                token->type = FLOAT;
+                token->value = content->str;
 
                 return SUCCESS;
             }
@@ -742,8 +739,14 @@ int getToken(Token *token) {
                 currentState = ST_BINARY_SEPARATOR;
             } else {
                 ungetc(c, input);
-                token->type = BINARY;
-                token->value.stringValue = content->str;
+                /*converting string conatining binary number to integer*/
+                char *ptr;
+                int binaryValue = strtol(content->str, &ptr, 2);
+                /*converting integer value into string*/
+                char *converted;
+                sprintf(converted, "%d", binaryValue);
+                token->type = INTEGER;
+                token->value = converted;
 
                 return SUCCESS;
             }
@@ -783,8 +786,16 @@ int getToken(Token *token) {
                 currentState = ST_OCTAL_SEPARATOR;
             } else {
                 ungetc(c, input);
-                token->type = OCTAL;
-                token->value.stringValue = content->str;
+                //tuto konvertujem cislo zo stringu na integer
+                char *ptr;
+                int octalValue = strtol(content->str, &ptr, 8);
+                printf("The value of 0o%s in decimal is %d", content->str, octalValue);
+                char *newnum;
+                sprintf(newnum, "%d", octalValue);
+                printf("The value of string is %s", newnum);
+                //tuto konvertujem integer do stringu
+                token->type = INTEGER;
+                token->value = newnum;
 
                 return SUCCESS;
             }
@@ -824,8 +835,10 @@ int getToken(Token *token) {
                 currentState = ST_HEXA_SEPARATOR;
             } else {
                 ungetc(c, input);
-                token->type = HEXA;
-                token->value.stringValue = content->str;
+                //tuto konvertujem string na integer
+                //tuto konvertujem integer do stringu
+                token->type = INTEGER;
+                token->value = content->str;
                 return SUCCESS;
             }
             break;    
