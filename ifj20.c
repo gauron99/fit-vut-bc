@@ -15,7 +15,11 @@ symtableGI symGlobal;
 
 int main(){
 
+<<<<<<< HEAD
     //create global symtable
+=======
+     //create global symtable
+>>>>>>> 9c35bd9b0620433e17a7b78e4710f8e272c46023
     symtableCreateGlobal(&symGlobal); //works
 
     //insert items into global symtable (functions)
@@ -23,7 +27,11 @@ int main(){
     symtableItemInsertGlobal("loudikBoi");
     symtableItemInsertGlobal("sabina_scenuje");
     symtableItemInsertGlobal("MAAAAAACEEEEEEE"); //works
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 9c35bd9b0620433e17a7b78e4710f8e272c46023
     //add some arguments & retvals
     if(pushArg("main",TYPE_INT64))return 1;
     if(pushArg("main",TYPE_FLOAT64))return 1;
@@ -61,7 +69,11 @@ int main(){
 
     // symtableGlobalItem *i = symtableItemGetGlobal("main");
     itemType type = TYPE_INT64;
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 9c35bd9b0620433e17a7b78e4710f8e272c46023
     symtableItemInsert("main","variable",type,"5");
     symtableItemInsert("main","variable2",type,"10");
     symtableItemInsert("main","variable3",type,"18");
@@ -95,7 +107,11 @@ int main(){
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
+<<<<<<< HEAD
 
+=======
+   
+>>>>>>> 9c35bd9b0620433e17a7b78e4710f8e272c46023
 
 
     int lexicalResult = 0; //Scanner return code
