@@ -33,7 +33,7 @@ hashFunc(char *key){
 
 
 int
-symtableItemInsert(char *funcKey, char *key, itemType type, char *value){
+symtableItemInsert(char *funcKey, char *key, itemType type){
     symtableGlobalItem *func = symtableItemGetGlobal(funcKey);
     symtable tab = func->localTabs[func->countTabs-1];
     symtableItem *first,*temp;
@@ -58,7 +58,6 @@ symtableItemInsert(char *funcKey, char *key, itemType type, char *value){
     }
 
     new->type = type;
-    new->data = value;
     new->key = key;
     new->next = NULL; //if its the first one, it will be the end of the list and always point to NULL
 
