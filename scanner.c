@@ -55,7 +55,7 @@ int getToken(Token *token) {
     dynamicString *content = &string;
     if (initDynamicString(content) == -1) {
         return INTERNAL_ERROR;
-    }
+    } 
 
     stateType currentState = INIT_ST;
 
@@ -739,15 +739,19 @@ int getToken(Token *token) {
                 currentState = ST_BINARY_SEPARATOR;
             } else {
                 ungetc(c, input);
-                /*converting string conatining binary number to integer*/
+                /*converting string containing binary number to integer*/
                 char *ptr;
                 int binaryValue = strtol(content->str, &ptr, 2);
                 /*converting integer value into string*/
-                char *converted;
-                sprintf(converted, "%d", binaryValue);
+
+                int length = snprintf(NULL, 0, "%d", binaryValue);
+                char* converted = malloc(length +1);
+                snprintf(converted, length + 1, "%d", binaryValue);
+
                 token->type = INTEGER;
                 token->value = converted;
 
+                //free(converted);
                 return SUCCESS;
             }
             break; 
@@ -786,17 +790,16 @@ int getToken(Token *token) {
                 currentState = ST_OCTAL_SEPARATOR;
             } else {
                 ungetc(c, input);
-                //tuto konvertujem cislo zo stringu na integer
                 char *ptr;
                 int octalValue = strtol(content->str, &ptr, 8);
-                printf("The value of 0o%s in decimal is %d", content->str, octalValue);
-                char *newnum;
-                sprintf(newnum, "%d", octalValue);
-                printf("The value of string is %s", newnum);
-                //tuto konvertujem integer do stringu
-                token->type = INTEGER;
-                token->value = newnum;
+                int length = snprintf(NULL, 0, "%d", octalValue);
+                char* converted = malloc(length +1);
+                snprintf(converted, length + 1, "%d", octalValue);
 
+                token->type = INTEGER;
+                token->value = converted;
+
+                //free(converted)
                 return SUCCESS;
             }
             break;  
@@ -835,10 +838,18 @@ int getToken(Token *token) {
                 currentState = ST_HEXA_SEPARATOR;
             } else {
                 ungetc(c, input);
-                //tuto konvertujem string na integer
-                //tuto konvertujem integer do stringu
+                /*converting string conatining binary number to integer*/
+                char *ptr;
+                int hexaValue = strtol(content->str, &ptr, 16);
+
+                int length = snprintf(NULL, 0, "%d", hexaValue);
+                char* converted = malloc(length +1);
+                snprintf(converted, length + 1, "%d", hexaValue);
+
                 token->type = INTEGER;
-                token->value = content->str;
+                token->value = converted;
+                
+                //free(converted);
                 return SUCCESS;
             }
             break;    
