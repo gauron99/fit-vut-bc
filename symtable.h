@@ -46,7 +46,6 @@ typedef struct symtableItem{
     char *key;
 
     itemType type;
-    char* data;
 
     struct symtableItem *next;
 
@@ -82,7 +81,7 @@ typedef symtableGlobalItem **symtableGI;
  */
 
 int
-symtableItemInsert(char *funcKey, char *key, itemType type, char *value);
+symtableItemInsert(char *funcKey, char *key, itemType type);
 
 /**
  * @brief get item from symtable by key
