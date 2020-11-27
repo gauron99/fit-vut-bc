@@ -217,12 +217,6 @@ symtableDestroyGlobal(){
 }
 
 int
-symtableItemInsert(char *funcKey, char *key, itemType type, char *value){
-    symtableGlobalItem *func = symtableItemGetGlobal(funcKey);
-    symtable tab = func->localTabs[func->countTabs-1];
-    symtableItem *first,*temp;
-
-int
 symtableItemInsertGlobal(char *key){
     symtableGlobalItem *first,*temp;
     int hash = hashFunc(key);
