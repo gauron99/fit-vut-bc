@@ -53,7 +53,6 @@ typedef struct symtableItem{
 }symtableItem;
 
 typedef symtableItem **symtable;
-<<<<<<< HEAD
 
 typedef struct symtableGlobalItem{
     char *key;
@@ -67,21 +66,6 @@ typedef struct symtableGlobalItem{
     symtable *localTabs;
     int countTabs;
 
-=======
-
-typedef struct symtableGlobalItem{
-    char *key;
-
-    itemType *args;
-    int countArgs;
-
-    itemType *returns;
-    int countRets;
-
-    symtable *localTabs;
-    int countTabs;
-    
->>>>>>> 9c35bd9b0620433e17a7b78e4710f8e272c46023
     struct symtableGlobalItem *next;
 
 }symtableGlobalItem;
@@ -125,19 +109,11 @@ symtableDestroyGlobal();
 
 int
 pushArg(char *key,itemType type);
-<<<<<<< HEAD
 
 int
 pushRet(char *key,itemType type);
 
 int
-=======
-
-int
-pushRet(char *key,itemType type);
-
-int
->>>>>>> 9c35bd9b0620433e17a7b78e4710f8e272c46023
 addScope(char *funcKey);
 
 int
