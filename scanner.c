@@ -614,13 +614,16 @@ int getToken(Token *token) {
                 appendChar(content, c);
                 currentState = ST_NUM_EXPONENT;
             } else if(c == 'b' || c == 'B'){
-                appendChar(content, c);
+               // appendChar(content, c);
+               eraseDynamicString(content);
                 currentState = ST_BINARY_BASE;
             } else if(c == 'o' || c == 'O') {
-                appendChar(content, c);
+               // appendChar(content, c);
+               eraseDynamicString(content);
                 currentState = ST_OCTAL_BASE;
             } else if(c == 'x' || c == 'X') {
-                appendChar(content, c);
+              //  appendChar(content, c);
+               eraseDynamicString(content);
                 currentState = ST_HEXA_BASE;
             } else if(isdigit(c)) {
                 return LEXICAL_ERROR;
