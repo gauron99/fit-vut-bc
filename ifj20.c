@@ -60,22 +60,22 @@ int main(){
 
     // symtableGlobalItem *i = symtableItemGetGlobal("main");
     itemType type = TYPE_INT64;
-    symtableItemInsert("main","variable",type,"5");
-    symtableItemInsert("main","variable2",type,"10");
-    symtableItemInsert("main","variable3",type,"18");
+    symtableItemInsert("main","variable",type);
+    symtableItemInsert("main","variable2",type);
+    symtableItemInsert("main","variable3",type);
 
-    symtableItemInsert("loudikBoi","va1",type,"18");
-    symtableItemInsert("sabina_scenuje","ve1",type,"18");
-    symtableItemInsert("MAAAAAACEEEEEEE","aw2",type,"18");
+    symtableItemInsert("loudikBoi","va1",type);
+    symtableItemInsert("sabina_scenuje","ve1",type);
+    symtableItemInsert("MAAAAAACEEEEEEE","aw2",type);
 
     // printSymtable("main");
     printAll();
 
     addScope("main");
-    symtableItemInsert("main","lalala",type,"18");
+    symtableItemInsert("main","lalala",type);
     symtableItem *it;
     it = symtableItemGet("main","lalala");
-    printf("THIS - %s; %d; %s\n",it->key,it->type, it->data);
+    printf("THIS - %s; %d\n",it->key,it->type);
     printAll();
 
     delScope("main");
