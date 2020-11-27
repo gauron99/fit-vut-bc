@@ -9,20 +9,24 @@
 #include "scanner.h"
 #include "parser.h"
 #include "precanalysis.h"
+#include "symtable.h"
 
 Token token;
+extern symtable globalSymTab;
+symtableGlobalItem *actualFunc;
+trAK *instr;
 
-int precedence(){
-    while (1){
-        CHECK(getToken(&token));
-        if (TTYPE==EOL_||TTYPE==SEMICOLON||TTYPE==COMMA||TTYPE==LEFT_CURLY_BRACKET) {
-            ungetToken(&token);
-            break;
-        }
-        else
-            continue;
-    }
-    return EC_GOOD;
+void assemble(char* name, char* boku, char* no, char* pico, trAK *instruct) {
+    strcpy(instruct->name, name);
+    strcpy(instruct->boku,boku);
+    strcpy(instruct->no,no);
+    strcpy(instruct->pico,pico);
+    generate(instruct);
+    return;
+}
+
+int generate(trAK *instr){
+    return 0;
 }
 
 int isType(char* string){
@@ -31,7 +35,50 @@ int isType(char* string){
     return 0;
 }
 
+int switchToType(char* type){
+    if (!strcmp(type,"string"))
+        return TYPE_STRING;
+    else if (!strcmp(type,"int"))
+        return TYPE_INT64;
+    else if (!strcmp(type,"float64"))
+        return TYPE_FLOAT64;
+    else if (!strcmp(type,"bool"))
+        return TYPE_BOOL;
+}
+
+itemValue intToUnion(int val){
+    itemValue vally;
+    vally.int_ = val;
+    return vally;
+}
+
+itemValue switchToUnion(char* type){
+    itemValue val;
+    if (!strcmp(type,"string")) {
+        val.string_ = "";
+        return val;
+    }
+    else if (!strcmp(type,"int")) {
+        val.int_ = 0;
+        return val;
+    }
+    else if (!strcmp(type,"float64")) {
+        val.float_ = 0.0;
+        return val;
+    }
+    else if (!strcmp(type,"bool")) {
+        val.bool_ = false; /// todo how do we represent tho
+        return val;
+    }
+
+}
+
 int prolog(){
+    instr = malloc(sizeof(trAK));
+    if (!instr){
+        fprintf(stderr,"NANI\n");
+        return INTERNAL_ERROR;
+    }
     CHECK(getToken(&token));
     if (TTYPE == EOL_)
     CHECK(prolog())
@@ -48,12 +95,14 @@ int prolog(){
 
 int rdBody(){
     CHECK(getToken(&token));
-    if (TTYPE==EOF_)
-        return EC_GOOD;
+    if (TTYPE==EOF_) {
+        free(instr);
+        return EC_GOOD; /// todo empty program?
+    }
     else if (TTYPE == EOL_)
-    CHECK(rdBody())
+        CHECK(rdBody())
     else {
-        CHECK_R(TTYPE==KEYWORD && !strcmp(TSTR,"func"),EC_SYN) // snad nebude padat se spatnym typem tokenu
+        CHECK_R(TTYPE==KEYWORD && !strcmp(TSTR,"func"),EC_SYN) // snad nebude padat se spatnym typem tokenu // cajk
 
         CHECK(rdDef())
         CHECK(rdBody())
@@ -66,6 +115,11 @@ int rdDef(){
 
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
 
+    CHECK(symtableItemInsertGlobal(TSTR))
+    actualFunc = symtableItemGetGlobal(TSTR);
+
+    assemble("LABEL",TSTR,"","",instr);
+
     CHECK(getToken(&token));
 
     CHECK_R(TTYPE==LEFT_ROUND_BRACKET,EC_SYN)
@@ -73,12 +127,12 @@ int rdDef(){
     CHECK(getToken(&token));
 
     if (TTYPE!=RIGHT_ROUND_BRACKET)
-    CHECK(rdParams())
+        CHECK(rdParams())
 
     CHECK(getToken(&token));
 
     if (TTYPE!=LEFT_CURLY_BRACKET)
-    CHECK(rdReturns())
+        CHECK(rdReturns())
 
     CHECK(getToken(&token));
 
@@ -93,11 +147,18 @@ int rdDef(){
 }
 
 int rdParams(){
+    char* varName;
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
+    strcpy(varName,TSTR);
 
     CHECK(getToken(&token));
 
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
+
+    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR),intToUnion(0)))
+    CHECK(pushArg(actualFunc->key,switchToType(TSTR)))
+
+
 
     CHECK(getToken(&token));
 
@@ -112,14 +173,21 @@ int rdParams(){
 }
 
 int rdParamsN(){
+    char* varName;
     if (TTYPE==EOL_)
         CHECK(getToken(&token));
 
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
+    strcpy(varName,TSTR);
 
     CHECK(getToken(&token));
 
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
+
+    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR),intToUnion(0)))
+    CHECK(pushArg(actualFunc->key,switchToType(TSTR)))
+
+
 
     CHECK(getToken(&token));
 
@@ -150,15 +218,25 @@ int rdReturns(){
 }
 
 int rdReturnsNamed(){
+    char* varName;
     if (TTYPE==IDENTIFIER){
+        strcpy(varName,TSTR);
+
         CHECK(getToken(&token));
         CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
+
+        CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR),switchToUnion(TSTR)))
+        CHECK(pushRet(actualFunc->key,switchToType(TSTR)))
+
+
         CHECK(getToken(&token));
         if (TTYPE==COMMA)
-        CHECK(rdReturnsNamedN())
+            CHECK(rdReturnsNamedN())
     }
     else {
         CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
+        CHECK(pushRet(actualFunc->key,switchToType(TSTR)))
+
         CHECK(getToken(&token));
         if (TTYPE==COMMA)
         CHECK(rdReturnsN())
@@ -169,20 +247,25 @@ int rdReturnsNamed(){
 }
 
 int rdReturnsNamedN(){
+    char* varName;
     CHECK(getToken(&token));
     if (TTYPE==EOL_)
         CHECK(getToken(&token));
 
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
+    strcpy(varName,TSTR);
 
     CHECK(getToken(&token));
 
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
+    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR),switchToUnion(TSTR)))
+    CHECK(pushArg(actualFunc->key,switchToType(TSTR)))
+
     CHECK(getToken(&token));
 
     if (TTYPE==COMMA)
-    CHECK(rdReturnsNamedN())
+        CHECK(rdReturnsNamedN())
 
     return EC_GOOD;
 }
@@ -193,11 +276,12 @@ int rdReturnsN(){
         CHECK(getToken(&token));
 
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
+    CHECK(pushRet(actualFunc->key,switchToType(TSTR)))
 
     CHECK(getToken(&token));
 
     if (TTYPE==COMMA)
-    CHECK(rdReturnsNamedN())
+        CHECK(rdReturnsN())
 
     return EC_GOOD;
 }
@@ -214,6 +298,8 @@ int rdComm(){
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
 
+        CHECK(addScope(actualFunc->key))
+
         CHECK(getToken(&token));
 
         CHECK_R(TTYPE==EOL_,EC_SYN)
@@ -221,16 +307,20 @@ int rdComm(){
         CHECK(getToken(&token));
 
         if (TTYPE!=RIGHT_CURLY_BRACKET)
-        CHECK(rdComm())
+            CHECK(rdComm())
+
+        CHECK(delScope(actualFunc->key))
 
         CHECK(getToken(&token));
 
         if (TTYPE!=EOL_)
-        CHECK(rdElseOrNot())
+            CHECK(rdElseOrNot())
+
         CHECK(getToken(&token));
         CHECK(rdComm())
     }
     else if (TTYPE==KEYWORD && !(strcmp(TSTR,"for"))){
+        CHECK(addScope(actualFunc->key))
         CHECK(getToken(&token));
         if (TTYPE!=SEMICOLON){
             CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
@@ -321,12 +411,14 @@ int rdElseOrNot(){
     CHECK(getToken(&token));
 
     if (TTYPE==LEFT_CURLY_BRACKET){
-        CHECK(getToken(&token));
+        CHECK(addScope(actualFunc->key))
+        CHECK(getToken(&token))
         CHECK_R(TTYPE==EOL_,EC_SYN)
 
         CHECK(getToken(&token));
         if(TTYPE!=RIGHT_CURLY_BRACKET)
-        CHECK(rdComm())
+            CHECK(rdComm())
+        CHECK(delScope(actualFunc->key))
     }
     else {
         CHECK_R(TTYPE == KEYWORD && !strcmp(TSTR, "if"), EC_SYN)
@@ -334,7 +426,7 @@ int rdElseOrNot(){
         CHECK(getToken(&token));
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
-
+        CHECK(addScope(actualFunc->key))
         CHECK(getToken(&token));
 
         CHECK_R(TTYPE==EOL_,EC_SYN)
@@ -342,8 +434,8 @@ int rdElseOrNot(){
         CHECK(getToken(&token));
 
         if (TTYPE!=RIGHT_CURLY_BRACKET)
-        CHECK(rdComm())
-
+            CHECK(rdComm())
+        CHECK(delScope(actualFunc->key))
         CHECK(getToken(&token));
 
         if (TTYPE!=EOL_)
