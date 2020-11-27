@@ -6,17 +6,41 @@
 #include "precanalysis.h"
 #include "scanner.h"
 
-int getPaType(Token *token) {
+int getPaType(Token *token, s_t *typeStack) {
+    sElemType typeElement;
     switch(token->type) {
-        case IDENTIFIER:
+        case IDENTIFIER: {
+            Token t1,t2;
+            getToken(&t1);
+            if(t1.type == LEFT_ROUND_BRACKET) {
+                getToken(&t2);
+                if(t2.type == RIGHT_ROUND_BRACKET) {
+                    return OP_FUN;
+                }
+                else {
+                    ungetToken(&t1);
+                    ungetToken(&t2);
+                    return OP_FUN;
+                }
+            }
             return OP_ID;
-        case INTEGER:
-        case FLOAT:
-        case STRING:
-        case BINARY:
-        case OCTAL:
-        case HEXA:
-	    return OP_DATATYPE;
+        }
+        case INTEGER:{ 
+            typeElement.paType = INTEGER;
+            sPush(typeStack, &typeElement);
+            return OP_INTEGER;
+        }
+        case FLOAT: {
+            typeElement.paType = FLOAT;
+            sPush(typeStack, &typeElement);
+            return OP_FLOAT;
+        }
+
+        case STRING: {
+            typeElement.paType = STRING;
+            sPush(typeStack, &typeElement);
+            return OP_STRING;
+        }
         case PLUS:
             return OP_PLUS;
         case MINUS:
@@ -61,8 +85,10 @@ bool sInit (s_t* s) {
     s->top = STACK_TOP;
     s->size = STACK_SIZE;
     s->stack = malloc(STACK_SIZE * sizeof(sElemType *));
-    if (s->stack == NULL)
+    if (s->stack == NULL) {
+        fprintf(stderr, "Malloc failed to allocate memory");
         return false;
+    }
     return true;
 }
 
@@ -85,10 +111,8 @@ void sGetTop (s_t* s, sElemType *data) {
     }
     else {
         data->paType = (s->stack[s->top])->paType;
+        strcpy((s->stack[s->top])->paToken->value, data->paToken->value);
         data->paToken->type = (s->stack[s->top])->paToken->type;
-        data->paToken->value.intValue = (s->stack[s->top])->paToken->value.intValue;
-        data->paToken->value.floatValue = (s->stack[s->top])->paToken->value.floatValue;
-        memcpy(data->paToken->value.stringValue, (s->stack[s->top])->paToken->value.stringValue, sizeof(&(s->stack[s->top])->paToken->value.stringValue));
         return;
     }
 }
@@ -114,7 +138,7 @@ void sPop (s_t* s) {
         return;
     }
     else {
-        free((s->stack[s->top])->paToken->value.stringValue);
+        //free((s->stack[s->top])->paToken->value.stringValue);
         free((s->stack[s->top])->paToken);
         free(s->stack[s->top]);
         s->top--;
@@ -179,23 +203,19 @@ bool sPush (s_t* s, sElemType *newData) {
             return false;
         }
     
-        if ((paToken->value.stringValue = malloc(50 * sizeof(char))) == NULL) {
+        if ((paToken->value = malloc(50 * sizeof(char))) == NULL) {
             free(paToken);
             free(data);
             return false;
         }
         
-        paToken->value.stringValue = malloc(50 * sizeof(char));
-       
         data->paToken = paToken;
         
         data->paType = newData->paType;
         
         if (newData->paToken != NULL) {
             data->paToken->type = newData->paToken->type;
-            data->paToken->value.intValue = newData->paToken->value.intValue;
-            data->paToken->value.floatValue = newData->paToken->value.floatValue;
-            memcpy(&data->paToken->value.stringValue, &newData->paToken->value.stringValue,sizeof(newData->paToken->value.stringValue));
+            strcpy(data->paToken->value, newData->paToken->value);
         }
 
         s->top++;
@@ -217,42 +237,24 @@ void sFree(s_t *s) {
 
 void sElemInit(sElemType *data) {
     data->paToken->type = 0;
-    data->paToken->value.intValue = 0;
-    data->paToken->value.floatValue = 0.0;
-    data->paToken->value.stringValue = NULL;
+    data->paToken->value = NULL;
     data->paType = 0;
 }
 
 void sElemFree(sElemType *data, Token *paToken) {
     if (paToken != NULL) {
-        if (paToken->value.stringValue != NULL) {
-            free(paToken->value.stringValue);
+        if (paToken->value != NULL) {
+            free(paToken->value);
         }
         free(paToken);
     }
     free(data);
 }
 
-void fill_token(Token *token, int type, int integer, double floating, char *string) {
-	if (type == INTEGER) token->value.intValue = integer;
-	else if (type == FLOAT) token->value.floatValue = floating;
-	//else if (type == STRING) //memcpy(token->value.stringValue, string, sizeof(string));
-        //strcpy(token->value.stringValue, string);
-}
-
-bool sElemGetData(Token *token, sElemType *data) {
-    data->paType = getPaType(token);
-    //printf("%s\n", token->value.stringValue);
-    if(data->paType == OP_DATATYPE) {
-        if(token->type == STRING)
-            fill_token(data->paToken, STRING, 0, 0, token->value.stringValue);
-        else if(token->type == INTEGER)
-            fill_token(data->paToken, INTEGER, token->value.intValue, 0, NULL);
-        else if(token->type == FLOAT)
-            fill_token(data->paToken, FLOAT, 0, token->value.floatValue, NULL);
-    }
-    //else if(data->paType == OP_ID)
-    //DOROBIT PRE ID, NECH GETNE HODNOTU ZREJME
+bool sElemGetData(Token *token, sElemType *data, s_t *typeStack) {
+    data->paType = getPaType(token, typeStack);
+    data->paToken->type = token->type;
+    strcpy(token->value,data->paToken->value);
     return true;
 }
 
@@ -286,16 +288,34 @@ bool cmp_rules(int *stackay1, int *stackay2) {
     return true;
 }
 
-int generateRule(int *rule) {
-        //printf("\nRule used: %i %i %i\n", rule[0], rule[1],rule[2]);
-        for(int i = 0; i < 20; i++) {
-            if(rule[0] == rules[i][0] && rule[1] == rules[i][1] && rule[2] == rules[i][2])
-                return i;
+int generateRule(int *rule, s_t *typeStack) {
+    //printf("\nRule used: %i %i %i\n", rule[0], rule[1],rule[2]);
+    sElemType ele1, ele2;
+    int i = 0;
+    int found = 0;
+    for(; i < 20; i++) {
+        if(rule[0] == rules[i][0] && rule[1] == rules[i][1] && rule[2] == rules[i][2]) {
+            found = 1;
+            break;
         }
+    }
+
+    if(found == 1) {
+        if(i < 10) {
+            sGetTop(typeStack, &ele1);
+            sGetTop(typeStack, &ele2);
+            if(ele1.paType == ele2.paType)
+                return i;
+            else
+                return DIFFERENT_TYPES;
+        }
+        return i;
+    }
+    else 
         return -1;
 }
 
-int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal) {
+int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, s_t *typeStack) {
     while ((mainStack->stack[mainStack->top])->paType != OP_LESS) {
         sGetTopPointer(mainStack, tmpTerminal);
         if (!sPushPointer(tmpStack, tmpTerminal))
@@ -307,17 +327,20 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal) {
     int ruleOnStack[3] = {0, 0, 0};
     for (int i = tmpStack->top; i > -1; i--)
         ruleOnStack[i] = (tmpStack->stack[i])->paType;
-    int usedRule = generateRule(ruleOnStack);
+    int usedRule = generateRule(ruleOnStack, typeStack);
+    
     return usedRule;
 }
 
 int analyzePrecedence() {
     Token *paToken;
     sElemType *mainTerminal;
+    
+    int firstDTType = NOT_FOUND;
 
     paToken = malloc(sizeof(Token));
-    paToken->value.stringValue = malloc(sizeof(char *));
-    paToken->value.stringValue = NULL;
+    paToken->value = malloc(sizeof(char *));
+    paToken->value = NULL;
     mainTerminal = malloc(sizeof(sElemType));
 
     mainTerminal->paToken = paToken;
@@ -334,15 +357,19 @@ int analyzePrecedence() {
     s_t *tmpStack;
     tmpStack = malloc(sizeof(s_t));
     sInit(tmpStack);
-    
-    int prec_tab[20][20];
-    pTableInit(prec_tab);
 
+    s_t *typeStack;
+    typeStack = malloc(sizeof(s_t));
+    sInit(typeStack);
+    
+    int prec_tab[25][25];
+    pTableInit(prec_tab);
+    int ret = 0;
     int i = 0;
     Token t;
     getToken(&t);
     int action = 0;
-    sElemGetData(&t, mainTerminal);
+    sElemGetData(&t, mainTerminal, typeStack);
     while(!(mainTerminal->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
             //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), mainTerminal->paType);
         i++;
@@ -350,10 +377,14 @@ int analyzePrecedence() {
         //printf("%i\n", action);
         switch(action) {
             case(PA_GREATER):
-                if(sFindRule(mainStack, tmpStack, &tmpTerminal) == -1)
+                ret = sFindRule(mainStack, tmpStack, &tmpTerminal, typeStack);
+                if(ret == -1)
                     return 2;
+                if(ret == DIFFERENT_TYPES)
+                    return DIFFERENT_TYPES;
+                
                 sPopPointer(mainStack);
-
+                
                 tmpTerminal.paType = OP_EXPRESSION;
                 tmpTerminal.paToken = (tmpStack->stack[tmpStack->top])->paToken;
 
@@ -380,7 +411,7 @@ int analyzePrecedence() {
                 //printf("RETURNING 2");
                 return 2;
         }
-        sElemGetData(&t, mainTerminal);
+        sElemGetData(&t, mainTerminal, typeStack);
     }
     ungetToken(&t);
 

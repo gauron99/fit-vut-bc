@@ -10,6 +10,8 @@
 #define INIT_ERR -42
 #define STACK_SIZE 20
 #define STACK_TOP -1
+#define NOT_FOUND -658
+#define DIFFERENT_TYPES -659
 
 // co zacina s_ ma do cinenia so stackom
 typedef struct {
@@ -49,7 +51,10 @@ enum {
 
     OP_DOLLAR,      // 17
     
-    OP_DATATYPE,    // 18
+    OP_INTEGER,
+    OP_FLOAT,
+    OP_STRING,
+
     OP_ID,          // 19
     
     OP_EXPRESSION,  // 20
@@ -58,7 +63,7 @@ enum {
 };
 
 // ***RULES***
-extern int rules[15][15];
+extern int rules[25][25];
 
 
 enum {
@@ -69,10 +74,10 @@ enum {
 };
 
 // initializes precedence table
-int pTableInit(int table[20][20]);   // v prec_table_init.c
+int pTableInit(int table[25][25]);   // v prec_table_init.c
 
 // determines paType of a token
-int getPaType(Token *t);
+int getPaType(Token *t, s_t *typeStack);
 
 // S T A C K  F U N C T I O N S //
 
@@ -116,13 +121,13 @@ bool sCopyUntilTerminal(s_t *src, s_t *dest, sElemType *helper);
 bool sCopyAll(s_t *src, s_t *dest, sElemType *helper); 
 // copies the stack to dest in reversed order
 
-int  sFindRule(s_t *mainStack, s_t *helperStack, sElemType *helperTerminal);
+int  sFindRule(s_t *mainStack, s_t *helperStack, sElemType *helperTerminal, s_t *typeStack);
 // gets the elements on top of the stack until < and sends them to compareRules
 
 int compareRules(int *rule);
 // 
 
-bool sElemGetData(Token *token, sElemType *data);
+bool sElemGetData(Token *token, sElemType *data, s_t *typeStack);
 
 Token * get_token(Token t_stream[15], int pos);
 
