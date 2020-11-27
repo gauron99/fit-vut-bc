@@ -46,33 +46,6 @@ int switchToType(char* type){
         return TYPE_BOOL;
 }
 
-itemValue intToUnion(int val){
-    itemValue vally;
-    vally.int_ = val;
-    return vally;
-}
-
-itemValue switchToUnion(char* type){
-    itemValue val;
-    if (!strcmp(type,"string")) {
-        val.string_ = "";
-        return val;
-    }
-    else if (!strcmp(type,"int")) {
-        val.int_ = 0;
-        return val;
-    }
-    else if (!strcmp(type,"float64")) {
-        val.float_ = 0.0;
-        return val;
-    }
-    else if (!strcmp(type,"bool")) {
-        val.bool_ = false; /// todo how do we represent tho
-        return val;
-    }
-
-}
-
 int prolog(){
     instr = malloc(sizeof(trAK));
     if (!instr){
@@ -81,7 +54,7 @@ int prolog(){
     }
     CHECK(getToken(&token));
     if (TTYPE == EOL_)
-    CHECK(prolog())
+        CHECK(prolog())
     else if (TTYPE == KEYWORD){
         CHECK_R(!strcmp(TSTR,"package"),EC_SYN)
         CHECK(getToken(&token));
@@ -155,7 +128,7 @@ int rdParams(){
 
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
-    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR),intToUnion(0)))
+    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR)))
     CHECK(pushArg(actualFunc->key,switchToType(TSTR)))
 
 
@@ -184,7 +157,7 @@ int rdParamsN(){
 
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
-    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR),intToUnion(0)))
+    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR)))
     CHECK(pushArg(actualFunc->key,switchToType(TSTR)))
 
 
@@ -225,7 +198,7 @@ int rdReturnsNamed(){
         CHECK(getToken(&token));
         CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
-        CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR),switchToUnion(TSTR)))
+        CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR)))
         CHECK(pushRet(actualFunc->key,switchToType(TSTR)))
 
 
@@ -259,7 +232,7 @@ int rdReturnsNamedN(){
 
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
-    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR),switchToUnion(TSTR)))
+    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR)))
     CHECK(pushArg(actualFunc->key,switchToType(TSTR)))
 
     CHECK(getToken(&token));

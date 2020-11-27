@@ -21,12 +21,6 @@ void assemble(char* name, char* boku, char* no, char* pico, trAK *instr);
 
 
 int isType(char* string);
-int switchToType(char* type);
-itemValue switchToUnion(char* type);
-itemValue intToUnion(int val);
-itemValue stringToUnion(int val);
-itemValue boolToUnion(int val);
-itemValue floatToUnion(int val);
 
 int prolog();
 int rdBody();
