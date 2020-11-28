@@ -17,7 +17,7 @@ symtableGlobalItem *actualFunc;
 trAK *instr;
 calledFun *funkce;
 
-int pushCall(char* key, int expectedRetCount, calledFun strukt){
+int pushCall(char* key, char** returns){
 
 }
 
