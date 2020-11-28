@@ -254,7 +254,8 @@ void sElemFree(sElemType *data, Token *paToken) {
 bool sElemGetData(Token *token, sElemType *data, s_t *typeStack) {
     data->paType = getPaType(token, typeStack);
     data->paToken->type = token->type;
-    strcpy(token->value,data->paToken->value);
+    if(data->paToken->value != NULL)
+        strcpy(token->value,data->paToken->value);
     return true;
 }
 
@@ -436,6 +437,6 @@ int analyzePrecedence() {
         sElemGetData(&t, mainTerminal, typeStack);
     }
     ungetToken(&t);
-    PUSHS(lastFoundType);
+    //PUSHS(lastFoundType);
     return 0;
 }
