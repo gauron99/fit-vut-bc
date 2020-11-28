@@ -69,16 +69,31 @@ int idSekv(int delim, int eos){
         CHECK_R(checker,EC_SEM3);
     }
     else if (((tokenType)delim) == ASSIGNMENT){
-
+        for (int i = idCount; i >= 0; i--)
+            CHECK_R(symtableItemGet(actualFunc->key,ids[i]),EC_SEM3)
     }
 
     CHECK_R(TTYPE==((tokenType)delim),EC_SYN)
 
     CHECK(getToken(&token));
 
+    CHECK_R(TTYPE==IDENTIFIER),EC_SYN)
+
+    int tknCount = 1;
+    CHECK(getToken(&token));
+
+    if (TTYPE==LEFT_ROUND_BRACKET){
+        tknCount++;
+        while(TTYPE!=RIGHT_ROUND_BRACKET){
+            CHECK(getToken(&token));
+            tknCount++;
+        }
+        CHECK(getToken(&token));
+        tknCount++;
+    }
+
     int* expTypes = malloc(sizeof(int));
     int expTypCount = 0;
-
     expTypes[0] = analyzePrecedence();
 
     CHECK(getToken(&token));
@@ -382,8 +397,7 @@ int rdComm(){
         CHECK(getToken(&token));
 
         if (TTYPE!=SEMICOLON)
-        CHECK(idSekv(DEFINITION,SEMICOLON))
-
+            CHECK(idSekv(DEFINITION,SEMICOLON))
 
         CHECK_R(TTYPE==SEMICOLON,EC_SYN)
         CHECK(analyzePrecedence());

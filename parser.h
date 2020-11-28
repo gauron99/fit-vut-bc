@@ -15,6 +15,12 @@ typedef struct trAK {
     char* pico;
 }trAK;
 
+typedef struct calledFun{
+    char* name;
+    char** returns;
+
+}calledFun;
+
 int generate(trAK *instr);
 
 void assemble(char* name, char* boku, char* no, char* pico, trAK *instr);
