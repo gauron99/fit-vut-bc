@@ -291,12 +291,13 @@ int generateRule(int *rule, s_t *typeStack, int *lastFoundType) {
     int found = 0;
     for(; i < 20; i++) {
         if(rule[0] == rules[i][0] && rule[1] == rules[i][1] && rule[2] == rules[i][2]) {
+	    return i;
             found = 1;
             break;
         }
     }
 
-    if(found == 1) {
+    /*if(found == 1) {
         if(i < 10) {
             sGetTop(typeStack, &ele1);
             sPopPointer(typeStack);
@@ -328,7 +329,7 @@ int generateRule(int *rule, s_t *typeStack, int *lastFoundType) {
     } else if(found == 14) {
         *lastFoundType = STRING;
         return i;
-    }
+    }*/
 
     return -1;
 }
