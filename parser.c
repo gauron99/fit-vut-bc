@@ -33,7 +33,8 @@ int generate(trAK *instr){
     return 0;
 }
 
-int idSekv(int delim, int eos){
+int idSekv(int eos){
+    int delim;
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
 
     char** ids = malloc(sizeof(ids));
@@ -43,7 +44,7 @@ int idSekv(int delim, int eos){
 
     CHECK(getToken(&token));
 
-    while (TTYPE!=((tokenType)delim)){
+    while (TTYPE!=DEFINITION && TTYPE!=ASSIGNMENT){
         CHECK_R(TTYPE==COMMA,EC_SYN)
         CHECK(getToken(&token));
 
@@ -57,7 +58,7 @@ int idSekv(int delim, int eos){
         strcpy(ids[idCount], TSTR);
         CHECK(getToken(&token));
     }
-
+    delim = TTYPE;
     if (((tokenType)delim) == DEFINITION){
         int checker = 0;
         for (int i = idCount; i >= 0; i--){
@@ -397,7 +398,7 @@ int rdComm(){
         CHECK(getToken(&token));
 
         if (TTYPE!=SEMICOLON)
-            CHECK(idSekv(DEFINITION,SEMICOLON))
+            CHECK(idSekv(SEMICOLON))
 
         CHECK_R(TTYPE==SEMICOLON,EC_SYN)
 
@@ -409,14 +410,17 @@ int rdComm(){
 
         CHECK(getToken(&token));
         if (TTYPE!=LEFT_CURLY_BRACKET)
-            CHECK(idSekv(DEFINITION,SEMICOLON))
+            CHECK(idSekv(LEFT_CURLY_BRACKET))
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
+        CHECK(addScope(actualFunc->key))
         CHECK(getToken(&token));
         CHECK_R(TTYPE==EOL_,EC_SYN)
         CHECK(getToken(&token));
         CHECK(rdComm())
         CHECK_R(TTYPE==RIGHT_CURLY_BRACKET,EC_SYN)
+        CHECK(delScope(actualFunc->key))
+        CHECK(delScope(actualFunc->key))
         CHECK(getToken(&token));
         CHECK_R(TTYPE==EOL_,EC_SYN)
         CHECK(getToken(&token));
@@ -425,23 +429,26 @@ int rdComm(){
     else if (TTYPE==KEYWORD && !strcmp(TSTR,"return")){
         CHECK(getToken(&token));
         if (TTYPE!=EOL_){
-            CHECK(rdExprSekv())
-            CHECK_R(TTYPE==EOL_,EC_SYN)
+            ungetToken(&token);
+            int i = 0;
+            do {
+                CHECK(getToken(&token));
+                CHECK_R(TTYPE==KEYWORD,EC_SYN)
+                CHECK_R(actualFunc->returns[i] && switchToType(TSTR)==actualFunc->returns[i++],EC_SEM6)
+                CHECK(getToken(&token));
+                CHECK_R(TTYPE==EOL_ || TTYPE==COMMA,EC_SYN)
+            } while (TTYPE!=EOL_);
         }
         CHECK(getToken(&token));
         CHECK(rdComm())
     }
     else if (TTYPE==IDENTIFIER){
+        Token tmp = token;
         CHECK(getToken(&token));
         if (TTYPE==COMMA || TTYPE == ASSIGNMENT || TTYPE == DEFINITION){
-            if (TTYPE==COMMA){
-                CHECK(getToken(&token));
-                CHECK(rdIdsekv())
-                CHECK_R(TTYPE==ASSIGNMENT||TTYPE==DEFINITION,EC_SYN)
-            }
-            CHECK(getToken(&token));
-
-            CHECK(rdExprsOrCall())
+            ungetToken(&token);
+            token = tmp;
+            CHECK(idSekv(EOL_))
         }
         else if (TTYPE==LEFT_ROUND_BRACKET){
             CHECK(getToken(&token));

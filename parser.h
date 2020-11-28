@@ -28,7 +28,7 @@ void assemble(char* name, char* boku, char* no, char* pico, trAK *instr);
 
 int isType(char* string);
 int checkOriginality();
-int idSekv(int delim, int eos);
+int idSekv(int eos);
 
 int prolog();
 int rdBody();
