@@ -99,8 +99,9 @@ int idSekv(int eos){
 
     int* expTypes = malloc(sizeof(int));
     int expTypCount = 0;
-    expTypes[0] = analyzePrecedence();
-
+    int retType = analyzePrecedence();
+    CHECK_R(retType>=0,(returnCode)-retType)
+    expTypes[0] = retType;
     CHECK(getToken(&token));
 
     while (TTYPE==COMMA){
@@ -111,7 +112,9 @@ int idSekv(int eos){
             fprintf(stderr, "NANI\n");
             return INTERNAL_ERROR;
         }
-        expTypes[expTypCount] = analyzePrecedence();
+        retType = analyzePrecedence();
+        CHECK_R(retType>=0,(returnCode)-retType)
+        expTypes[expTypCount] = retType;
 
         CHECK(getToken(&token));
     }
@@ -131,7 +134,6 @@ int idSekv(int eos){
         assemble("POPS","origShit","","",instr);
         assemble("MOVE",ids[i],"origShit","",instr);
     }
-
     CHECK_R(TTYPE==((tokenType)eos),EC_SYN)
 
     return EC_GOOD;
@@ -529,8 +531,8 @@ int rdExprsOrCall(){
         tmpToken = token;
         CHECK(getToken(&token));
         if (TTYPE!=LEFT_ROUND_BRACKET){
-            ungetToken(&token);
             ungetToken(&tmpToken);
+            ungetToken(&token);
             retType = analyzePrecedence();
             CHECK_R(retType>=0,(returnCode)-retType)
             CHECK(getToken(&token));
