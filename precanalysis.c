@@ -389,17 +389,17 @@ int analyzePrecedence() {
     int action = 0;
     sElemGetData(&t, mainTerminal, typeStack);
     while(!(mainTerminal->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
-            //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), mainTerminal->paType);
+            printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), mainTerminal->paType);
         i++;
         action = prec_tab[sFindFirstTerminal(mainStack)][mainTerminal->paType];
-        //printf("%i\n", action);
+        printf("%i\n", action);
         switch(action) {
             case(PA_GREATER):
                 ret = sFindRule(mainStack, tmpStack, &tmpTerminal, typeStack, &lastFoundType);
                 if(ret == -1)
                     return 2;
                 if(ret == DIFFERENT_TYPES)
-                    return DIFFERENT_TYPES;
+                    return 2;
                 
                 sPopPointer(mainStack);
                 
