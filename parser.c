@@ -359,12 +359,14 @@ int rdReturnsN(){
 }
 
 int rdComm(){
+    int retType = 0;
     if (TTYPE==EOL_){
         CHECK(getToken(&token));
         CHECK(rdComm())
     }
     else if (TTYPE==KEYWORD && !(strcmp(TSTR,"if"))){
-        CHECK(analyzePrecedence());
+        retType = analyzePrecedence();
+        CHECK_R(retType>=0,(returnCode)-retType)
         CHECK(getToken(&token));
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
@@ -398,18 +400,16 @@ int rdComm(){
             CHECK(idSekv(DEFINITION,SEMICOLON))
 
         CHECK_R(TTYPE==SEMICOLON,EC_SYN)
-        CHECK(analyzePrecedence());
+
+        retType = analyzePrecedence();
+        CHECK_R(retType>=0,(returnCode)-retType)
 
         CHECK(getToken(&token));
         CHECK_R(TTYPE==SEMICOLON,EC_SYN)
 
         CHECK(getToken(&token));
-        if (TTYPE!=LEFT_CURLY_BRACKET) {
-            CHECK(rdIdsekv())
-            CHECK_R(TTYPE==ASSIGNMENT,EC_SYN)
-            CHECK(getToken(&token));
-            CHECK(rdExprsOrCall())
-        }
+        if (TTYPE!=LEFT_CURLY_BRACKET)
+            CHECK(idSekv(DEFINITION,SEMICOLON))
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
         CHECK(getToken(&token));
@@ -440,6 +440,7 @@ int rdComm(){
                 CHECK_R(TTYPE==ASSIGNMENT||TTYPE==DEFINITION,EC_SYN)
             }
             CHECK(getToken(&token));
+
             CHECK(rdExprsOrCall())
         }
         else if (TTYPE==LEFT_ROUND_BRACKET){
@@ -450,7 +451,8 @@ int rdComm(){
             CHECK(getToken(&token));
         }
         else if (TTYPE==PLUS_EQ||TTYPE==MINUS_EQ||TTYPE==MUL_EQ||TTYPE==DIV_EQ){
-            CHECK(analyzePrecedence());
+            retType = analyzePrecedence();
+            CHECK_R(retType>=0,(returnCode)-retType)
             CHECK(getToken(&token));
         }
         CHECK_R(TTYPE==EOL_,EC_SYN)
@@ -468,6 +470,7 @@ int rdComm(){
 }
 
 int rdElseOrNot(){
+    int retType = 0;
     CHECK_R(TTYPE==KEYWORD && !strcmp(TSTR,"else"),EC_SYN)
     CHECK(getToken(&token));
 
@@ -483,7 +486,8 @@ int rdElseOrNot(){
     }
     else {
         CHECK_R(TTYPE == KEYWORD && !strcmp(TSTR, "if"), EC_SYN)
-        CHECK(analyzePrecedence());
+        retType = analyzePrecedence();
+        CHECK_R(retType>=0,(returnCode)-retType)
         CHECK(getToken(&token));
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
@@ -507,6 +511,7 @@ int rdElseOrNot(){
 }
 
 int rdExprsOrCall(){
+    int retType = 0;
     if (TTYPE==IDENTIFIER){
         Token tmpToken;
         tmpToken = token;
@@ -514,7 +519,8 @@ int rdExprsOrCall(){
         if (TTYPE!=LEFT_ROUND_BRACKET){
             ungetToken(&token);
             ungetToken(&tmpToken);
-            CHECK(analyzePrecedence());
+            retType = analyzePrecedence();
+            CHECK_R(retType>=0,(returnCode)-retType)
             CHECK(getToken(&token));
             if (TTYPE==COMMA)
             CHECK(rdExprSekv())
@@ -530,7 +536,8 @@ int rdExprsOrCall(){
     }
     else {
         ungetToken(&token);
-        CHECK(analyzePrecedence());
+        retType = analyzePrecedence();
+        CHECK_R(retType>=0,(returnCode)-retType)
         CHECK(getToken(&token));
         if (TTYPE==COMMA)
         CHECK(rdExprSekv())
@@ -551,7 +558,9 @@ int rdIdsekv(){
 }
 
 int rdExprSekv(){
-    CHECK(analyzePrecedence());
+    int retType = 0;
+    retType = analyzePrecedence();
+    CHECK_R(retType>=0,(returnCode)-retType)
     CHECK(getToken(&token));
     if(TTYPE==COMMA)
     CHECK(rdExprSekv());
