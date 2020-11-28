@@ -334,8 +334,7 @@ int generateRule(int *rule, s_t *typeStack, int *lastFoundType) {
         return i;
     }
 
-
-        return -1;
+    return -1;
 }
 
 int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, s_t *typeStack, int * lastFoundType) {
@@ -437,6 +436,6 @@ int analyzePrecedence() {
         sElemGetData(&t, mainTerminal, typeStack);
     }
     ungetToken(&t);
-
+    PUSHS(lastFoundType);
     return 0;
 }
