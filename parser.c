@@ -68,6 +68,9 @@ int idSekv(int delim, int eos){
         }
         CHECK_R(checker,EC_SEM3);
     }
+    else if (((tokenType)delim) == ASSIGNMENT){
+
+    }
 
     CHECK_R(TTYPE==((tokenType)delim),EC_SYN)
 
