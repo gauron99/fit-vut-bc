@@ -10,7 +10,7 @@
 #define CHECK_R(exp,rc) if (!(exp)) return rc;
 
 #define TTYPE token.type
-#define TSTR token.value.stringValue
+#define TSTR token.value
 #define TINT token.value.intValue
 #define TFLOAT token.value.floatValue
 
