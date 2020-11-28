@@ -25,7 +25,7 @@ int generate(trAK *instr);
 
 void assemble(char* name, char* boku, char* no, char* pico, trAK *instr);
 
-
+int pushCall(char* key, char** returns);
 int isType(char* string);
 int checkOriginality();
 int idSekv(int eos);

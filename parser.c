@@ -15,6 +15,11 @@ Token token;
 extern symtable globalSymTab;
 symtableGlobalItem *actualFunc;
 trAK *instr;
+calledFun *funkce;
+
+int pushCall(char* key, int expectedRetCount, calledFun strukt){
+
+}
 
 void assemble(char* name, char* boku, char* no, char* pico, trAK *instruct) {
     instruct->name = name;
