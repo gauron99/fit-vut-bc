@@ -517,9 +517,9 @@ int pTableInit(int table[25][25]) {
     table[OP_DOLLAR][OP_COMMA] = PA_LESS;
     table[OP_DOLLAR][OP_ID] = PA_LESS;
     table[OP_DOLLAR][OP_DOLLAR] = PA_EMPTY; 
-    table[OP_STRING][OP_INTEGER] = PA_LESS;
-    table[OP_STRING][OP_FLOAT] = PA_LESS;
-    table[OP_STRING][OP_STRING] = PA_LESS;   
+    table[OP_DOLLAR][OP_INTEGER] = PA_LESS;
+    table[OP_DOLLAR][OP_FLOAT] = PA_LESS;
+    table[OP_DOLLAR][OP_STRING] = PA_LESS;   
     
     return 0;
 }

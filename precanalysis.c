@@ -23,6 +23,7 @@ int getPaType(Token *token, s_t *typeStack) {
                     return OP_FUN;
                 }
             }
+            ungetToken(&t1);
             return OP_ID;
         }
         case INTEGER:{ 
@@ -203,19 +204,13 @@ bool sPush (s_t* s, sElemType *newData) {
             return false;
         }
     
-        if ((paToken->value = malloc(50 * sizeof(char))) == NULL) {
-            free(paToken);
-            free(data);
-            return false;
-        }
-        
         data->paToken = paToken;
         
         data->paType = newData->paType;
         
         if (newData->paToken != NULL) {
             data->paToken->type = newData->paToken->type;
-            strcpy(data->paToken->value, newData->paToken->value);
+            //strcpy(data->paToken->value, newData->paToken->value);
         }
 
         s->top++;
@@ -425,6 +420,7 @@ int analyzePrecedence() {
                 sCopyAll(tmpStack, mainStack, &tmpTerminal);
                 sPush(mainStack, mainTerminal);
                 getToken(&t);
+                //printf("t->type = %i", t.type);
                 //printf("it->type: %i", t.type);
                 break;
             case(PA_SHIFT):
