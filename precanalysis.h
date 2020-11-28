@@ -121,7 +121,7 @@ bool sCopyUntilTerminal(s_t *src, s_t *dest, sElemType *helper);
 bool sCopyAll(s_t *src, s_t *dest, sElemType *helper); 
 // copies the stack to dest in reversed order
 
-int  sFindRule(s_t *mainStack, s_t *helperStack, sElemType *helperTerminal, s_t *typeStack);
+int  sFindRule(s_t *mainStack, s_t *helperStack, sElemType *helperTerminal, s_t *typeStack, int *lastFoundType);
 // gets the elements on top of the stack until < and sends them to compareRules
 
 int compareRules(int *rule);

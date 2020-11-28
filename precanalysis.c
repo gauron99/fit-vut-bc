@@ -72,7 +72,7 @@ int getPaType(Token *token, s_t *typeStack) {
         case OR:
             return OP_OR;
         case COMMA:
-            return OP_COMMA;
+            return OP_DOLLAR;
         case EOL_:
         case SEMICOLON:
         case LEFT_CURLY_BRACKET:
@@ -288,7 +288,7 @@ bool cmp_rules(int *stackay1, int *stackay2) {
     return true;
 }
 
-int generateRule(int *rule, s_t *typeStack) {
+int generateRule(int *rule, s_t *typeStack, int *lastFoundType) {
     //printf("\nRule used: %i %i %i\n", rule[0], rule[1],rule[2]);
     sElemType ele1, ele2;
     int i = 0;
@@ -303,19 +303,42 @@ int generateRule(int *rule, s_t *typeStack) {
     if(found == 1) {
         if(i < 10) {
             sGetTop(typeStack, &ele1);
+            sPopPointer(typeStack);
             sGetTop(typeStack, &ele2);
-            if(ele1.paType == ele2.paType)
+            sPopPointer(typeStack);
+            if(ele1.paType == ele2.paType) {
+                if(found < 4)
+                    *lastFoundType = ele1.paType;
+                else
+                    *lastFoundType = BOOL;
                 return i;
+            }
             else
                 return DIFFERENT_TYPES;
         }
         return i;
+    }   // domysliet pre ID
+    else if(found == 11) {
+        sGetTop(typeStack, &ele1);
+        sPopPointer(typeStack);
+        *lastFoundType = ele1.paType;
+        return i;
+    } else if(found == 12) {
+        *lastFoundType = INTEGER;
+        return i;
+    } else if(found == 13) {
+        *lastFoundType = FLOAT;
+        return i;
+    } else if(found == 14) {
+        *lastFoundType = STRING;
+        return i;
     }
-    else 
+
+
         return -1;
 }
 
-int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, s_t *typeStack) {
+int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, s_t *typeStack, int * lastFoundType) {
     while ((mainStack->stack[mainStack->top])->paType != OP_LESS) {
         sGetTopPointer(mainStack, tmpTerminal);
         if (!sPushPointer(tmpStack, tmpTerminal))
@@ -327,7 +350,7 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, s_t *typeSt
     int ruleOnStack[3] = {0, 0, 0};
     for (int i = tmpStack->top; i > -1; i--)
         ruleOnStack[i] = (tmpStack->stack[i])->paType;
-    int usedRule = generateRule(ruleOnStack, typeStack);
+    int usedRule = generateRule(ruleOnStack, typeStack, lastFoundType);
     
     return usedRule;
 }
@@ -335,8 +358,8 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, s_t *typeSt
 int analyzePrecedence() {
     Token *paToken;
     sElemType *mainTerminal;
-    
-    int firstDTType = NOT_FOUND;
+   
+    int lastFoundType = 0;
 
     paToken = malloc(sizeof(Token));
     paToken->value = malloc(sizeof(char *));
@@ -377,7 +400,7 @@ int analyzePrecedence() {
         //printf("%i\n", action);
         switch(action) {
             case(PA_GREATER):
-                ret = sFindRule(mainStack, tmpStack, &tmpTerminal, typeStack);
+                ret = sFindRule(mainStack, tmpStack, &tmpTerminal, typeStack, &lastFoundType);
                 if(ret == -1)
                     return 2;
                 if(ret == DIFFERENT_TYPES)
