@@ -545,4 +545,8 @@ int rules[25][25] = {
 
     //{OP_EXPRESSION, OP_COMMA, OP_EXPRESSION},        // E -> E , E
     {OP_FUN, OP_EXPRESSION, 0},                     // E -> FUNCTION
+
+    {OP_NOT, OP_EXPRESSION, 0},
+    {OP_EXPRESSION, OP_AND, OP_EXPRESSION},
+    {OP_EXPRESSION, OP_OR, OP_EXPRESSION},
 };
