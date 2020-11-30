@@ -188,7 +188,7 @@ int idSekv(int eos){
             CHECK(getToken(&token));
             ungetToken(&token);
             if (TTYPE==EOL_) {
-                CHECK_R(tempos->countRets == idCount, EC_SEM6)
+                CHECK_R(tempos->countRets == idCount+1, EC_SEM6)
 
                 for (int i = 0; i < tempos->countRets;i++)
                     expTypes[i]=tempos->returns[i];
@@ -310,10 +310,12 @@ int rdBody(){
 
 int rdDef(){
     CHECK(getToken(&token));
+
     while (TTYPE!=LEFT_CURLY_BRACKET)
         CHECK(getToken(&token));
 
     CHECK(getToken(&token));
+
     CHECK_R(TTYPE==EOL_,EC_SYN)
 
     CHECK(getToken(&token));
@@ -392,9 +394,10 @@ int rdReturns(){
         CHECK(gettToken(&token));
         CHECK(fillTknArr(&token))
     }
-    else
-    CHECK(gettToken(&token));
-    CHECK(fillTknArr(&token))
+    else {
+        CHECK(gettToken(&token));
+        CHECK(fillTknArr(&token))
+    }
 
     CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
 
@@ -552,6 +555,7 @@ int rdComm(){
     }
     else if (TTYPE==KEYWORD && !strcmp(TSTR,"return")){
         CHECK(getToken(&token));
+
         if (TTYPE!=EOL_){
             ungetToken(&token);
             int i = 0;
@@ -560,6 +564,7 @@ int rdComm(){
                 CHECK_R(retType>=0,(returnCode)-retType)
                 CHECK_R(actualFunc->returns[i] && retType==actualFunc->returns[i++],EC_SEM6)
                 CHECK(getToken(&token));
+
                 CHECK_R(TTYPE==EOL_ || TTYPE==COMMA,EC_SYN)
             } while (TTYPE!=EOL_);
         }
