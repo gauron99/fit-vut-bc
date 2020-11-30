@@ -51,15 +51,15 @@ enum {
 
     OP_DOLLAR,      // 17
     
-    OP_INTEGER,
-    OP_FLOAT,
-    OP_STRING,
+    OP_INTEGER,     // 18
+    OP_FLOAT,       // 19
+    OP_STRING,      // 20
 
-    OP_ID,          // 19
+    OP_ID,          // 21
     
-    OP_EXPRESSION,  // 20
+    OP_EXPRESSION,  // 22
 
-    OP_TABLE_LESS,  // 21
+    OP_TABLE_LESS,  // 23
 };
 
 // ***RULES***
