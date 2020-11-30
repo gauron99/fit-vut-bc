@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "precanalysis.h"
+#include "parser.h"
 #include "scanner.h"
 
 int getPaType(Token *token, s_t *typeStack) {
