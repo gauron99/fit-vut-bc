@@ -301,7 +301,7 @@ bool cmp_rules(int *stackay1, int *stackay2) {
 }
 
 int generateRule(int *rule, s_t *typeStack, int *lastFoundType) {
-    printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
+    //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
     sElemType *tmp = malloc(sizeof(sElemType));
 
     Token *tokenTmp;
@@ -343,13 +343,13 @@ int generateRule(int *rule, s_t *typeStack, int *lastFoundType) {
     }
     
     if(found == 1) {
-        printf("CHECK 2, i = %i\n", i);
+        //printf("CHECK 2, i = %i\n", i);
         if(i < 10 || i == 17 || i == 18) {
             sGetTopPointer(typeStack, ele1);
-            printf("ele1: %i\n", ele1->paType);
+            //printf("ele1: %i\n", ele1->paType);
             sPopPointer(typeStack);
             sGetTopPointer(typeStack, ele2);
-            printf("ele2: %i\n", ele2->paType);
+            //printf("ele2: %i\n", ele2->paType);
             sPopPointer(typeStack);
             if(ele1->paType == ele2->paType) {
                 if(i < 4)
@@ -364,14 +364,14 @@ int generateRule(int *rule, s_t *typeStack, int *lastFoundType) {
         }
     }
     if(i == 10) {
-        printf("po pushi\n");
+        //printf("po pushi\n");
         *lastFoundType = IDENTIFIER;
         tmp->paType = IDENTIFIER;
         sPush(typeStack, tmp);
         return i;
     }
     if(i == 11) {
-        printf("ele1: %i\n", ele1->paType);
+        //printf("ele1: %i\n", ele1->paType);
         sGetTopPointer(typeStack, ele1);            
         sPopPointer(typeStack);
         *lastFoundType = ele1->paType;
@@ -466,17 +466,17 @@ int analyzePrecedence() {
         printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), mainTerminal->paType);
         i++;
         action = prec_tab[sFindFirstTerminal(mainStack)][mainTerminal->paType];
-        printf("%i\n", action);
+        //printf("%i\n", action);
         switch(action) {
             case(PA_GREATER):
                 ret = sFindRule(mainStack, tmpStack, &tmpTerminal, typeStack, &lastFoundType);
                 if(ret == -2) {
-                    printf("returning -2\n");
+                    //printf("returning -2\n");
                     return -2;
                 }
                 if(ret == DIFFERENT_TYPES)
                 {
-                    printf("returning -2\n");
+                    //printf("returning -2\n");
                     return -2;
                 }
                 
@@ -505,7 +505,7 @@ int analyzePrecedence() {
                 sPush(mainStack, mainTerminal);
                 getToken(&t);
             case(PA_EMPTY):
-                printf("returning -2\n");
+                //printf("returning -2\n");
                 return -2;
         }
         sElemGetData(&t, mainTerminal, typeStack);
@@ -513,7 +513,7 @@ int analyzePrecedence() {
     }
     
     ungetToken(&t);
-    printf("LAST FOUND: %i", lastFoundType);
-    printf("returning 0\n");
+    //printf("LAST FOUND: %i", lastFoundType);
+    //printf("returning 0\n");
     return 0;
 }
