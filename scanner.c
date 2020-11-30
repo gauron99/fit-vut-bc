@@ -20,27 +20,7 @@
 
 #define EOL '\n'
 
-Token* tkns;
-int ungot = 0;
-int dewit = 1;
-
-int ungetToken(Token *token) {
-    tkns[ungot++] = *token;
-    if (!(tkns = realloc(tkns, sizeof(Token)*(ungot+1))))
-        return INTERNAL_ERROR;
-};
-
-int getToken(Token *token) {
-    if(ungot && dewit) {
-        *token = tkns[0];
-        for (int i = 1; i < ungot; i++){
-            tkns[i-1] = tkns[i];
-        }
-        if (!(tkns = realloc(tkns, sizeof(Token)*(ungot--))))
-            return INTERNAL_ERROR;
-        return 0;
-    }
-
+int gettToken(Token *token) {
    int numOfKeywords = 9;
    char *keyWords[] = {
                     "else",

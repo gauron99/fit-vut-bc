@@ -12,20 +12,13 @@
 #include "symtable.h"
 
 symtableGI symGlobal;
-extern Token* tkns;
-extern int dewit;
 
-int allocUnget(){
-    if (!(tkns = malloc(sizeof(Token))))
-        return INTERNAL_ERROR;
-    return EC_GOOD;
-}
+
 
 int main(){
 
     //create global symtable
     symtableCreateGlobal(&symGlobal); //works
-    CHECK(allocUnget())
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
@@ -54,7 +47,6 @@ int main(){
     CHECK(prolog())
 
     //printf("--- Status code: %d\n", lexicalResult);
-    free(tkns);
     return lexicalResult;
     return 0;
 }
