@@ -11,8 +11,7 @@
 
 #define TTYPE token.type
 #define TSTR token.value
-#define TINT token.value.intValue
-#define TFLOAT token.value.floatValue
+
 
 typedef enum {
     EC_GOOD     = 0,

@@ -13,12 +13,67 @@
 
 Token token;
 extern symtable globalSymTab;
+extern int dewit;
 symtableGlobalItem *actualFunc;
 trAK *instr;
-calledFun *funkce;
+Token *tknLoad;
+int tknLoadCount = 0;
 
-int pushCall(char* key, char** returns){
+Token* tkns;
+int ungot = 0;
+int dewit = 1;
 
+int ungetToken(Token *tk) {
+    tkns[ungot++] = *tk;
+    if (!(tkns = realloc(tkns, sizeof(Token)*(ungot+1))))
+        return INTERNAL_ERROR;
+}
+
+int allocUnget(){
+    if (!(tkns = malloc(sizeof(Token))))
+        return INTERNAL_ERROR;
+    if (!(tknLoad = malloc(sizeof(Token))))
+        return INTERNAL_ERROR;
+    return EC_GOOD;
+}
+
+int getToken(Token *tok){
+    if(ungot && dewit) {
+        *tok = tkns[0];
+        for (int i = 1; i < ungot; i++){
+            tkns[i-1] = tkns[i];
+        }
+        if (!(tkns = realloc(tkns, sizeof(Token)*(ungot--))))
+            return INTERNAL_ERROR;
+        return 0;
+    }
+    if(tknLoadCount) {
+        *tok = tknLoad[0];
+        for (int i = 1; i < tknLoadCount; i++){
+            tknLoad[i-1] = tknLoad[i];
+        }
+        if (!(tknLoad = realloc(tknLoad, sizeof(Token)*(tknLoadCount--))))
+            return INTERNAL_ERROR;
+        return 0;
+    }
+}
+
+int fillTknArr(Token *tok){
+    tknLoad[tknLoadCount++] = *tok;
+    if (!(tknLoad = realloc(tknLoad, sizeof(Token)*(tknLoadCount+1))))
+        return INTERNAL_ERROR;
+    return EC_GOOD;
+}
+
+int loadFuncti(){
+    Token tok;
+    CHECK(gettToken(&tok))
+    while (tok.type!=EOF_){
+        CHECK(fillTknArr(&tok))
+        CHECK(gettToken(&tok))
+    }
+    tknLoad[tknLoadCount++] = tok;
+    return EC_GOOD;
 }
 
 void assemble(char* name, char* boku, char* no, char* pico, trAK *instruct) {
@@ -26,10 +81,6 @@ void assemble(char* name, char* boku, char* no, char* pico, trAK *instruct) {
     instruct->boku = boku;
     instruct->no = no;
     instruct->pico = pico;
-/*    strcpy(instruct->name, name);
-    strcpy(instruct->boku,boku);
-    strcpy(instruct->no,no);
-    strcpy(instruct->pico,pico);*/
     generate(instruct);
     return;
 }
@@ -80,44 +131,71 @@ int idSekv(int eos){
     }
 
     CHECK_R(TTYPE==((tokenType)delim),EC_SYN)
-
-    /*CHECK(getToken(&token));
-
-    CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
-
-    int tknCount = 2;
     CHECK(getToken(&token));
-
-    if (TTYPE==LEFT_ROUND_BRACKET){
-        while(TTYPE!=RIGHT_ROUND_BRACKET){
-            CHECK(getToken(&token));
-            tknCount++;
-        }
-        CHECK(getToken(&token));
-        tknCount++;
-    }*/
-
-    int* expTypes = malloc(sizeof(int));
+    ungetToken(&token);
+    int isCall = 0;
+    int *expTypes = malloc(sizeof(int));
     int expTypCount = 0;
-    int retType = analyzePrecedence();
-    CHECK_R(retType>=0,(returnCode)-retType)
-    expTypes[0] = retType;
-    CHECK(getToken(&token));
+    int retType = 0;
 
-    while (TTYPE==COMMA){
+    if (TTYPE == IDENTIFIER){
+        dewit = 0;
+        symtableGlobalItem *tempos = symtableItemGetGlobal(TSTR);
         CHECK(getToken(&token));
+        ungetToken(&token);
+        int tknCount = 2;
 
-        expTypes = realloc(expTypes,sizeof(int)*(++expTypCount+1));
-        if(!expTypes) {
-            fprintf(stderr, "NANI\n");
-            return INTERNAL_ERROR;
+        if (TTYPE==LEFT_ROUND_BRACKET){
+            isCall = 1;
+            while(TTYPE!=RIGHT_ROUND_BRACKET){
+                CHECK(getToken(&token));
+                ungetToken(&token);
+                tknCount++;
+            }
+            CHECK(getToken(&token));
+            ungetToken(&token);
+            if (TTYPE==EOL_) {
+                CHECK_R(tempos->countRets == idCount, EC_SEM6)
+
+                for (int i = 0; i < tempos->countRets;i++)
+                    expTypes[i]=tempos->returns[i];
+                dewit = 1;
+                for (int i = 1; i<tknCount;i++)
+                    getToken(&token);
+
+            }
+            else if (TTYPE==COMMA) {
+                    goto dere;
+                }
+            dewit = 1;
+            for (int i = 1; i<tknCount;i++)
+                getToken(&token);
         }
-        retType = analyzePrecedence();
-        CHECK_R(retType>=0,(returnCode)-retType)
-        expTypes[expTypCount] = retType;
-
-        CHECK(getToken(&token));
+        dewit = 1;
     }
+    else {
+        dere:
+        retType = analyzePrecedence();
+        CHECK_R(retType >= 0, (returnCode) -retType)
+        expTypes[0] = retType;
+        CHECK(getToken(&token));
+
+        while (TTYPE == COMMA) {
+            CHECK(getToken(&token));
+
+            expTypes = realloc(expTypes, sizeof(int) * (++expTypCount + 1));
+            if (!expTypes) {
+                fprintf(stderr, "NANI\n");
+                return INTERNAL_ERROR;
+            }
+            retType = analyzePrecedence();
+            CHECK_R(retType >= 0, (returnCode) -retType)
+            expTypes[expTypCount] = retType;
+
+            CHECK(getToken(&token));
+        }
+    }
+
     CHECK_R(expTypCount==idCount,EC_SEM6)
 
     if (idCount==0 && delim == (tokenType) DEFINITION)
@@ -134,6 +212,7 @@ int idSekv(int eos){
         assemble("POPS","origShit","","",instr);
         assemble("MOVE",ids[i],"origShit","",instr);
     }
+
     CHECK_R(TTYPE==((tokenType)eos),EC_SYN)
 
     return EC_GOOD;
@@ -157,14 +236,17 @@ int switchToType(char* type){
 }
 
 int prolog(){
+    CHECK(allocUnget())
+    CHECK(loadFuncti())
     instr = malloc(sizeof(trAK));
     if (!instr){
         fprintf(stderr,"NANI\n");
         return INTERNAL_ERROR;
     }
+
     CHECK(getToken(&token));
     if (TTYPE == EOL_)
-    CHECK(prolog())
+        CHECK(prolog())
     else if (TTYPE == KEYWORD){
         CHECK_R(!strcmp(TSTR,"package"),EC_SYN)
         CHECK(getToken(&token));
@@ -195,7 +277,6 @@ int rdBody(){
 
 int rdDef(){
     CHECK(getToken(&token));
-
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
     CHECK(symtableItemInsertGlobal(TSTR))
 
@@ -218,7 +299,6 @@ int rdDef(){
     CHECK(rdReturns())
 
     CHECK(getToken(&token));
-
     CHECK_R(TTYPE==EOL_,EC_SYN)
 
     CHECK(getToken(&token));
@@ -408,7 +488,6 @@ int rdComm(){
             CHECK(idSekv(SEMICOLON))
 
         CHECK_R(TTYPE==SEMICOLON,EC_SYN)
-
         retType = analyzePrecedence();
         CHECK_R(retType>=0,(returnCode)-retType)
 
@@ -439,9 +518,9 @@ int rdComm(){
             ungetToken(&token);
             int i = 0;
             do {
-                CHECK(getToken(&token));
-                CHECK_R(TTYPE==KEYWORD,EC_SYN)
-                CHECK_R(actualFunc->returns[i] && switchToType(TSTR)==actualFunc->returns[i++],EC_SEM6)
+                retType = analyzePrecedence();
+                CHECK_R(retType>=0,(returnCode)-retType)
+                CHECK_R(actualFunc->returns[i] && retType==actualFunc->returns[i++],EC_SEM6)
                 CHECK(getToken(&token));
                 CHECK_R(TTYPE==EOL_ || TTYPE==COMMA,EC_SYN)
             } while (TTYPE!=EOL_);
@@ -452,17 +531,20 @@ int rdComm(){
     else if (TTYPE==IDENTIFIER){
         Token tmp = token;
         CHECK(getToken(&token));
+
         if (TTYPE==COMMA || TTYPE == ASSIGNMENT || TTYPE == DEFINITION){
             ungetToken(&token);
             token = tmp;
             CHECK(idSekv(EOL_))
         }
         else if (TTYPE==LEFT_ROUND_BRACKET){
-            CHECK(getToken(&token));
-            if (TTYPE!=RIGHT_ROUND_BRACKET)
-            CHECK(rdInParams())
-            CHECK_R(TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
-            CHECK(getToken(&token));
+            CHECK_R(symtableItemGetGlobal(tmp.value),EC_SEM3)
+            symtableGlobalItem *glob = symtableItemGetGlobal(tmp.value);
+            CHECK_R(glob->countRets==0,EC_SEM6)
+            do {
+                getToken(&token);
+            } while (TTYPE!=RIGHT_ROUND_BRACKET);
+            getToken(&token);
         }
         else if (TTYPE==PLUS_EQ||TTYPE==MINUS_EQ||TTYPE==MUL_EQ||TTYPE==DIV_EQ){
             retType = analyzePrecedence();

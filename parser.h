@@ -15,20 +15,15 @@ typedef struct trAK {
     char* pico;
 }trAK;
 
-typedef struct calledFun{
-    char* name;
-    char** returns;
-
-}calledFun;
-
 int generate(trAK *instr);
 
 void assemble(char* name, char* boku, char* no, char* pico, trAK *instr);
 
-int pushCall(char* key, char** returns);
 int isType(char* string);
 int checkOriginality();
 int idSekv(int eos);
+int getToken(Token *token);
+int loadFuncti();
 
 int prolog();
 int rdBody();
