@@ -24,6 +24,7 @@ int checkOriginality();
 int idSekv(int eos);
 int getToken(Token *token);
 int loadFuncti();
+int addInbuilt();
 
 int prolog();
 int rdBody();

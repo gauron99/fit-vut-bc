@@ -162,7 +162,6 @@ int idSekv(int eos){
         for (int i = idCount; i >= 0; i--)
             CHECK_R(symtableItemGet(actualFunc->key,ids[i]),EC_SEM3)
     }
-
     CHECK_R(TTYPE==((tokenType)delim),EC_SYN)
     CHECK(getToken(&token));
     ungetToken(&token);
@@ -189,7 +188,7 @@ int idSekv(int eos){
             ungetToken(&token);
             if (TTYPE==EOL_) {
                 CHECK_R(tempos->countRets == idCount+1, EC_SEM6)
-
+                expTypCount=tempos->countRets-1;
                 for (int i = 0; i < tempos->countRets;i++)
                     expTypes[i]=tempos->returns[i];
                 dewit = 1;
@@ -723,5 +722,55 @@ int rdInParamsN(){
     if (TTYPE==COMMA)
     CHECK(rdInParamsN())
 
+    return EC_GOOD;
+}
+
+int addInbuilt(){
+    CHECK(symtableItemInsertGlobal("inputs"))
+    CHECK(pushRet("inputs",switchToType("string")))
+    CHECK(pushRet("inputs",switchToType("int")))
+
+    CHECK(symtableItemInsertGlobal("inputi"))
+    CHECK(pushRet("inputi",switchToType("int")))
+    CHECK(pushRet("inputi",switchToType("int")))
+
+    CHECK(symtableItemInsertGlobal("inputf"))
+    CHECK(pushRet("inputf",switchToType("float64")))
+    CHECK(pushRet("inputf",switchToType("int")))
+
+    CHECK(symtableItemInsertGlobal("print"))
+    symtableGlobalItem *pls = symtableItemGetGlobal("print");
+    pls->countArgs = -1;
+
+    CHECK(symtableItemInsertGlobal("int2float"))
+    CHECK(pushArg("int2float",switchToType("int")))
+    CHECK(pushRet("int2float",switchToType("float64")))
+
+    CHECK(symtableItemInsertGlobal("float2int"))
+    CHECK(pushArg("int2float",switchToType("float64")))
+    CHECK(pushRet("int2float",switchToType("int")))
+
+    CHECK(symtableItemInsertGlobal("len"))
+    CHECK(pushArg("len",switchToType("string")))
+    CHECK(pushRet("len",switchToType("int")))
+
+    CHECK(symtableItemInsertGlobal("substr"))
+    CHECK(pushArg("substr",switchToType("string")))
+    CHECK(pushArg("substr",switchToType("int")))
+    CHECK(pushArg("substr",switchToType("int")))
+    CHECK(pushRet("substr",switchToType("string")))
+    CHECK(pushRet("substr",switchToType("int")))
+
+    CHECK(symtableItemInsertGlobal("ord"))
+    CHECK(pushArg("ord",switchToType("string")))
+    CHECK(pushArg("ord",switchToType("int")))
+    CHECK(pushRet("ord",switchToType("int")))
+    CHECK(pushRet("ord",switchToType("int")))
+
+    CHECK(symtableItemInsertGlobal("chr"))
+    CHECK(pushArg("chr",switchToType("int")))
+    CHECK(pushRet("chr",switchToType("string")))
+    CHECK(pushRet("chr",switchToType("int")))
+    
     return EC_GOOD;
 }
