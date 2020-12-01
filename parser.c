@@ -12,6 +12,7 @@
 #include "symtable.h"
 
 Token token;
+int varCounter = 0;
 extern symtable globalSymTab;
 symtableGlobalItem *actualFunc;
 trAK *instr;
@@ -238,8 +239,9 @@ int idSekv(int eos){
             symtableItem *tmp = symtableItemGet(actualFunc->key, ids[i]);
             CHECK_R(tmp->type == ((tokenType) expTypes[i]), EC_SEM6)
         }
-        else
-            symtableItemInsert(actualFunc->key,ids[i],(itemType) expTypes[i]);
+        else {
+            symtableItemInsert(actualFunc->key, ids[i], (itemType) expTypes[i], varCounter++);
+        }
 
         assemble("POPS","origShit","","",instr);
         assemble("MOVE",ids[i],"origShit","",instr);
@@ -334,7 +336,7 @@ int rdParams(){
     CHECK(fillTknArr(&token))
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
-    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR)))
+    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR),varCounter++))
     CHECK(pushArg(actualFunc->key,switchToType(TSTR)))
 
 
@@ -366,7 +368,7 @@ int rdParamsN(){
     CHECK(fillTknArr(&token))
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
-    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR)))
+    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR),varCounter++))
     CHECK(pushArg(actualFunc->key,switchToType(TSTR)))
 
 
@@ -412,7 +414,7 @@ int rdReturnsNamed(){
         CHECK(fillTknArr(&token))
         CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
-        CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR)))
+        CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR),varCounter++))
         CHECK(pushRet(actualFunc->key,switchToType(TSTR)))
 
 
@@ -453,7 +455,7 @@ int rdReturnsNamedN(){
 
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
-    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR)))
+    CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR),varCounter++))
     CHECK(pushArg(actualFunc->key,switchToType(TSTR)))
 
     CHECK(gettToken(&token));
