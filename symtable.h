@@ -31,10 +31,9 @@ typedef enum itemType{
 
 }itemType;
 
-
 /**
  * @brief structure for the item(node) in given linked list
- *
+ * 
  * key parameter holds value for each item to be identified with
  * data parameter holds data (gonna be changed depending on needs of others)
  * next pointer connects the linked list (pointer to the next item)
@@ -45,6 +44,7 @@ typedef enum itemType{
 typedef struct symtableItem{
     char *key;
 
+    int i;
     itemType type;
 
     struct symtableItem *next;
@@ -64,7 +64,7 @@ typedef struct symtableGlobalItem{
 
     symtable *localTabs;
     int countTabs;
-
+    
     struct symtableGlobalItem *next;
 
 }symtableGlobalItem;
@@ -77,11 +77,17 @@ typedef symtableGlobalItem **symtableGI;
  * @param funcKey name of function (in higher symtable)
  * @param key value of the item (used in hashing)
  * @param type type of the item being inserted
- * @param value item value (int,float,string,bool...)
  */
-
 int
-symtableItemInsert(char *funcKey, char *key, itemType type);
+symtableItemInsert(char *funcKey, char *key, itemType type,int i);
+
+/**
+ * @brief destroy one item by given key value
+ * @param tab pointer to the whole symtable
+ * @param key value given by user, what node to destroy (if none found, do nothing)
+ */
+void//gone
+symtableItemDelete(symtable *tab, char *key);
 
 /**
  * @brief get item from symtable by key
@@ -112,16 +118,10 @@ pushArg(char *key,itemType type);
 int
 pushRet(char *key,itemType type);
 
-int
+int //gone
 addScope(char *funcKey);
 
-int
+int//gone
 delScope(char *funcKey);
-
-void
-printAll();
-
-void
-printSymtable(char *funcKey);
 
 #endif

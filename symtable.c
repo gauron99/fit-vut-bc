@@ -15,7 +15,7 @@
 extern symtableGI symGlobal;
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-int 
+int //done
 hashFunc(char *key){
     int final = 1;
 
@@ -33,7 +33,7 @@ hashFunc(char *key){
 
 
 int
-symtableItemInsert(char *funcKey, char *key, itemType type){
+symtableItemInsert(char *funcKey, char *key, itemType type,int i){
     symtableGlobalItem *func = symtableItemGetGlobal(funcKey);
     symtable tab = func->localTabs[func->countTabs-1];
     symtableItem *first,*temp;
@@ -148,7 +148,6 @@ printAll(){
     }
     printf("~~~ # of items |%d| ~~~ ~~~\n\n",count);
 }
-
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 //create global symtable
@@ -176,7 +175,7 @@ symtableDestroyGlobal(){
             while(tempGl){
                 delGl = tempGl;
                 tempGl = tempGl->next;
-                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
                 //free array of arg types if any was allocated
                 if(delGl->countArgs){
                     free(delGl->args);
@@ -185,9 +184,9 @@ symtableDestroyGlobal(){
                 if(delGl->countRets){
                     free(delGl->returns);
                 }
-                //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
                 //destroy array of local symtables
-                for (int j = delGl->countTabs; j > 0 ; --j)
+                for (int j = delGl->countTabs; j > 0 ; --j)    
                 {
                     symtable *tab;
                     tab = &(delGl->localTabs[j-1]);
@@ -215,7 +214,7 @@ symtableDestroyGlobal(){
     }
 }
 
-int
+int 
 symtableItemInsertGlobal(char *key){
     symtableGlobalItem *first,*temp;
     int hash = hashFunc(key);
@@ -266,7 +265,7 @@ symtableItemInsertGlobal(char *key){
     return SUCCESS;
 }
 
-symtableGlobalItem*
+symtableGlobalItem* 
 symtableItemGetGlobal(char *key){
 
     symtableGlobalItem *found;
@@ -321,7 +320,7 @@ pushArg(char *key, itemType type){
         return SUCCESS;
     }
     //didnt find element by key (function of name by key)
-    printf("\n\nloudo you basic bitch, neumíš ani psát stringy už jo, sem tě vychoval teda jinak, soustřed se vole\n\n");
+    printf("loudo you basic bitch, neumíš ani psát stringy už jo, sem tě vychoval teda jinak, soustřed se vole\n");
     return 666; //return error
 }
 
@@ -467,19 +466,19 @@ delScope(char *funcKey){
 
 //     // symtableGlobalItem *i = symtableItemGetGlobal("main");
 //     itemType type = TYPE_INT64;
-//     symtableItemInsert("main","variable",type,"5");
-//     symtableItemInsert("main","variable2",type,"10");
-//     symtableItemInsert("main","variable3",type,"18");
+//     symtableItemInsert("main","variable",type,1);
+//     symtableItemInsert("main","variable2",type,1);
+//     symtableItemInsert("main","variable3",type,1);
 
-//     symtableItemInsert("loudikBoi","va1",type,"18");
-//     symtableItemInsert("sabina_scenuje","ve1",type,"18");
-//     symtableItemInsert("MAAAAAACEEEEEEE","aw2",type,"18");
+//     symtableItemInsert("loudikBoi","va1",type,1);
+//     symtableItemInsert("sabina_scenuje","ve1",type,1);
+//     symtableItemInsert("MAAAAAACEEEEEEE","aw2",type,1);
 
 //     // printSymtable("main");
 //     printAll();
 
 //     addScope("main");
-//     symtableItemInsert("main","lalala",type,"18");
+//     symtableItemInsert("main","lalala",type,1);
 //     // symtableItem *it;
 //     // it = symtableItemGet("main","lalala");
 //     // printf("%s; %d\n",it->key,it->type);
