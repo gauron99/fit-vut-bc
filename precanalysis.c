@@ -275,10 +275,10 @@ bool sPush (s_t* s, sElemType *newData) {
         Token *paToken = NULL;
         //char *val = NULL; 
         
-        if(newData->paToken != NULL) {
+        /*if(newData->paToken != NULL) {
             if(newData->paToken->value != NULL)
                 //printf("\nVALUE: %s", newData->paToken->value);
-        }
+        }*/
         
         if ((data = malloc(sizeof(sElemType))) == NULL)
             return false;
