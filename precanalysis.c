@@ -81,7 +81,7 @@ int getPaType(Token *token) {
             return OP_BOOL;
 
         case IDENTIFIER: {
-            printf("HALOHOHOHO");
+            //printf("HALOHOHOHO");
             Token t1,t2;
             getToken(&t1);
             if(t1.type == LEFT_ROUND_BRACKET) {
@@ -96,7 +96,7 @@ int getPaType(Token *token) {
                 }
             }
             ungetToken(&t1);
-            printf("RETURNING OP_ID in getPaType");
+            //printf("RETURNING OP_ID in getPaType");
             return OP_ID;
         }
         case INTEGER:{ 
@@ -365,7 +365,7 @@ bool cmp_rules(int *stackay1, int *stackay2) {
 }
 
 int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken) {
-    printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
+    //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
     sElemType *tmp = malloc(sizeof(sElemType));
 
     Token *tokenTmp;
@@ -428,7 +428,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken) {
             return i;
         }
         if(i == 10) {
-            printf("SOM TUUUUUUU\n");
+            //printf("SOM TUUUUUUU\n");
             symtableItem *item = symtableItemGet(actualFunc->key, teken->value);
             int tmp = *item->key;
             intStackPush(typeStack, tmp);
@@ -490,7 +490,7 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
 }
 
 int analyzePrecedence() {
-    printf("INA ZAVOLANA FUNKCIA");
+    //printf("INA ZAVOLANA FUNKCIA");
     Token *paToken;
     sElemType *mainTerminal;
    
@@ -534,10 +534,10 @@ int analyzePrecedence() {
     int action = 0;
     sElemGetData(&t, mainTerminal);
     while(!(mainTerminal->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
-        printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), mainTerminal->paType);
+        //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), mainTerminal->paType);
         i++;
         action = prec_tab[sFindFirstTerminal(mainStack)][mainTerminal->paType];
-        printf("%i\n", action);
+        //printf("%i\n", action);
         switch(action) {
             case(PA_GREATER):
                 ret = sFindRule(mainStack, tmpStack, &tmpTerminal, intStack, &lastFoundType);
@@ -575,17 +575,17 @@ int analyzePrecedence() {
             case(PA_SHIFT):
                 sPush(mainStack, mainTerminal);
                 getToken(&t);
-                printf("\nHalo dpc: %i \n", t.type);
+                //printf("\nHalo dpc: %i \n", t.type);
                 break;
             case(PA_EMPTY):
-                printf("returning -2\n");
+                //printf("returning -2\n");
                 return -2;
             }
         sElemGetData(&t, mainTerminal);
     }
     
     ungetToken(&t);
-    printf("LAST FOUND: %i", lastFoundType);
-    printf("returning 0\n");
+    //printf("LAST FOUND: %i", lastFoundType);
+    //printf("returning 0\n");
     return 0;
 }
