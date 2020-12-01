@@ -7,11 +7,82 @@
 #include "parser.h"
 #include "scanner.h"
 
-int getPaType(Token *token, s_t *typeStack) {
-    sElemType *typeElement = malloc(sizeof(sElemType));
+extern symtableGlobalItem *actualFunc;
+
+bool intStackInit(is_t *s) {
+    s->top = STACK_TOP;
+    s->size = STACK_SIZE;
+    s->iStack = malloc(STACK_SIZE * sizeof(int *));
+    if (s->iStack == NULL) {
+        fprintf(stderr, "Malloc failed to allocate memory");
+        return false;
+    }
+    return true;
+}
+
+void intStackFree(is_t *s) {
+    if (s != NULL) {
+        for (int i = s->top; i > STACK_TOP; i--) {
+            free(s->iStack[i]);
+        }
+        free(s->iStack);
+        free(s);
+    }
+}
+
+bool intStackIsFull(is_t *s) {
+    if(s->top == s->size - 1)
+        return true;
+    return false;
+
+}
+
+bool intStackIsEmpty(is_t *s) {
+    if(s->top == STACK_TOP)
+        return true;
+    return false;
+}
+
+bool intStackPush(is_t *s, int data) {
+    if (intStackIsFull(s)) {
+        int **helpPtr = NULL;
+        s->size = s->size * 2;
+        helpPtr = realloc(s->iStack, s->size*sizeof(int *));
+        if (helpPtr == NULL) {
+                return false;
+        }
+        s->iStack = helpPtr;
+        if(!intStackPush(s, data))
+                return false;
+    }
+    else {
+        int *tmp = malloc(sizeof(int));
+        *tmp = data;
+        s->top++;
+        s->iStack[s->top] = tmp;
+    }
+    return true;
+}
+
+int intStackPop(is_t *s) {
+    if(!intStackIsEmpty(s)) {
+        int ret = *s->iStack[s->top];
+        free(s->iStack[s->top]);
+        s->top--;
+        return ret;
+    }
+    else
+        return -1;   
+}
+
+int getPaType(Token *token) {
     switch(token->type) {
+        case KEYWORD:
+            return OP_BOOL;
+
         case IDENTIFIER: {
-            /*Token t1,t2;
+            printf("HALOHOHOHO");
+            Token t1,t2;
             getToken(&t1);
             if(t1.type == LEFT_ROUND_BRACKET) {
                 getToken(&t2);
@@ -24,25 +95,18 @@ int getPaType(Token *token, s_t *typeStack) {
                     return OP_FUN;
                 }
             }
-            ungetToken(&t1);*/
-            typeElement->paType = IDENTIFIER;
-            sPushPointer(typeStack, typeElement);
+            ungetToken(&t1);
+            printf("RETURNING OP_ID in getPaType");
             return OP_ID;
         }
         case INTEGER:{ 
-            typeElement->paType = INTEGER;
-            sPushPointer(typeStack, typeElement);
             return OP_INTEGER;
         }
         case FLOAT: {
-            typeElement->paType = FLOAT;
-            sPushPointer(typeStack, typeElement);
             return OP_FLOAT;
         }
 
         case STRING: {
-            typeElement->paType = STRING;
-            sPushPointer(typeStack, typeElement);
             return OP_STRING;
         }
         case PLUS:
@@ -238,9 +302,9 @@ void sFree(s_t *s) {
     if (s != NULL) {
         for (int i = s->top; i > STACK_TOP; i--) {
             free(s->stack[i]);
-            free(s->stack);
-            free(s);
         }
+        free(s->stack);
+        free(s);
     }
 }
 
@@ -262,11 +326,11 @@ void sElemFree(sElemType *data, Token *paToken) {
     free(data);
 }
 
-bool sElemGetData(Token *token, sElemType *data, s_t *typeStack) {
-    data->paType = getPaType(token, typeStack);
+bool sElemGetData(Token *token, sElemType *data) {
+    data->paType = getPaType(token);
     data->paToken->type = token->type;
     if(data->paToken->value != NULL)
-        strcpy(token->value,data->paToken->value);
+        //strcpy(token->value,data->paToken->value);
     return true;
 }
 
@@ -300,8 +364,8 @@ bool cmp_rules(int *stackay1, int *stackay2) {
     return true;
 }
 
-int generateRule(int *rule, s_t *typeStack, int *lastFoundType) {
-    //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
+int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken) {
+    printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
     sElemType *tmp = malloc(sizeof(sElemType));
 
     Token *tokenTmp;
@@ -345,67 +409,69 @@ int generateRule(int *rule, s_t *typeStack, int *lastFoundType) {
     if(found == 1) {
         //printf("CHECK 2, i = %i\n", i);
         if(i < 10 || i == 17 || i == 18) {
-            sGetTopPointer(typeStack, ele1);
-            //printf("ele1: %i\n", ele1->paType);
-            sPopPointer(typeStack);
-            sGetTopPointer(typeStack, ele2);
-            //printf("ele2: %i\n", ele2->paType);
-            sPopPointer(typeStack);
-            if(ele1->paType == ele2->paType) {
-                if(i < 4)
-                    *lastFoundType = ele1->paType;
-                else
+            int type1 = intStackPop(typeStack);
+            int type2 = intStackPop(typeStack);
+            if(type1 == type2) {
+                if(i < 4 || i == 17 || i == 18) {
+                    intStackPush(typeStack, type1);
+                    *lastFoundType = type1;
+                }
+                else {
+                    type2 = BOOL;
+                    intStackPush(typeStack, type2);
                     *lastFoundType = BOOL;
+                }
                 return i;
             }
             else
                 return DIFFERENT_TYPES;
             return i;
         }
+        if(i == 10) {
+            printf("SOM TUUUUUUU\n");
+            symtableItem *item = symtableItemGet(actualFunc->key, teken->value);
+            int tmp = *item->key;
+            intStackPush(typeStack, tmp);
+            *lastFoundType = tmp;
+            //printf("po pushi\n");
+            return i;
+        }
+        if(i == 11) {
+            //printf("ele1: %i\n", ele1->paType);
+            int tmp = intStackPop(typeStack);
+            intStackPush(typeStack, tmp);
+            *lastFoundType = tmp;
+            return i;
+        } 
+        if(i == 12) {
+            *lastFoundType = INTEGER;
+            int tmp = INTEGER;
+            intStackPush(typeStack, tmp);
+            //printf("\n\n %i PUSHED ON STACK\n", *typeStack->iStack[typeStack->top]);
+            return i;
+        }
+        if(i == 13) {
+            *lastFoundType = FLOAT;
+            int tmp = FLOAT; 
+            intStackPush(typeStack, tmp);
+            return i;
+        }
+        if(i == 14) {
+            *lastFoundType = STRING;
+            int tmp = STRING; 
+            intStackPush(typeStack, tmp);
+            return i;
+        }
+        if(i == 16) {
+            int tmp = intStackPop(typeStack);
+            *lastFoundType = tmp;
+            intStackPush(typeStack, tmp);
+        }
     }
-    if(i == 10) {
-        //printf("po pushi\n");
-        *lastFoundType = IDENTIFIER;
-        tmp->paType = IDENTIFIER;
-        sPush(typeStack, tmp);
-        return i;
-    }
-    if(i == 11) {
-        //printf("ele1: %i\n", ele1->paType);
-        sGetTopPointer(typeStack, ele1);            
-        sPopPointer(typeStack);
-        *lastFoundType = ele1->paType;
-        return i;
-    } 
-    if(i == 12) {
-        *lastFoundType = INTEGER;
-        tmp->paType = INTEGER;
-        sPush(typeStack, tmp);
-        //printf("\n\n %i PUSHED ON STACK\n", typeStack->stack[typeStack->top]->paType);
-        return i;
-    }
-    if(i == 13) {
-        *lastFoundType = FLOAT;
-        tmp->paType = FLOAT; 
-        sPush(typeStack, tmp);
-        return i;
-    }
-    if(i == 14) {
-        *lastFoundType = STRING;
-        tmp->paType = STRING; 
-        sPush(typeStack, tmp);
-        return i;
-    }
-    if(i == 16) {
-        sGetTopPointer(typeStack, tmp);
-        sPopPointer(typeStack);
-        *lastFoundType = tmp->paType;
-    }
-
     return -2;
 }
 
-int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, s_t *typeStack, int * lastFoundType) {
+int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeStack, int * lastFoundType) {
     while ((mainStack->stack[mainStack->top])->paType != OP_LESS) {
         sGetTopPointer(mainStack, tmpTerminal);
         if (!sPushPointer(tmpStack, tmpTerminal))
@@ -417,13 +483,14 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, s_t *typeSt
     int ruleOnStack[3] = {0, 0, 0};
     for (int i = tmpStack->top; i > -1; i--)
         ruleOnStack[i] = (tmpStack->stack[i])->paType;
-    int usedRule = generateRule(ruleOnStack, typeStack, lastFoundType);
+    int usedRule = generateRule(ruleOnStack, typeStack, lastFoundType, tmpStack->stack[0]->paToken);
     
     //printf("returning %i\n", usedRule);
     return usedRule;
 }
 
 int analyzePrecedence() {
+    printf("INA ZAVOLANA FUNKCIA");
     Token *paToken;
     sElemType *mainTerminal;
    
@@ -454,6 +521,10 @@ int analyzePrecedence() {
     typeStack = malloc(sizeof(s_t));
     sInit(typeStack);
     
+    is_t *intStack;
+    intStack = malloc(sizeof(is_t));
+    intStackInit(intStack);
+       
     int prec_tab[25][25];
     pTableInit(prec_tab);
     int ret = 0;
@@ -461,15 +532,15 @@ int analyzePrecedence() {
     Token t;
     getToken(&t);
     int action = 0;
-    sElemGetData(&t, mainTerminal, typeStack);
+    sElemGetData(&t, mainTerminal);
     while(!(mainTerminal->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
         printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), mainTerminal->paType);
         i++;
         action = prec_tab[sFindFirstTerminal(mainStack)][mainTerminal->paType];
-        //printf("%i\n", action);
+        printf("%i\n", action);
         switch(action) {
             case(PA_GREATER):
-                ret = sFindRule(mainStack, tmpStack, &tmpTerminal, typeStack, &lastFoundType);
+                ret = sFindRule(mainStack, tmpStack, &tmpTerminal, intStack, &lastFoundType);
                 if(ret == -2) {
                     //printf("returning -2\n");
                     return -2;
@@ -504,16 +575,17 @@ int analyzePrecedence() {
             case(PA_SHIFT):
                 sPush(mainStack, mainTerminal);
                 getToken(&t);
+                printf("\nHalo dpc: %i \n", t.type);
+                break;
             case(PA_EMPTY):
-                //printf("returning -2\n");
+                printf("returning -2\n");
                 return -2;
-        }
-        sElemGetData(&t, mainTerminal, typeStack);
-
+            }
+        sElemGetData(&t, mainTerminal);
     }
     
     ungetToken(&t);
-    //printf("LAST FOUND: %i", lastFoundType);
-    //printf("returning 0\n");
+    printf("LAST FOUND: %i", lastFoundType);
+    printf("returning 0\n");
     return 0;
 }

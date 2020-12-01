@@ -28,7 +28,8 @@ int pTableInit(int table[25][25]) {
     table[OP_PLUS][OP_DOLLAR] = PA_GREATER;
     table[OP_PLUS][OP_INTEGER] = PA_LESS;
     table[OP_PLUS][OP_FLOAT] = PA_LESS;
-    table[OP_PLUS][OP_STRING] = PA_LESS; 
+    table[OP_PLUS][OP_STRING] = PA_LESS;  
+    table[OP_PLUS][OP_BOOL] = PA_LESS;
 
     table[OP_MINUS][OP_PLUS] = PA_GREATER;
     table[OP_MINUS][OP_MINUS] = PA_GREATER;
@@ -51,7 +52,8 @@ int pTableInit(int table[25][25]) {
     table[OP_MINUS][OP_DOLLAR] = PA_GREATER;
     table[OP_MINUS][OP_INTEGER] = PA_LESS;
     table[OP_MINUS][OP_FLOAT] = PA_LESS;
-    table[OP_MINUS][OP_STRING] = PA_LESS; 
+    table[OP_MINUS][OP_STRING] = PA_LESS;  
+    table[OP_MINUS][OP_BOOL] = PA_LESS;
 
     table[OP_MUL][OP_PLUS] = PA_GREATER;
     table[OP_MUL][OP_MINUS] = PA_GREATER;
@@ -74,7 +76,8 @@ int pTableInit(int table[25][25]) {
     table[OP_MUL][OP_DOLLAR] = PA_GREATER;
     table[OP_MUL][OP_INTEGER] = PA_LESS;
     table[OP_MUL][OP_FLOAT] = PA_LESS;
-    table[OP_MUL][OP_STRING] = PA_LESS; 
+    table[OP_MUL][OP_STRING] = PA_LESS;  
+    table[OP_MUL][OP_BOOL] = PA_LESS;
 
     table[OP_DIV][OP_PLUS] = PA_GREATER;
     table[OP_DIV][OP_MINUS] = PA_GREATER;
@@ -97,7 +100,8 @@ int pTableInit(int table[25][25]) {
     table[OP_DIV][OP_DOLLAR] = PA_GREATER;
     table[OP_DIV][OP_INTEGER] = PA_LESS;
     table[OP_DIV][OP_FLOAT] = PA_LESS;
-    table[OP_DIV][OP_STRING] = PA_LESS; 
+    table[OP_DIV][OP_STRING] = PA_LESS;  
+    table[OP_DIV][OP_BOOL] = PA_LESS;
 
     table[OP_LBRAC][OP_PLUS] = PA_LESS;
     table[OP_LBRAC][OP_MINUS] = PA_LESS;
@@ -120,7 +124,8 @@ int pTableInit(int table[25][25]) {
     table[OP_LBRAC][OP_DOLLAR] = PA_EMPTY;
     table[OP_LBRAC][OP_INTEGER] = PA_LESS;
     table[OP_LBRAC][OP_FLOAT] = PA_LESS;
-    table[OP_LBRAC][OP_STRING] = PA_LESS; 
+    table[OP_LBRAC][OP_STRING] = PA_LESS;  
+    table[OP_LBRAC][OP_BOOL] = PA_LESS;
 
     table[OP_RBRAC][OP_PLUS] = PA_GREATER;
     table[OP_RBRAC][OP_MINUS] = PA_GREATER;
@@ -141,9 +146,10 @@ int pTableInit(int table[25][25]) {
     table[OP_RBRAC][OP_COMMA] = PA_GREATER;
     table[OP_RBRAC][OP_ID] = PA_EMPTY;
     table[OP_RBRAC][OP_DOLLAR] = PA_GREATER;
-    table[OP_STRING][OP_INTEGER] = PA_EMPTY;
-    table[OP_STRING][OP_FLOAT] = PA_EMPTY;
-    table[OP_STRING][OP_STRING] = PA_EMPTY; 
+    table[OP_RBRAC][OP_INTEGER] = PA_EMPTY;
+    table[OP_RBRAC][OP_FLOAT] = PA_EMPTY;
+    table[OP_RBRAC][OP_STRING] = PA_EMPTY;  
+    table[OP_RBRAC][OP_BOOL] = PA_EMPTY;
 
     table[OP_LESS][OP_PLUS] = PA_LESS;
     table[OP_LESS][OP_MINUS] = PA_LESS;
@@ -166,7 +172,8 @@ int pTableInit(int table[25][25]) {
     table[OP_LESS][OP_DOLLAR] = PA_GREATER;
     table[OP_LESS][OP_INTEGER] = PA_LESS;
     table[OP_LESS][OP_FLOAT] = PA_LESS;
-    table[OP_LESS][OP_STRING] = PA_LESS; 
+    table[OP_LESS][OP_STRING] = PA_LESS;  
+    table[OP_LESS][OP_BOOL] = PA_LESS;
 
     table[OP_LESS_EQUAL][OP_PLUS] = PA_LESS;
     table[OP_LESS_EQUAL][OP_MINUS] = PA_LESS;
@@ -189,7 +196,8 @@ int pTableInit(int table[25][25]) {
     table[OP_LESS_EQUAL][OP_DOLLAR] = PA_GREATER;
     table[OP_LESS_EQUAL][OP_INTEGER] = PA_LESS;
     table[OP_LESS_EQUAL][OP_FLOAT] = PA_LESS;
-    table[OP_LESS_EQUAL][OP_STRING] = PA_LESS; 
+    table[OP_LESS_EQUAL][OP_STRING] = PA_LESS;  
+    table[OP_LESS_EQUAL][OP_BOOL] = PA_LESS;
 
     table[OP_MORE][OP_PLUS] = PA_LESS;
     table[OP_MORE][OP_MINUS] = PA_LESS;
@@ -212,7 +220,8 @@ int pTableInit(int table[25][25]) {
     table[OP_MORE][OP_DOLLAR] = PA_GREATER;
     table[OP_MORE][OP_INTEGER] = PA_LESS;
     table[OP_MORE][OP_FLOAT] = PA_LESS;
-    table[OP_MORE][OP_STRING] = PA_LESS; 
+    table[OP_MORE][OP_STRING] = PA_LESS;  
+    table[OP_MORE][OP_BOOL] = PA_LESS;
 
     table[OP_MORE_EQUAL][OP_PLUS] = PA_LESS;
     table[OP_MORE_EQUAL][OP_MINUS] = PA_LESS;
@@ -235,7 +244,8 @@ int pTableInit(int table[25][25]) {
     table[OP_MORE_EQUAL][OP_DOLLAR] = PA_GREATER;
     table[OP_MORE_EQUAL][OP_INTEGER] = PA_LESS;
     table[OP_MORE_EQUAL][OP_FLOAT] = PA_LESS;
-    table[OP_MORE_EQUAL][OP_STRING] = PA_LESS; 
+    table[OP_MORE_EQUAL][OP_STRING] = PA_LESS;  
+    table[OP_MORE_EQUAL][OP_BOOL] = PA_LESS;
 
     table[OP_EQUAL][OP_PLUS] = PA_LESS;
     table[OP_EQUAL][OP_MINUS] = PA_LESS;
@@ -258,7 +268,8 @@ int pTableInit(int table[25][25]) {
     table[OP_EQUAL][OP_DOLLAR] = PA_GREATER;
     table[OP_EQUAL][OP_INTEGER] = PA_LESS;
     table[OP_EQUAL][OP_FLOAT] = PA_LESS;
-    table[OP_EQUAL][OP_STRING] = PA_LESS; 
+    table[OP_EQUAL][OP_STRING] = PA_LESS;  
+    table[OP_EQUAL][OP_BOOL] = PA_LESS;
 
     table[OP_NOT_EQUAL][OP_PLUS] = PA_LESS;
     table[OP_NOT_EQUAL][OP_MINUS] = PA_LESS;
@@ -281,7 +292,8 @@ int pTableInit(int table[25][25]) {
     table[OP_NOT_EQUAL][OP_DOLLAR] = PA_GREATER;
     table[OP_NOT_EQUAL][OP_INTEGER] = PA_LESS;
     table[OP_NOT_EQUAL][OP_FLOAT] = PA_LESS;
-    table[OP_NOT_EQUAL][OP_STRING] = PA_LESS; 
+    table[OP_NOT_EQUAL][OP_STRING] = PA_LESS;  
+    table[OP_NOT_EQUAL][OP_BOOL] = PA_LESS;
 
     table[OP_FUN][OP_PLUS] = PA_GREATER;
     table[OP_FUN][OP_MINUS] = PA_GREATER;
@@ -306,7 +318,8 @@ int pTableInit(int table[25][25]) {
     table[OP_FUN][OP_DOLLAR] = PA_GREATER;
     table[OP_FUN][OP_INTEGER] = PA_LESS;
     table[OP_FUN][OP_FLOAT] = PA_LESS;
-    table[OP_FUN][OP_STRING] = PA_LESS; 
+    table[OP_FUN][OP_STRING] = PA_LESS;  
+    table[OP_FUN][OP_BOOL] = PA_LESS;
 
     table[OP_COMMA][OP_PLUS] = PA_LESS;
     table[OP_COMMA][OP_MINUS] = PA_LESS;
@@ -331,7 +344,8 @@ int pTableInit(int table[25][25]) {
     table[OP_COMMA][OP_DOLLAR] = PA_GREATER;
     table[OP_COMMA][OP_INTEGER] = PA_LESS;
     table[OP_COMMA][OP_FLOAT] = PA_LESS;
-    table[OP_COMMA][OP_STRING] = PA_LESS; 
+    table[OP_COMMA][OP_STRING] = PA_LESS;  
+    table[OP_COMMA][OP_BOOL] = PA_LESS;
  
     table[OP_NOT][OP_PLUS] = PA_LESS;
     table[OP_NOT][OP_MINUS] = PA_LESS;
@@ -355,6 +369,7 @@ int pTableInit(int table[25][25]) {
     table[OP_NOT][OP_INTEGER] = PA_LESS;
     table[OP_NOT][OP_FLOAT] = PA_LESS;
     table[OP_NOT][OP_STRING] = PA_LESS; 
+    table[OP_NOT][OP_BOOL] = PA_LESS;
 
     table[OP_AND][OP_PLUS] = PA_LESS;
     table[OP_AND][OP_MINUS] = PA_LESS;
@@ -379,7 +394,8 @@ int pTableInit(int table[25][25]) {
     table[OP_AND][OP_DOLLAR] = PA_GREATER;
     table[OP_AND][OP_INTEGER] = PA_LESS;
     table[OP_AND][OP_FLOAT] = PA_LESS;
-    table[OP_AND][OP_STRING] = PA_LESS; 
+    table[OP_AND][OP_STRING] = PA_LESS;  
+    table[OP_AND][OP_BOOL] = PA_LESS;
 
     table[OP_OR][OP_PLUS] = PA_LESS;
     table[OP_OR][OP_MINUS] = PA_LESS;
@@ -404,7 +420,8 @@ int pTableInit(int table[25][25]) {
     table[OP_OR][OP_DOLLAR] = PA_GREATER;
     table[OP_OR][OP_INTEGER] = PA_LESS;
     table[OP_OR][OP_FLOAT] = PA_LESS;
-    table[OP_OR][OP_STRING] = PA_LESS; 
+    table[OP_OR][OP_STRING] = PA_LESS;  
+    table[OP_OR][OP_BOOL] = PA_LESS;
 
     table[OP_ID][OP_PLUS] = PA_GREATER;
     table[OP_ID][OP_MINUS] = PA_GREATER;
@@ -427,7 +444,8 @@ int pTableInit(int table[25][25]) {
     table[OP_ID][OP_DOLLAR] = PA_GREATER;
     table[OP_ID][OP_INTEGER] = PA_EMPTY;
     table[OP_ID][OP_FLOAT] = PA_EMPTY;
-    table[OP_ID][OP_STRING] = PA_EMPTY; 
+    table[OP_ID][OP_STRING] = PA_EMPTY;  
+    table[OP_ID][OP_BOOL] = PA_EMPTY;
 
     table[OP_INTEGER][OP_PLUS] = PA_GREATER;
     table[OP_INTEGER][OP_MINUS] = PA_GREATER;
@@ -450,7 +468,8 @@ int pTableInit(int table[25][25]) {
     table[OP_INTEGER][OP_DOLLAR] = PA_GREATER;
     table[OP_INTEGER][OP_INTEGER] = PA_EMPTY;
     table[OP_INTEGER][OP_FLOAT] = PA_EMPTY;
-    table[OP_INTEGER][OP_STRING] = PA_EMPTY;
+    table[OP_INTEGER][OP_STRING] = PA_EMPTY; 
+    table[OP_INTEGER][OP_BOOL] = PA_EMPTY;
 
     table[OP_FLOAT][OP_PLUS] = PA_GREATER;
     table[OP_FLOAT][OP_MINUS] = PA_GREATER;
@@ -473,7 +492,8 @@ int pTableInit(int table[25][25]) {
     table[OP_FLOAT][OP_DOLLAR] = PA_GREATER;
     table[OP_FLOAT][OP_INTEGER] = PA_EMPTY;
     table[OP_FLOAT][OP_FLOAT] = PA_EMPTY;
-    table[OP_FLOAT][OP_STRING] = PA_EMPTY;
+    table[OP_FLOAT][OP_STRING] = PA_EMPTY; 
+    table[OP_FLOAT][OP_BOOL] = PA_EMPTY;
 
     table[OP_STRING][OP_PLUS] = PA_GREATER;
     table[OP_STRING][OP_MINUS] = PA_GREATER;
@@ -496,7 +516,32 @@ int pTableInit(int table[25][25]) {
     table[OP_STRING][OP_DOLLAR] = PA_GREATER;
     table[OP_STRING][OP_INTEGER] = PA_EMPTY;
     table[OP_STRING][OP_FLOAT] = PA_EMPTY;
-    table[OP_STRING][OP_STRING] = PA_EMPTY;
+    table[OP_STRING][OP_STRING] = PA_EMPTY; 
+    table[OP_STRING][OP_BOOL] = PA_EMPTY;
+    
+    table[OP_BOOL][OP_PLUS] = PA_GREATER;
+    table[OP_BOOL][OP_MINUS] = PA_GREATER;
+    table[OP_BOOL][OP_MUL] = PA_GREATER;    
+    table[OP_BOOL][OP_DIV] = PA_GREATER;
+    table[OP_BOOL][OP_LBRAC] = PA_EMPTY;
+    table[OP_BOOL][OP_RBRAC] = PA_GREATER;
+    table[OP_BOOL][OP_LESS] = PA_GREATER;
+    table[OP_BOOL][OP_LESS_EQUAL] = PA_GREATER;
+    table[OP_BOOL][OP_MORE] = PA_GREATER;
+    table[OP_BOOL][OP_MORE_EQUAL] = PA_GREATER;
+    table[OP_BOOL][OP_EQUAL] = PA_GREATER;
+    table[OP_BOOL][OP_NOT_EQUAL] = PA_GREATER;
+    table[OP_BOOL][OP_NOT] = PA_GREATER;
+    table[OP_BOOL][OP_AND] = PA_GREATER;
+    table[OP_BOOL][OP_OR] = PA_GREATER;
+    table[OP_BOOL][OP_FUN] = PA_GREATER;
+    table[OP_BOOL][OP_COMMA] = PA_GREATER;
+    table[OP_BOOL][OP_ID] = PA_EMPTY;
+    table[OP_BOOL][OP_DOLLAR] = PA_GREATER;
+    table[OP_BOOL][OP_INTEGER] = PA_EMPTY;
+    table[OP_BOOL][OP_FLOAT] = PA_EMPTY;
+    table[OP_BOOL][OP_STRING] = PA_EMPTY; 
+    table[OP_BOOL][OP_BOOL] = PA_EMPTY;
 
     table[OP_DOLLAR][OP_PLUS] = PA_LESS;
     table[OP_DOLLAR][OP_MINUS] = PA_LESS;
@@ -519,7 +564,9 @@ int pTableInit(int table[25][25]) {
     table[OP_DOLLAR][OP_DOLLAR] = PA_EMPTY; 
     table[OP_DOLLAR][OP_INTEGER] = PA_LESS;
     table[OP_DOLLAR][OP_FLOAT] = PA_LESS;
-    table[OP_DOLLAR][OP_STRING] = PA_LESS;   
+    table[OP_DOLLAR][OP_STRING] = PA_LESS; 
+    table[OP_DOLLAR][OP_BOOL] = PA_LESS;
+   
     
     return 0;
 }
@@ -549,4 +596,5 @@ int rules[25][25] = {
     {OP_NOT, OP_EXPRESSION, 0},
     {OP_EXPRESSION, OP_AND, OP_EXPRESSION},
     {OP_EXPRESSION, OP_OR, OP_EXPRESSION},
+    {OP_BOOL, 0, 0},
 };

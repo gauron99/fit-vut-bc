@@ -25,6 +25,12 @@ typedef struct {
     int size;
 } s_t; // pri refaktorizacii s_t premenovat nakoniec, moze sa vyskytovat aj inde
 
+typedef struct {
+    int **iStack;
+    int top;
+    int size;
+} is_t;
+
 enum {
     OP_PLUS,        // 0
     OP_MINUS,       // 1
@@ -60,11 +66,11 @@ enum {
     OP_EXPRESSION,  // 22
 
     OP_TABLE_LESS,  // 23
+    OP_BOOL,        // 24
 };
 
 // ***RULES***
 extern int rules[25][25];
-
 
 enum {
     PA_LESS = 420,
@@ -77,7 +83,7 @@ enum {
 int pTableInit(int table[25][25]);   // v prec_table_init.c
 
 // determines paType of a token
-int getPaType(Token *t, s_t *typeStack);
+int getPaType(Token *t);
 
 // S T A C K  F U N C T I O N S //
 
@@ -121,13 +127,13 @@ bool sCopyUntilTerminal(s_t *src, s_t *dest, sElemType *helper);
 bool sCopyAll(s_t *src, s_t *dest, sElemType *helper); 
 // copies the stack to dest in reversed order
 
-int  sFindRule(s_t *mainStack, s_t *helperStack, sElemType *helperTerminal, s_t *typeStack, int *lastFoundType);
+int  sFindRule(s_t *mainStack, s_t *helperStack, sElemType *helperTerminal, is_t *typeStack, int *lastFoundType);
 // gets the elements on top of the stack until < and sends them to compareRules
 
 int compareRules(int *rule);
 // 
 
-bool sElemGetData(Token *token, sElemType *data, s_t *typeStack);
+bool sElemGetData(Token *token, sElemType *data);
 
 Token * get_token(Token t_stream[15], int pos);
 
