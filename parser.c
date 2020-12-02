@@ -12,6 +12,7 @@
 #include "symtable.h"
 
 Token token;
+int isInFuncCall = 0;
 int varCounter = 0;
 extern symtable globalSymTab;
 symtableGlobalItem *actualFunc;
@@ -163,6 +164,7 @@ int idSekv(int eos){
         for (int i = idCount; i >= 0; i--)
             CHECK_R(symtableItemGet(actualFunc->key,ids[i]),EC_SEM3)
     }
+
     CHECK_R(TTYPE==((tokenType)delim),EC_SYN)
     CHECK(getToken(&token));
     ungetToken(&token);
@@ -180,6 +182,7 @@ int idSekv(int eos){
         int tknCount = 2;
 
         if (TTYPE==LEFT_ROUND_BRACKET){
+            isInFuncCall = 1;
             while(TTYPE!=RIGHT_ROUND_BRACKET){
                 CHECK(getToken(&token));
                 ungetToken(&token);
@@ -198,6 +201,7 @@ int idSekv(int eos){
                 CHECK_R(TTYPE==COMMA || TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
                 tknCount+=2;
             }
+            isInFuncCall = 0;
 
             CHECK(getToken(&token));
             ungetToken(&token);
@@ -218,10 +222,15 @@ int idSekv(int eos){
             for (int i = 1; i<tknCount;i++)
                 getToken(&token);
         }
+        else{
+            dewit = 1;
+            goto dere;
+        }
         dewit = 1;
     }
     else {
         dere:
+        getToken(&token);
         retType = analyzePrecedence();
         CHECK_R(retType >= 0, (returnCode) -retType)
         expTypes[0] = retType;
@@ -596,12 +605,30 @@ int rdComm(){
             CHECK(idSekv(EOL_))
         }
         else if (TTYPE==LEFT_ROUND_BRACKET){
+            int *argTypes = malloc(sizeof(int));
+            int argTypCount = 0;
             CHECK_R(symtableItemGetGlobal(tmp.value),EC_SEM3)
             symtableGlobalItem *glob = symtableItemGetGlobal(tmp.value);
-            CHECK_R(glob->countRets==0,EC_SEM6)
-            do {
-                getToken(&token);
-            } while (TTYPE!=RIGHT_ROUND_BRACKET);
+            CHECK_R(glob->countArgs==0,EC_SEM6)
+            getToken(&token);
+            isInFuncCall = 1;
+            while(TTYPE!=RIGHT_ROUND_BRACKET){
+                CHECK(getToken(&token));
+                ungetToken(&token);
+                if (TTYPE==RIGHT_ROUND_BRACKET) {
+                    break;
+                }
+                CHECK_R(TTYPE==IDENTIFIER || TTYPE==FLOAT || TTYPE==INTEGER || TTYPE==STRING || TTYPE==BOOL,EC_SYN)
+                retType = analyzePrecedence();
+                CHECK_R(retType >= 0, (returnCode) -retType)
+                CHECK_R((argTypes=realloc(argTypes,++argTypCount*sizeof(int))),EC_INTERNAL)
+                argTypes[argTypCount-1]=retType;
+                CHECK_R((glob->args[argTypCount-1] && argTypes[argTypCount-1]==glob->args[argTypCount-1]),EC_SEM6)
+                CHECK(getToken(&token))
+                ungetToken(&token);
+                CHECK_R(TTYPE==COMMA || TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
+            }
+            isInFuncCall = 0;
             getToken(&token);
         }
         else if (TTYPE==PLUS_EQ||TTYPE==MINUS_EQ||TTYPE==MUL_EQ||TTYPE==DIV_EQ){
