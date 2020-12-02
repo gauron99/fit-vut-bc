@@ -1,3 +1,11 @@
+/**
+        ~~ IFJ-20 ~~
+    @file   prectableandrules.c
+    @brief  contains precedence table and rules used by PA
+    @authoe Martin Zatovic
+*/
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -6,7 +14,7 @@
 #include "precanalysis.h"
 #include "scanner.h"
 
-int pTableInit(int table[25][25]) {
+bool pTableInit(int table[25][25]) {
     table[OP_PLUS][OP_PLUS] = PA_GREATER;
     table[OP_PLUS][OP_MINUS] = PA_GREATER;
     table[OP_PLUS][OP_MUL] = PA_LESS;    
@@ -435,7 +443,7 @@ int pTableInit(int table[25][25]) {
     table[OP_ID][OP_MORE_EQUAL] = PA_GREATER;
     table[OP_ID][OP_EQUAL] = PA_GREATER;
     table[OP_ID][OP_NOT_EQUAL] = PA_GREATER;
-    table[OP_ID][OP_NOT] = PA_GREATER;
+    table[OP_ID][OP_NOT] = PA_EMPTY;
     table[OP_ID][OP_AND] = PA_GREATER;
     table[OP_ID][OP_OR] = PA_GREATER;
     table[OP_ID][OP_FUN] = PA_LESS;
@@ -459,7 +467,7 @@ int pTableInit(int table[25][25]) {
     table[OP_INTEGER][OP_MORE_EQUAL] = PA_GREATER;
     table[OP_INTEGER][OP_EQUAL] = PA_GREATER;
     table[OP_INTEGER][OP_NOT_EQUAL] = PA_GREATER;
-    table[OP_INTEGER][OP_NOT] = PA_GREATER;
+    table[OP_INTEGER][OP_NOT] = PA_EMPTY;
     table[OP_INTEGER][OP_AND] = PA_GREATER;
     table[OP_INTEGER][OP_OR] = PA_GREATER;
     table[OP_INTEGER][OP_FUN] = PA_GREATER;
@@ -483,7 +491,7 @@ int pTableInit(int table[25][25]) {
     table[OP_FLOAT][OP_MORE_EQUAL] = PA_GREATER;
     table[OP_FLOAT][OP_EQUAL] = PA_GREATER;
     table[OP_FLOAT][OP_NOT_EQUAL] = PA_GREATER;
-    table[OP_FLOAT][OP_NOT] = PA_GREATER;
+    table[OP_FLOAT][OP_NOT] = PA_EMPTY;
     table[OP_FLOAT][OP_AND] = PA_GREATER;
     table[OP_FLOAT][OP_OR] = PA_GREATER;
     table[OP_FLOAT][OP_FUN] = PA_GREATER;
@@ -507,7 +515,7 @@ int pTableInit(int table[25][25]) {
     table[OP_STRING][OP_MORE_EQUAL] = PA_GREATER;
     table[OP_STRING][OP_EQUAL] = PA_GREATER;
     table[OP_STRING][OP_NOT_EQUAL] = PA_GREATER;
-    table[OP_STRING][OP_NOT] = PA_GREATER;
+    table[OP_STRING][OP_NOT] = PA_EMPTY;
     table[OP_STRING][OP_AND] = PA_GREATER;
     table[OP_STRING][OP_OR] = PA_GREATER;
     table[OP_STRING][OP_FUN] = PA_GREATER;
@@ -567,8 +575,7 @@ int pTableInit(int table[25][25]) {
     table[OP_DOLLAR][OP_STRING] = PA_LESS; 
     table[OP_DOLLAR][OP_BOOL] = PA_LESS;
    
-    
-    return 0;
+    return true;
 }
 
 int rules[25][25] = {
