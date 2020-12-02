@@ -77,21 +77,24 @@ symtableItemInsert(char *funcKey, char *key, itemType type,int i){
 symtableItem*
 symtableItemGet(char *funcKey, char *key){
     symtableGlobalItem *func = symtableItemGetGlobal(funcKey);
-    symtable *tab = &(func->localTabs[func->countTabs-1]);
-
-    symtableItem *found;
-    int hash = hashFunc(key);
-    found = (*tab)[hash];
-    while(found){
-        if(!strcmp(key,found->key)){
-            return found;
+    symtable *tab;
+    for (int i = func->countTabs; i > 0; --i)
+    {
+        tab = &(func->localTabs[i-1]);
+        symtableItem *found;
+        int hash = hashFunc(key);
+        found = (*tab)[hash];
+        while(found){
+            if(!strcmp(key,found->key)){
+                return found;
+            }
+            found=found->next;
         }
-        found=found->next;
     }
+    
     //returns NULL when nothing is found
     return NULL;
 }
-
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 void
