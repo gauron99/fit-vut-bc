@@ -150,6 +150,7 @@ int idSekv(int eos){
         CHECK(getToken(&token));
     }
     delim = TTYPE;
+
     if (((tokenType)delim) == DEFINITION){
         int checker = 0;
         for (int i = idCount; i >= 0; i--){
@@ -230,7 +231,6 @@ int idSekv(int eos){
     }
     else {
         dere:
-        getToken(&token);
         retType = analyzePrecedence();
         CHECK_R(retType >= 0, (returnCode) -retType)
         expTypes[0] = retType;
