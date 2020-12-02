@@ -44,6 +44,8 @@ int gettToken(Token *token) {
         return INTERNAL_ERROR;
     } 
 
+    char hexaEscape[3];
+
     stateType currentState = INIT_ST;
 
     char c = '\0';
@@ -534,7 +536,7 @@ int gettToken(Token *token) {
                 appendChar(content, c);
                 currentState = ST_STRING_START;
             } else if(c == 'x') {
-                appendChar(content, c);
+               // appendChar(content, c);
                 currentState = ST_STRING_HEXA_1;
             } else {
                 return LEXICAL_ERROR;
@@ -545,8 +547,9 @@ int gettToken(Token *token) {
         /*-----------------------------S_4-----------------------------*/
 
         case ST_STRING_HEXA_1:
-            if(isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-                appendChar(content, c);
+            if(isHexa(c)) {
+                hexaEscape[0] = c;
+               // appendChar(content, c);
                 currentState = ST_STRING_HEXA_2;
             } else {
                 return LEXICAL_ERROR;
@@ -557,9 +560,38 @@ int gettToken(Token *token) {
         /*-----------------------------S_5-----------------------------*/
 
         case ST_STRING_HEXA_2:
-            if(isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-                appendChar(content, c);
-                currentState = ST_STRING_START;
+            if(isHexa(c)) {
+               hexaEscape[1] = c;
+               hexaEscape[2] = '\0';
+
+               currentState = ST_STRING_START; 
+
+                /*here comes the converting*/
+                /*
+                         <`--'\>______
+                        /. .  `'     \
+                        (`')  ,        @
+                        `-._,        /
+                            )-)_/--( >  
+                        ''''  ''''
+                                            */
+                char *ptr;
+                int hexaVal = strtol(hexaEscape, &ptr, 16);
+
+                if(hexaVal <= 9) {
+                    appendChar(content, '0');
+                    appendChar(content, '0');
+                    char temp = hexaVal + 48;
+                    appendChar(content, temp);
+                } else if(hexaVal >= 10 && hexaVal <= 99) {
+                    appendChar(content, '0');
+                    appendChar(content, (hexaVal / 10) + 48);
+                    appendChar(content, (hexaVal % 10) + 48);
+                } else {
+                    appendChar(content, (hexaVal / 100) + 48);
+                    appendChar(content, ((hexaVal % 100) / 10) + 48);
+                    appendChar(content, (hexaVal % 10) + 48);
+                }
             } else {
                 return LEXICAL_ERROR;
             }
