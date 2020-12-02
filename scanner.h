@@ -95,7 +95,7 @@ typedef enum { /*state num, read lexeme*/
     ST_R_CURLY_BRACKET, /*P_2 , } */
     ST_L_CURLY_BRACKET, /*P_3 , { */
     ST_COMMA,           /*P_4 , , */
-    ST_SEMICOLON,
+    ST_SEMICOLON,       /*P_5, ;*/ 
     ST_LESS,            /*O_0 , < */
     ST_LESS_EQUAL,      /*O_1 , <= */
     ST_GREATER,         /*O_2 , > */
@@ -117,9 +117,9 @@ typedef enum { /*state num, read lexeme*/
     ST_MULTI_LC_PRE_END,/*C_3, /~*..* */
     ST_STRING_START,    /*S_1, " */
     ST_STRING_END,      /*S_2, "" */
-    ST_STRING_ESC_START,/*S_3, "../ */
-    ST_STRING_HEXA_1,   /*S_4, /x */
-    ST_STRING_HEXA_2,   /*S_5, /x. */
+    ST_STRING_ESC_START,/*S_3, "..\ */
+    ST_STRING_HEXA_1,   /*S_4, \x */
+    ST_STRING_HEXA_2,   /*S_5, \x. */
     ST_NUM_WHOLE_PART_ZERO,     /*L_0, 0 */
     ST_NUM_WHOLE_PART_NONZERO,  /*L_1, 1 */
     ST_NUM_DECIMAL_POINT,       /*L_2, 1. */
