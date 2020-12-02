@@ -591,6 +591,7 @@ int rdComm(){
 
                 CHECK_R(TTYPE==EOL_ || TTYPE==COMMA,EC_SYN)
             } while (TTYPE!=EOL_);
+            CHECK_R(i==actualFunc->countRets,EC_SEM6)
         }
         CHECK(getToken(&token));
         CHECK(rdComm())
