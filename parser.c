@@ -166,8 +166,9 @@ int idSekv(int eos){
     CHECK_R(TTYPE==((tokenType)delim),EC_SYN)
     CHECK(getToken(&token));
     ungetToken(&token);
-    int isCall = 0;
     int *expTypes = malloc(sizeof(int));
+    int *argTypes = malloc(sizeof(int));
+    int argTypCount = 0;
     int expTypCount = 0;
     int retType = 0;
 
@@ -179,12 +180,25 @@ int idSekv(int eos){
         int tknCount = 2;
 
         if (TTYPE==LEFT_ROUND_BRACKET){
-            isCall = 1;
             while(TTYPE!=RIGHT_ROUND_BRACKET){
                 CHECK(getToken(&token));
                 ungetToken(&token);
-                tknCount++;
+                if (TTYPE==RIGHT_ROUND_BRACKET) {
+                    tknCount++;
+                    break;
+                }
+                CHECK_R(TTYPE==IDENTIFIER || TTYPE==FLOAT || TTYPE==INTEGER || TTYPE==STRING || TTYPE==BOOL,EC_SYN)
+                retType = analyzePrecedence();
+                CHECK_R(retType >= 0, (returnCode) -retType)
+                CHECK_R((argTypes=realloc(argTypes,++argTypCount*sizeof(int))),EC_INTERNAL)
+                argTypes[argTypCount-1]=retType;
+                CHECK_R((tempos->args[argTypCount-1] && argTypes[argTypCount-1]==tempos->args[argTypCount-1]),EC_SEM6)
+                CHECK(getToken(&token))
+                ungetToken(&token);
+                CHECK_R(TTYPE==COMMA || TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
+                tknCount+=2;
             }
+
             CHECK(getToken(&token));
             ungetToken(&token);
             if (TTYPE==EOL_) {
