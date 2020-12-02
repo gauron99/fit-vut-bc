@@ -156,6 +156,8 @@ int idSekv(int eos){
         for (int i = idCount; i >= 0; i--){
             if(!symtableItemGet(actualFunc->key,ids[i])) {
                 assemble("DEFVAR",actualFunc->key,"","",instr);
+                if (!strcmp(ids[i],"_"))
+                    continue;
                 checker = 1;
             }
         }
@@ -260,6 +262,10 @@ int idSekv(int eos){
     for (int i = idCount; i >= 0; i--){
         if (symtableItemGet(actualFunc->key,ids[i])) {
             symtableItem *tmp = symtableItemGet(actualFunc->key, ids[i]);
+            if (!strcmp("_",ids[i])){
+                assemble("POPS","dev null","","",instr);
+                continue;
+            }
             CHECK_R(tmp->type == ((tokenType) expTypes[i]), EC_SEM6)
         }
         else
@@ -334,16 +340,15 @@ int rdBody(){
 
 int rdDef(){
     CHECK(getToken(&token));
-
+    actualFunc = symtableItemGetGlobal(TSTR);
+    symtableItemInsert(actualFunc->key,"_",0,0);
     while (TTYPE!=LEFT_CURLY_BRACKET)
         CHECK(getToken(&token));
 
     CHECK(getToken(&token));
-
     CHECK_R(TTYPE==EOL_,EC_SYN)
 
     CHECK(getToken(&token));
-
     if (TTYPE!=RIGHT_CURLY_BRACKET)
         CHECK(rdComm())
 
@@ -606,11 +611,12 @@ int rdComm(){
             CHECK(idSekv(EOL_))
         }
         else if (TTYPE==LEFT_ROUND_BRACKET){
+            CHECK_R(!(symtableItemGet(actualFunc->key,tmp.value)),EC_SEM3)
             int *argTypes = malloc(sizeof(int));
             int argTypCount = 0;
             CHECK_R(symtableItemGetGlobal(tmp.value),EC_SEM3)
             symtableGlobalItem *glob = symtableItemGetGlobal(tmp.value);
-            CHECK_R(glob->countArgs==0,EC_SEM6)
+            CHECK_R(glob->countRets==0,EC_SEM6)
             getToken(&token);
             isInFuncCall = 1;
             while(TTYPE!=RIGHT_ROUND_BRACKET){
