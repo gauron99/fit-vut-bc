@@ -15,6 +15,7 @@
 #include "scanner.h"
 
 extern symtableGlobalItem *actualFunc;
+extern int isInFuncCall;
 
 bool intStackInit(is_t *s) {
     s->top = STACK_TOP;
@@ -141,8 +142,12 @@ int getPaType(Token *token) {
             return OP_NOT_EQUAL;
         case LEFT_ROUND_BRACKET:
             return OP_LBRAC;
-        case RIGHT_ROUND_BRACKET:
-            return OP_RBRAC;
+        case RIGHT_ROUND_BRACKET: {
+            if(isInFuncCall == 1)
+                return OP_DOLLAR;
+            else
+                return OP_RBRAC;
+        }
         case NOT:
             return OP_NOT;
         case AND:
@@ -404,6 +409,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken) {
 
             int type1 = intStackPop(typeStack);
             int type2 = intStackPop(typeStack);
+            //printf("type1: %i, type2: %i\n", type1, type2);
 
             if(type1 == type2) {
                 if(i < 4 || i == 17 || i == 18) {
@@ -585,7 +591,7 @@ int analyzePrecedence() {
     }
     
     ungetToken(&t);
-    //printf("LAST FOUND: %i", lastFoundType);
+   // printf("LAST FOUND: %i", lastFoundType);
     //printf("returning 0\n");
     return lastFoundType;
 }
