@@ -21,7 +21,7 @@ typedef enum {
     EC_SEM4     = 4,
     EC_SEM5     = 5,
     EC_SEM6     = 6,
-    EC_OTHER    = 7,
+    EC_SEM7     = 7,
     EC_ZERODIV  = 9,
     EC_INTERNAL = 99
 } returnCode;

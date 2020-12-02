@@ -128,6 +128,8 @@ int idSekv(int eos){
     int delim;
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
 
+    int wasFunCalled = 0;
+
     char** ids = malloc(sizeof(ids));
     int idCount = 0;
     ids[0] = calloc(1,strlen(TSTR));
@@ -164,12 +166,14 @@ int idSekv(int eos){
         CHECK_R(checker,EC_SEM3);
     }
     else if (((tokenType)delim) == ASSIGNMENT){
-        for (int i = idCount; i >= 0; i--)
-            CHECK_R(symtableItemGet(actualFunc->key,ids[i]),EC_SEM3)
+        for (int i = idCount; i >= 0; i--) {
+            CHECK_R(symtableItemGet(actualFunc->key, ids[i]), EC_SEM3)
+        }
     }
 
     CHECK_R(TTYPE==((tokenType)delim),EC_SYN)
     CHECK(getToken(&token));
+    CHECK_R(TTYPE!=EOL_,EC_SYN)
     ungetToken(&token);
     int *expTypes = malloc(sizeof(int));
     int *argTypes = malloc(sizeof(int));
@@ -185,6 +189,7 @@ int idSekv(int eos){
         int tknCount = 2;
 
         if (TTYPE==LEFT_ROUND_BRACKET){
+            wasFunCalled = 1;
             isInFuncCall = 1;
             while(TTYPE!=RIGHT_ROUND_BRACKET){
                 CHECK(getToken(&token));
@@ -253,12 +258,13 @@ int idSekv(int eos){
             CHECK(getToken(&token));
         }
     }
-
-    CHECK_R(expTypCount==idCount,EC_SEM6)
+    if (wasFunCalled)
+        CHECK_R(expTypCount==idCount,EC_SEM6)
+    else
+        CHECK_R(expTypCount==idCount,EC_SEM6)
 
     if (idCount==0 && delim == (tokenType) DEFINITION)
         CHECK_R(!symtableItemGet(actualFunc->key,ids[0]),EC_SEM3)
-
     for (int i = idCount; i >= 0; i--){
         if (symtableItemGet(actualFunc->key,ids[i])) {
             symtableItem *tmp = symtableItemGet(actualFunc->key, ids[i]);
@@ -266,7 +272,10 @@ int idSekv(int eos){
                 assemble("POPS","dev null","","",instr);
                 continue;
             }
-            CHECK_R(tmp->type == ((tokenType) expTypes[i]), EC_SEM6)
+            if (wasFunCalled)
+                CHECK_R(tmp->type == ((tokenType) expTypes[i]), EC_SEM6)
+            else
+                CHECK_R(tmp->type == ((tokenType) expTypes[i]), EC_SEM7)
         }
         else
             symtableItemInsert(actualFunc->key, ids[i], (itemType) expTypes[i], varCounter++);
@@ -277,7 +286,6 @@ int idSekv(int eos){
     }
 
     CHECK_R(TTYPE==((tokenType)eos),EC_SYN)
-
     return EC_GOOD;
 }
 
@@ -558,6 +566,9 @@ int rdComm(){
             CHECK(idSekv(SEMICOLON))
 
         CHECK_R(TTYPE==SEMICOLON,EC_SYN)
+        getToken(&token);
+        ungetToken(&token);
+        CHECK_R(TTYPE!=SEMICOLON,EC_SYN)
         retType = analyzePrecedence();
         CHECK_R(retType>=0,(returnCode)-retType)
 
