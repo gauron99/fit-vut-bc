@@ -239,9 +239,9 @@ int idSekv(int eos){
             symtableItem *tmp = symtableItemGet(actualFunc->key, ids[i]);
             CHECK_R(tmp->type == ((tokenType) expTypes[i]), EC_SEM6)
         }
-        else {
+        else
             symtableItemInsert(actualFunc->key, ids[i], (itemType) expTypes[i], varCounter++);
-        }
+
 
         assemble("POPS","origShit","","",instr);
         assemble("MOVE",ids[i],"origShit","",instr);

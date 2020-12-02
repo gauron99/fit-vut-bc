@@ -59,6 +59,7 @@ symtableItemInsert(char *funcKey, char *key, itemType type,int i){
 
     new->type = type;
     new->key = key;
+    new->i = i;
     new->next = NULL; //if its the first one, it will be the end of the list and always point to NULL
 
     //insert item to the beggining of the list
