@@ -383,7 +383,7 @@ bool cmp_rules(int *stackay1, int *stackay2) {
 }
 
 int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken) {
-    printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
+    //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
     sElemType *tmp = malloc(sizeof(sElemType));
 
     int i = 0;
@@ -487,7 +487,7 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
 }
 
 int analyzePrecedence() {
-    printf("\nINA ZAVOLANA FUNKCIA\n");
+    //printf("\nINA ZAVOLANA FUNKCIA\n");
     Token *paToken;
     sElemType *mainTerminal;
    
@@ -534,7 +534,7 @@ int analyzePrecedence() {
     int action = 0;
     sElemGetData(&t, mainTerminal);
     while(!(mainTerminal->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
-        printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), mainTerminal->paType);
+        //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), mainTerminal->paType);
         i++;
         action = prec_tab[sFindFirstTerminal(mainStack)][mainTerminal->paType];
         //printf("%i\n", action);
@@ -586,6 +586,6 @@ int analyzePrecedence() {
     
     ungetToken(&t);
     //printf("LAST FOUND: %i", lastFoundType);
-    printf("returning 0\n");
+    //printf("returning 0\n");
     return lastFoundType;
 }
