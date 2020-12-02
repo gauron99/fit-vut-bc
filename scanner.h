@@ -120,11 +120,6 @@ typedef enum { /*state num, read lexeme*/
     ST_STRING_ESC_START,/*S_3, "..\ */
     ST_STRING_HEXA_1,   /*S_4, \x */
     ST_STRING_HEXA_2,   /*S_5, \x. */
-    ST_STRING_DEC_HUNDR_1,      /*S_6,  \0 or \1 */
-    ST_STRING_DEC_HUNDR_2,      /*S_7,  \00 or \18*/
-    ST_STRING_DEC_TWO_HUNDR_1,  /*S_8,  \2*/
-    ST_STRING_DEC_TWO_HUNDR_2,  /*S_9,  \21*/
-    ST_STRING_DEC_TWO_HUNDR_5,  /*S_10, \25*/
     ST_NUM_WHOLE_PART_ZERO,     /*L_0, 0 */
     ST_NUM_WHOLE_PART_NONZERO,  /*L_1, 1 */
     ST_NUM_DECIMAL_POINT,       /*L_2, 1. */

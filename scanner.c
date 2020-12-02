@@ -536,80 +536,11 @@ int gettToken(Token *token) {
             } else if(c == 'x') {
                 appendChar(content, c);
                 currentState = ST_STRING_HEXA_1;
-            } else if(c == '0' || c == '1') {   
-                appendChar(content,c);
-                currentState = ST_STRING_DEC_HUNDR_1;
-            } else if(c == '2') {   
-                appendChar(content,c);
-                currentState = ST_STRING_DEC_TWO_HUNDR_1;
             } else {
                 return LEXICAL_ERROR;
             }
 
             break;
-
-        /*-----------------------------S_6-----------------------------*/
-
-        case ST_STRING_DEC_HUNDR_1:
-            if(isdigit(c) && (c >= '0' && c <= '9')) {
-                appendChar(content, c);
-                currentState = ST_STRING_DEC_HUNDR_2;
-            } else {
-                return LEXICAL_ERROR;
-            }
-
-            break; 
-
-        /*-----------------------------S_7-----------------------------*/
-
-        case ST_STRING_DEC_HUNDR_2:
-            if(isdigit(c) && (c >= '0' && c <= '9')) {
-                appendChar(content, c);
-                currentState = ST_STRING_START;
-            } else {
-                return LEXICAL_ERROR;
-            }
-
-            break;    
-
-        /*-----------------------------S_8-----------------------------*/
-
-        case ST_STRING_DEC_TWO_HUNDR_1:
-            if(isdigit(c) && (c >= '0' && c <= '4')) {
-                appendChar(content, c);
-                currentState = ST_STRING_DEC_TWO_HUNDR_2;
-            } else if(isdigit(c) && c == '5') {
-                appendChar(content, c);
-                currentState = ST_STRING_DEC_TWO_HUNDR_5;
-            } else {
-                return LEXICAL_ERROR;
-            }
-
-            break;
-
-        /*-----------------------------S_9-----------------------------*/
-           
-        case ST_STRING_DEC_TWO_HUNDR_2:
-            if(isdigit(c) && (c >= '0' && c <= '9')) {
-                appendChar(content, c);
-                currentState = ST_STRING_START;
-            } else {
-                return LEXICAL_ERROR;
-            }
-
-            break;
-
-        /*-----------------------------S_10----------------------------*/
-
-        case ST_STRING_DEC_TWO_HUNDR_5:
-            if(isdigit(c) && (c >= '0' && c <= '5')) {
-                appendChar(content, c);
-                currentState = ST_STRING_START;
-            } else {
-                return LEXICAL_ERROR;
-            }
-
-            break;    
 
         /*-----------------------------S_4-----------------------------*/
 
