@@ -14,6 +14,8 @@ void generateBeginningOfExistence(){
     printf("JUMP MAIN\n\n");
     generateInBuilt();
     printf("LABEL MAIN\n");
+    printf("CREATEFRAME\n");
+    printf("CLEARS\n");
 
     return;
 }
