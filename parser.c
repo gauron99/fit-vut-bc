@@ -351,6 +351,9 @@ int rdBody(){
 }
 
 int rdDef(){
+    char** args = malloc(sizeof(char*));
+    int* rets = malloc(sizeof(int));
+    int argCount = 0;
     CHECK(getToken(&token));
     actualFunc = symtableItemGetGlobal(TSTR);
     assemble("FUNC_DEF",TSTR,"","",instr);
@@ -360,11 +363,27 @@ int rdDef(){
 
     while (TTYPE!=RIGHT_ROUND_BRACKET){
         getToken(&token);
+        if(!(args = realloc(args,(argCount+1))))
+            return INTERNAL_ERROR;
+        if(!(rets = realloc(rets,(argCount+1))))
+            return INTERNAL_ERROR;
         if (TTYPE==RIGHT_ROUND_BRACKET)
             break;
-        assemble("DEFVAR",TSTR,"","",instr);
+        args[argCount++] = TSTR;
         getToken(&token);
+        rets[argCount-1] = switchToType(TSTR);
         getToken(&token);
+    }
+    for (int i = argCount-1; i >= 0; i--){
+        char *name = malloc(10+sizeof(args[i]));
+        char *theInt = malloc(10);
+        if(!sprintf(theInt,"%d",varCounter))
+            return INTERNAL_ERROR;
+        strcpy(name,args[i]);
+        name = strcat(name,theInt);
+        symtableItemInsert(actualFunc->key,args[i],rets[i],varCounter++);
+        assemble("DEFVAR",name,"","",instr);
+        assemble("POPS",name,"","",instr);
     }
     while (TTYPE!=LEFT_CURLY_BRACKET)
         getToken(&token);
