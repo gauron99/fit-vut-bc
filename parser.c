@@ -87,7 +87,6 @@ int loadFuncti(){
 
             CHECK(gettToken(&token));
             CHECK(fillTknArr(&token))
-
             if (token.type!=RIGHT_ROUND_BRACKET)
                 CHECK(rdParams())
 
@@ -364,22 +363,22 @@ int rdDef(){
 }
 
 int rdParams(){
-    char* varName;
+    char* varName = malloc(sizeof(TSTR));
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
     strcpy(varName,TSTR);
 
-    CHECK(getToken(&token))
+    CHECK(gettToken(&token))
     CHECK(fillTknArr(&token))
+
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
     CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR),varCounter++))
     CHECK(pushArg(actualFunc->key,switchToType(TSTR)))
 
-
-    CHECK(getToken(&token))
+    CHECK(gettToken(&token))
     CHECK(fillTknArr(&token))
     if (TTYPE == COMMA) {
-        CHECK(getToken(&token))
+        CHECK(gettToken(&token))
         CHECK(fillTknArr(&token))
         CHECK(rdParamsN())
     }
@@ -392,26 +391,27 @@ int rdParams(){
 int rdParamsN(){
     char* varName;
     if (TTYPE==EOL_) {
-        CHECK(getToken(&token));
+        CHECK(gettToken(&token));
         CHECK(fillTknArr(&token))
     }
 
-
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
+    varName = malloc(sizeof(TSTR));
     strcpy(varName,TSTR);
 
-    CHECK(getToken(&token));
+    CHECK(gettToken(&token));
     CHECK(fillTknArr(&token))
+
     CHECK_R(TTYPE==KEYWORD && isType(TSTR),EC_SYN)
 
     CHECK(symtableItemInsert(actualFunc->key,varName,switchToType(TSTR),varCounter++))
     CHECK(pushArg(actualFunc->key,switchToType(TSTR)))
 
 
-    CHECK(getToken(&token));
+    CHECK(gettToken(&token));
     CHECK(fillTknArr(&token))
     if (TTYPE==COMMA) {
-        CHECK(getToken(&token));
+        CHECK(gettToken(&token));
         CHECK(fillTknArr(&token))
         CHECK(rdParamsN())
     }
@@ -628,14 +628,10 @@ int rdComm(){
             CHECK_R(symtableItemGetGlobal(tmp.value),EC_SEM3)
             symtableGlobalItem *glob = symtableItemGetGlobal(tmp.value);
             CHECK_R(glob->countRets==0,EC_SEM6)
-            getToken(&token);
             isInFuncCall = 1;
             while(TTYPE!=RIGHT_ROUND_BRACKET){
-                CHECK(getToken(&token));
+                getToken(&token);
                 ungetToken(&token);
-                if (TTYPE==RIGHT_ROUND_BRACKET) {
-                    break;
-                }
                 CHECK_R(TTYPE==IDENTIFIER || TTYPE==FLOAT || TTYPE==INTEGER || TTYPE==STRING || TTYPE==BOOL,EC_SYN)
                 retType = analyzePrecedence();
                 CHECK_R(retType >= 0, (returnCode) -retType)
@@ -643,9 +639,9 @@ int rdComm(){
                 argTypes[argTypCount-1]=retType;
                 CHECK_R((glob->args[argTypCount-1] && argTypes[argTypCount-1]==glob->args[argTypCount-1]),EC_SEM6)
                 CHECK(getToken(&token))
-                ungetToken(&token);
                 CHECK_R(TTYPE==COMMA || TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
             }
+            CHECK_R(glob->countArgs==argTypCount,EC_SEM6)
             isInFuncCall = 0;
             getToken(&token);
         }
