@@ -10,7 +10,8 @@
 #ifndef GENERATOR_H
 #define GENERATOR_H
 
-#include "../error.h"
+#include "error.h"
+#include "parser.h"
 
 typedef struct instruction{
     char *instr;
@@ -36,7 +37,7 @@ void generateInBuilt();
  * function will be the base of the whole file
  * TODO -- arguments from parser( array of tokens or something)
  */
-int generate(struct instruction instr);
+int generate(trAK instr);
 
 
 #endif

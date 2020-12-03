@@ -10,6 +10,7 @@
 #include "parser.h"
 #include "precanalysis.h"
 #include "symtable.h"
+#include "generator.h"
 
 Token token;
 int isInFuncCall = 0;
@@ -115,13 +116,10 @@ void assemble(char* name, char* boku, char* no, char* pico, trAK *instruct) {
     instruct->boku = boku;
     instruct->no = no;
     instruct->pico = pico;
-    generate(instruct);
+    generate(*instruct);
     return;
 }
 
-int generate(trAK *instr){
-    return 0;
-}
 
 int idSekv(int eos){
     int delim;

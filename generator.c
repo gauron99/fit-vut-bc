@@ -304,8 +304,7 @@ void generateInBuilt(){
     printf("\n");
 }
 
-int generate(struct instruction instr){
-
+int generate(trAK instr){
 
     return SUCCESS;
 }
