@@ -17,70 +17,315 @@
 extern symtableGlobalItem *actualFunc;
 extern int isInFuncCall;
 
-bool intStackInit(is_t *s) {
-    s->top = STACK_TOP;
-    s->size = STACK_SIZE;
-    s->iStack = malloc(STACK_SIZE * sizeof(int *));
-    if (s->iStack == NULL) {
+//-----------------INTEGER STACK FUNCTIONS-----------------//
+
+bool intStackInit(is_t *intStack) {
+    intStack->top = STACK_TOP;
+    intStack->size = STACK_SIZE;
+    intStack->iStack = malloc(STACK_SIZE * sizeof(int *));
+    if (intStack->iStack == NULL) {
         fprintf(stderr, "Malloc failed to allocate memory");
         return false;
     }
     return true;
 }
 
-void intStackFree(is_t *s) {
-    if (s != NULL) {
-        for (int i = s->top; i > STACK_TOP; i--) {
-            free(s->iStack[i]);
+void intStackFree(is_t *intStack) {
+    if (intStack != NULL) {
+        for (int i = intStack->top; i > STACK_TOP; i--) {
+            free(intStack->iStack[i]);
         }
-        free(s->iStack);
-        free(s);
+        free(intStack->iStack);
+        free(intStack);
     }
 }
 
-bool intStackIsFull(is_t *s) {
-    if(s->top == s->size - 1)
+bool intStackIsFull(is_t *intStack) {
+    if(intStack->top == intStack->size - 1)
         return true;
     return false;
 
 }
 
-bool intStackIsEmpty(is_t *s) {
-    if(s->top == STACK_TOP)
+bool intStackIsEmpty(is_t *intStack) {
+    if(intStack->top == STACK_TOP)
         return true;
     return false;
 }
 
-bool intStackPush(is_t *s, int data) {
-    if (intStackIsFull(s)) {
+bool intStackPush(is_t *intStack, int data) {
+    if (intStackIsFull(intStack)) {
         int **helpPtr = NULL;
-        s->size = s->size * 2;
-        helpPtr = realloc(s->iStack, s->size*sizeof(int *));
+
+        intStack->size = intStack->size * 2;
+
+        helpPtr = realloc(intStack->iStack, intStack->size*sizeof(int *));
         if (helpPtr == NULL) {
-                return false;
+            fprintf(stderr, "Realloc failed to allocate memory");
+            return false;
         }
-        s->iStack = helpPtr;
-        if(!intStackPush(s, data))
+
+        intStack->iStack = helpPtr;
+        if(!intStackPush(intStack, data))
                 return false;
     }
     else {
         int *tmp = malloc(sizeof(int));
         *tmp = data;
-        s->top++;
-        s->iStack[s->top] = tmp;
+        intStack->top++;
+        intStack->iStack[intStack->top] = tmp;
     }
     return true;
 }
 
-int intStackPop(is_t *s) {
-    if(!intStackIsEmpty(s)) {
-        int ret = *s->iStack[s->top];
-        free(s->iStack[s->top]);
-        s->top--;
+int intStackPop(is_t *intStack) {
+    if(!intStackIsEmpty(intStack)) {
+        int ret = *intStack->iStack[intStack->top];
+        free(intStack->iStack[intStack->top]);
+        intStack->top--;
         return ret;
     }
     else
-        return -1;   
+        return -1;
+}
+
+//-----------------SYMBOL STACK FUNCTIONS-----------------//
+
+bool sInit (s_t* symStack) {
+    symStack->top = STACK_TOP;
+    symStack->size = STACK_SIZE;
+    symStack->stack = malloc(STACK_SIZE * sizeof(sElemType *));
+    if (symStack->stack == NULL) {
+        fprintf(stderr, "Malloc failed to allocate memory");
+        return false;
+    }
+    return true;
+}
+
+void sFree(s_t *symStack) {
+    if (symStack != NULL) {
+        for (int i = symStack->top; i > STACK_TOP; i--) {
+            free(symStack->stack[i]);
+        }
+        free(symStack->stack);
+        free(symStack);
+    }
+}
+
+bool sIsEmpty (s_t* symStack) {
+    if(symStack->top == STACK_TOP)
+        return true;
+    return false;
+}
+
+bool sIsFull (s_t* symStack) {
+    if(symStack->top == symStack->size - 1)
+        return true;
+    return false;
+}
+
+void sGetTop (s_t* symStack, sElemType *data) {
+    if(sIsEmpty(symStack)) {
+        // error
+        return;
+    }
+    else {
+        data->paType = (symStack->stack[symStack->top])->paType;
+        strcpy((symStack->stack[symStack->top])->paToken->value, data->paToken->value);
+        data->paToken->type = (symStack->stack[symStack->top])->paToken->type;
+        return;
+    }
+}
+
+void sGetTopPointer(s_t *symStack, sElemType *data) {
+    data->paType = (symStack->stack[symStack->top])->paType;
+    data->paToken = (symStack->stack[symStack->top])->paToken;
+    data->paToken->value = (symStack->stack[symStack->top])->paToken->value;
+    //printf("\n-------------sgettoppointer value : %s", (symStack->stack[symStack->top])->paToken->value);
+    return;
+}
+
+void sPop (s_t* symStack) {
+    if (sIsEmpty(symStack)) {
+        return;
+    }
+    else {
+        if( (symStack->stack[symStack->top])->paToken->value != NULL)
+            free( (symStack->stack[symStack->top])->paToken->value);
+
+        free((symStack->stack[symStack->top])->paToken);
+        free(symStack->stack[symStack->top]);
+
+        symStack->top--;
+    }
+}
+
+void sPopPointer(s_t *symStack) {
+    if (sIsEmpty(symStack)) {
+        return;
+    }
+    else {
+	free(symStack->stack[symStack->top]);
+	symStack->stack[symStack->top] = NULL;
+	symStack->top--;
+    }
+}
+
+bool sPush (s_t* symStack, sElemType *newData) {
+    if (sIsFull(symStack)) {
+        sElemType **helpPtr = NULL;
+        symStack->size = symStack->size + 10;
+        
+        helpPtr = realloc(symStack->stack, symStack->size*sizeof(sElemType *));
+        
+        if (helpPtr == NULL) {
+                return false;
+        }
+        symStack->stack = helpPtr;
+        if(!sPush(symStack, newData))
+                return false;
+    }
+    else {
+        sElemType *data = NULL;
+        Token *paToken = NULL;
+        
+        /*if(newData->paToken != NULL) {
+            if(newData->paToken->value != NULL)
+                printf("\nVALUE: %s", newData->paToken->value);
+        }*/
+        
+        if ((data = malloc(sizeof(sElemType))) == NULL)
+        {
+            fprintf(stderr, "Malloc failed to allocate memory");
+            return false;
+        }
+        if ((paToken = malloc(sizeof(Token))) == NULL) {
+            fprintf(stderr, "Malloc failed to allocate memory");
+            free(data);
+            return false;
+        }
+        data->paToken = paToken;
+        
+        data->paType = newData->paType;
+        
+        
+        if(newData->paToken != NULL) {
+            data->paToken->type = newData->paToken->type;
+
+            if(newData->paToken->value != NULL && data->paToken->value == NULL) {
+                if((data->paToken->value = malloc(strlen(newData->paToken->value) + 1)) == NULL) {
+                    fprintf(stderr, "Malloc failed to allocate memory");
+                    return false;
+                }
+                else {
+                    strcpy(data->paToken->value, newData->paToken->value);
+                }
+            }
+        }
+        
+        symStack->top++;
+        symStack->stack[symStack->top] = data; 
+    }
+    return true;
+}
+
+bool sPushPointer(s_t *symStack, sElemType *data) {
+    if (sIsFull(symStack)) {
+        sElemType **helpPtr = NULL;
+        symStack->size += 100;
+
+        helpPtr = realloc(symStack->stack, symStack->size*sizeof(sElemType *));
+        if (helpPtr == NULL) {
+            return false;
+        }
+        symStack->stack = helpPtr;
+        if(!sPushPointer(symStack, data))
+            return false;
+    }
+    else {
+        sElemType *newData;
+        if ((newData = malloc(sizeof(sElemType))) == NULL)
+            return false;
+        newData->paType = data->paType;
+        newData->paToken = data->paToken;
+        symStack->top++;
+        symStack->stack[symStack->top] = newData;
+    }
+    return true;
+}
+
+void sElemInit(sElemType *data) {
+    //printf("eleminit\n");
+    data->paToken->type = 0;
+    data->paToken->value = NULL;
+    data->paType = 0;
+    //printf("eleminitreturn");
+}
+
+void sElemFree(sElemType *data, Token *paToken) {
+    if (paToken != NULL) {
+        if (paToken->value != NULL) {
+            free(paToken->value);
+        }
+        free(paToken);
+    }
+    free(data);
+}
+
+bool sElemGetData(Token *token, sElemType *data) {
+    data->paType = getPaType(token);
+    data->paToken->type = token->type;
+
+    if(data->paToken->value == NULL)
+        data->paToken->value = malloc(strlen(token->value) + 1);
+
+    if(data->paToken->value == NULL) {
+        fprintf(stderr, "Malloc failed to allocate memory");
+        return false;
+    }
+    
+    if(token->value != NULL) {
+        strcpy(data->paToken->value, token->value);
+        //printf("SKOPIROVAL SOM VALUE : %s\n", data->paToken->value);
+    }
+    return true;
+}
+
+bool sCopyUntilTerminal(s_t *src, s_t *dest, sElemType *tmp) {
+    while((src->stack[src->top])->paType == OP_EXPRESSION || (src->stack[src->top])->paType == PA_LESS) {
+        tmp->paType = 0;
+        tmp->paToken = NULL;
+
+        sGetTopPointer(src, tmp);
+
+        if (!sPushPointer(dest, tmp))
+            return false;
+
+        sPopPointer(src);
+    }
+    return true;
+}
+
+bool sCopyAll(s_t *src, s_t *dest, sElemType *tmp) {
+    while (!sIsEmpty(src)) {
+        sGetTopPointer(src, tmp);
+        
+        if (!sPushPointer(dest, tmp))
+            return false;
+
+        sPopPointer(src);
+    }
+    return true;
+}
+
+int sFindFirstTerminal(s_t * symStack) {
+    int tmp = symStack->top;
+
+    while ((symStack->stack[tmp])->paType == OP_LESS || (symStack->stack[tmp])->paType == OP_EXPRESSION) {
+        tmp--;
+    }
+
+    return (symStack->stack[tmp])->paType;
 }
 
 int getPaType(Token *token) {
@@ -164,229 +409,6 @@ int getPaType(Token *token) {
     return OP_DOLLAR;       // oddelat
 }
 
-bool sInit (s_t* symStack) {
-    symStack->top = STACK_TOP;
-    symStack->size = STACK_SIZE;
-    symStack->stack = malloc(STACK_SIZE * sizeof(sElemType *));
-    if (symStack->stack == NULL) {
-        fprintf(stderr, "Malloc failed to allocate memory");
-        return false;
-    }
-    return true;
-}
-
-bool sIsEmpty (s_t* symStack) {
-    if(symStack->top == STACK_TOP)
-        return true;
-    return false;
-}
-
-bool sIsFull (s_t* symStack) {
-    if(symStack->top == symStack->size - 1)
-        return true;
-    return false;
-}
-
-void sGetTop (s_t* symStack, sElemType *data) {
-    if(sIsEmpty(symStack)) {
-        // error
-        return;
-    }
-    else {
-        data->paType = (symStack->stack[symStack->top])->paType;
-        strcpy((symStack->stack[symStack->top])->paToken->value, data->paToken->value);
-        data->paToken->type = (symStack->stack[symStack->top])->paToken->type;
-        return;
-    }
-}
-
-void sGetTopPointer(s_t *symStack, sElemType *data) {
-    data->paType = (symStack->stack[symStack->top])->paType;
-    data->paToken = (symStack->stack[symStack->top])->paToken;
-    data->paToken->value = (symStack->stack[symStack->top])->paToken->value;
-    //printf("\n-------------sgettoppointer value : %s", (symStack->stack[symStack->top])->paToken->value);
-    return;
-}
-
-int sFindFirstTerminal(s_t * symStack) {
-    int tmp = symStack->top;
-
-    while ((symStack->stack[tmp])->paType == OP_LESS || (symStack->stack[tmp])->paType == OP_EXPRESSION) {
-        tmp--;
-    }
-
-    return (symStack->stack[tmp])->paType;
-}
-
-void sPop (s_t* symStack) {
-    if (sIsEmpty(symStack)) {
-        return;
-    }
-    else {
-        if( (symStack->stack[symStack->top])->paToken->value != NULL)
-            free( (symStack->stack[symStack->top])->paToken->value);
-        free((symStack->stack[symStack->top])->paToken);
-        free(symStack->stack[symStack->top]);
-        symStack->top--;
-    }
-}
-
-void sPopPointer(s_t *symStack) {
-    if (sIsEmpty(symStack)) {
-        return;
-    }
-    else {
-	free(symStack->stack[symStack->top]);
-	symStack->stack[symStack->top] = NULL;
-	symStack->top--;
-    }
-}
-
-bool sPushPointer(s_t *symStack, sElemType *data) {
-    if (sIsFull(symStack)) {
-        sElemType **helpPtr = NULL;
-        symStack->size += 10;
-        helpPtr = realloc(symStack->stack, symStack->size*sizeof(sElemType *));
-        if (helpPtr == NULL) {
-            return false;
-        }
-        symStack->stack = helpPtr;
-        if(!sPushPointer(symStack, data))
-            return false;
-    }
-    else {
-        sElemType *newData;
-        if ((newData = malloc(sizeof(sElemType))) == NULL)
-            return false;
-        newData->paType = data->paType;
-        newData->paToken = data->paToken;
-        symStack->top++;
-        symStack->stack[symStack->top] = newData;
-    }
-    return true;
-}
-
-bool sPush (s_t* symStack, sElemType *newData) {
-    if (sIsFull(symStack)) {
-        sElemType **helpPtr = NULL;
-        symStack->size = symStack->size + 10;
-        helpPtr = realloc(symStack->stack, symStack->size*sizeof(sElemType *));
-        if (helpPtr == NULL) {
-                return false;
-        }
-        symStack->stack = helpPtr;
-        if(!sPush(symStack, newData))
-                return false;
-    }
-    else {
-        sElemType *data = NULL;
-        Token *paToken = NULL;
-        
-        /*if(newData->paToken != NULL) {
-            if(newData->paToken->value != NULL)
-                printf("\nVALUE: %s", newData->paToken->value);
-        }*/
-        
-        if ((data = malloc(sizeof(sElemType))) == NULL)
-            return false;
-        if ((paToken = malloc(sizeof(Token))) == NULL) {
-            free(data);
-            return false;
-        }
-        data->paToken = paToken;
-        
-        data->paType = newData->paType;
-        
-        
-        if(newData->paToken != NULL) {
-            data->paToken->type = newData->paToken->type;
-            if(newData->paToken->value != NULL && data->paToken->value == NULL) {
-                if((data->paToken->value = malloc(strlen(newData->paToken->value) + 1)) == NULL)
-                    return false;
-                else {
-                    strcpy(data->paToken->value, newData->paToken->value);
-                }
-            }
-        }
-        
-        symStack->top++;
-        symStack->stack[symStack->top] = data; 
-    }
-    return true;
-}
-
-void sFree(s_t *symStack) {
-    if (symStack != NULL) {
-        for (int i = symStack->top; i > STACK_TOP; i--) {
-            free(symStack->stack[i]);
-        }
-        free(symStack->stack);
-        free(symStack);
-    }
-}
-
-void sElemInit(sElemType *data) {
-    //printf("eleminit\n");
-    data->paToken->type = 0;
-    data->paToken->value = NULL;
-    data->paType = 0;
-    //printf("eleminitreturn");
-}
-
-void sElemFree(sElemType *data, Token *paToken) {
-    if (paToken != NULL) {
-        if (paToken->value != NULL) {
-            free(paToken->value);
-        }
-        free(paToken);
-    }
-    free(data);
-}
-
-bool sElemGetData(Token *token, sElemType *data) {
-    data->paType = getPaType(token);
-    data->paToken->type = token->type;
-    if(data->paToken->value == NULL)
-        data->paToken->value = malloc(strlen(token->value) + 1);
-    if(token->value != NULL) {
-        strcpy(data->paToken->value, token->value);
-        //printf("SKOPIROVAL SOM VALUE : %s\n", data->paToken->value);
-    }
-
-
-    return true;
-}
-
-bool sCopyUntilTerminal(s_t *src, s_t *dest, sElemType *tmp) {
-    while((src->stack[src->top])->paType == OP_EXPRESSION || (src->stack[src->top])->paType == PA_LESS) {
-        tmp->paType = 0;
-        tmp->paToken = NULL;
-        sGetTopPointer(src, tmp);
-        if (!sPushPointer(dest, tmp))
-            return false;
-        sPopPointer(src);
-    }
-    return true;
-}
-
-bool sCopyAll(s_t *src, s_t *dest, sElemType *tmp) {
-    while (!sIsEmpty(src)) {
-        sGetTopPointer(src, tmp);
-        if (!sPushPointer(dest, tmp))
-            return false;
-        sPopPointer(src);
-    }
-    return true;
-}
-
-bool cmp_rules(int *stackay1, int *stackay2) {
-    for (int i = 0; i < 3; i++) {
-    	if (stackay1[i] != stackay2[i])
-	    return false;
-    }
-    return true;
-}
-
 int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken) {
     //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
     sElemType *tmp = malloc(sizeof(sElemType));
@@ -432,8 +454,8 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken) {
             symtableItem *item = symtableItemGet(actualFunc->key, teken->value);
             int tmp = *item->key;
             //printf("ID DATATYPE PUSED ON STACK: %i   \n", tmp);
-            intStackPush(typeStack, INTEGER);
-            *lastFoundType = INTEGER;
+            intStackPush(typeStack, tmp);
+            *lastFoundType = tmp;
             //printf("po pushi\n");
             return i;
         }
@@ -473,6 +495,8 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken) {
 }
 
 int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeStack, int * lastFoundType) {
+    int ruleOnStack[3] = {0, 0, 0};
+
     while ((mainStack->stack[mainStack->top])->paType != OP_LESS) {
         if(mainStack->stack[mainStack->top]->paToken->value != NULL)
             //printf("SFINDRULE VALUE ON TOP OF STACK : %s\n", mainStack->stack[mainStack->top]->paToken->value);
@@ -481,11 +505,13 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
             return -1;
         sPopPointer(mainStack);
     }
+
     if (tmpStack->top > 2)
         return -1;
-    int ruleOnStack[3] = {0, 0, 0};
+
     for (int i = tmpStack->top; i > -1; i--)
         ruleOnStack[i] = (tmpStack->stack[i])->paType;
+
     int usedRule = generateRule(ruleOnStack, typeStack, lastFoundType, tmpStack->stack[0]->paToken);
     
     //printf("returning %i\n", usedRule);
@@ -494,16 +520,27 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
 
 int analyzePrecedence() {
     //printf("\nINA ZAVOLANA FUNKCIA\n");
+ 
+    int i = 0;              // iterator
+    int action = 0;         // action determined by prectable
+    int findRuleRet = 0;
+    int lastFoundType = 0;  // type of most recently analyzed symbol or expression
+    
+    Token t;
     Token *paToken;
     sElemType *mainTerminal;
-   
-    int lastFoundType = 0;
+
+    int prec_tab[25][25];
+    pTableInit(prec_tab);
 
     paToken = malloc(sizeof(Token));
+    if(paToken == NULL) {        
+        fprintf(stderr, "Malloc failed to allocate memory");
+        return -908;
+    }    
     paToken->value = NULL;
     
     mainTerminal = malloc(sizeof(sElemType));
-
     mainTerminal->paToken = paToken;
     sElemInit(mainTerminal);
 
@@ -526,18 +563,14 @@ int analyzePrecedence() {
     
     is_t *intStack;
     intStack = malloc(sizeof(is_t));
-    intStackInit(intStack);
-       
-    int prec_tab[25][25];
-    pTableInit(prec_tab);
-    int ret = 0;
-    int i = 0;
-    Token t;
+    intStackInit(intStack);       
+    
     getToken(&t);
     //if(t.value != NULL)
         //printf("\n\n\n%s\n\n\n", t.value);
+
     mainTerminal->paToken->value = malloc(strlen(t.value) + 1);
-    int action = 0;
+
     sElemGetData(&t, mainTerminal);
     while(!(mainTerminal->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
         //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), mainTerminal->paType);
@@ -546,12 +579,12 @@ int analyzePrecedence() {
         //printf("%i\n", action);
         switch(action) {
             case(PA_GREATER):
-                ret = sFindRule(mainStack, tmpStack, &tmpTerminal, intStack, &lastFoundType);
-                if(ret == -2) {
+                findRuleRet = sFindRule(mainStack, tmpStack, &tmpTerminal, intStack, &lastFoundType);
+                if(findRuleRet == -2) {
                     //printf("returning -2\n");
                     return -2;
                 }
-                if(ret == DIFFERENT_TYPES)
+                if(findRuleRet == DIFFERENT_TYPES)
                 {
                     //printf("returning -2\n");
                     return -5;
