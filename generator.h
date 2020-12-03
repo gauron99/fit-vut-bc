@@ -10,19 +10,33 @@
 #ifndef GENERATOR_H
 #define GENERATOR_H
 
-#include "../error.h"
+#include "error.h"
 
-typedef struct instruction{
-    char *instr;
+typedef struct trAK {
+    char* name;
 
-    char *one;
-    char *two;
-    char *result;
+    char* boku;
+    char* no;
+    char* pico;
+}trAK;
 
-}instruction;
+typedef enum instructionNames{
+    FUNC_DEF, //label, createframe, pushframe
+    FUNC_DEF_END, //popframe, return
+    DEFVAR, //defvar <varName> <value>
+    POPS,
+    PUSHS,
+    MOVE, //assignment --> a = 5 (just a MOVE instr)
+    IF_DEF, //DEFVAR var of type bool- present how to get out of the IF (aka skip it)
+    IF_END, // LABEL name of where to jump if IF is not to be executed
+    FOR_DEF, //DEF LABEL to jump to, iterator, and when to get out
+    FOR_END, // iterator +1, JUMP to LABEL back
 
+}instrNames;
 /** function declarations **/
-
+int count_digits(unsigned long long int n);
+char* generate_identifier();
+char* generate_label();
 
 void generateBeginningOfExistence();
 /**
@@ -36,7 +50,7 @@ void generateInBuilt();
  * function will be the base of the whole file
  * TODO -- arguments from parser( array of tokens or something)
  */
-int generate(struct instruction instr);
+int generate(trAK instr);
 
 
 #endif

@@ -10,6 +10,7 @@
 #include "parser.h"
 #include "precanalysis.h"
 #include "symtable.h"
+#include "generator.h"
 
 Token token;
 int isInFuncCall = 0;
@@ -79,7 +80,6 @@ int loadFuncti(){
 
             actualFunc = symtableItemGetGlobal(token.value);
 
-            assemble("LABEL",token.value,"","",instr);
             CHECK(gettToken(&token));
             CHECK(fillTknArr(&token))
 
@@ -88,7 +88,7 @@ int loadFuncti(){
             CHECK(gettToken(&token));
             CHECK(fillTknArr(&token))
             if (token.type!=RIGHT_ROUND_BRACKET)
-                CHECK(rdParams())
+            CHECK(rdParams())
 
             CHECK(gettToken(&token));
             CHECK(fillTknArr(&token))
@@ -115,13 +115,10 @@ void assemble(char* name, char* boku, char* no, char* pico, trAK *instruct) {
     instruct->boku = boku;
     instruct->no = no;
     instruct->pico = pico;
-    generate(instruct);
+    generate(*instruct);
     return;
 }
 
-int generate(trAK *instr){
-    return 0;
-}
 
 int idSekv(int eos){
     int delim;
@@ -223,8 +220,8 @@ int idSekv(int eos){
 
             }
             else if (TTYPE==COMMA) {
-                    goto dere;
-                }
+                goto dere;
+            }
             dewit = 1;
             for (int i = 1; i<tknCount;i++)
                 getToken(&token);
@@ -259,7 +256,7 @@ int idSekv(int eos){
     }
     if (wasFunCalled)
         CHECK_R(expTypCount==idCount,EC_SEM6)
-    else
+        else
         CHECK_R(expTypCount==idCount,EC_SEM6)
 
     if (idCount==0 && delim == (tokenType) DEFINITION)
@@ -273,7 +270,7 @@ int idSekv(int eos){
             }
             if (wasFunCalled)
                 CHECK_R(tmp->type == ((tokenType) expTypes[i]), EC_SEM6)
-            else
+                else
                 CHECK_R(tmp->type == ((tokenType) expTypes[i]), EC_SEM7)
         }
         else
@@ -316,7 +313,7 @@ int prolog(){
 
     CHECK(getToken(&token));
     if (TTYPE == EOL_)
-        CHECK(prolog())
+    CHECK(prolog())
     else if (TTYPE == KEYWORD){
         CHECK_R(!strcmp(TSTR,"package"),EC_SYN)
         CHECK(getToken(&token));
@@ -335,7 +332,7 @@ int rdBody(){
         return EC_GOOD; /// todo empty program?
     }
     else if (TTYPE == EOL_)
-        CHECK(rdBody())
+    CHECK(rdBody())
     else {
         CHECK_R(TTYPE==KEYWORD && !strcmp(TSTR,"func"),EC_SYN) // snad nebude padat se spatnym typem tokenu // cajk
 
@@ -348,9 +345,11 @@ int rdBody(){
 int rdDef(){
     CHECK(getToken(&token));
     actualFunc = symtableItemGetGlobal(TSTR);
+    assemble("FUNC_DEF",TSTR,"","",instr);
     symtableItemInsert(actualFunc->key,"_",0,0);
+
     while (TTYPE!=LEFT_CURLY_BRACKET)
-        CHECK(getToken(&token));
+    CHECK(getToken(&token));
 
     CHECK(getToken(&token));
     CHECK_R(TTYPE==EOL_,EC_SYN)
@@ -358,7 +357,7 @@ int rdDef(){
     CHECK(getToken(&token));
     if (TTYPE!=RIGHT_CURLY_BRACKET)
         CHECK(rdComm())
-
+    assemble("FUNC_DEF_END","","","",instr);
     return EC_GOOD;
 }
 
@@ -563,7 +562,7 @@ int rdComm(){
         CHECK(getToken(&token));
 
         if (TTYPE!=SEMICOLON)
-            CHECK(idSekv(SEMICOLON))
+        CHECK(idSekv(SEMICOLON))
 
         CHECK_R(TTYPE==SEMICOLON,EC_SYN)
         getToken(&token);
@@ -577,7 +576,7 @@ int rdComm(){
 
         CHECK(getToken(&token));
         if (TTYPE!=LEFT_CURLY_BRACKET)
-            CHECK(idSekv(LEFT_CURLY_BRACKET))
+        CHECK(idSekv(LEFT_CURLY_BRACKET))
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
         CHECK(addScope(actualFunc->key))
@@ -828,6 +827,6 @@ int addInbuilt(){
     CHECK(pushArg("chr",switchToType("int")))
     CHECK(pushRet("chr",switchToType("string")))
     CHECK(pushRet("chr",switchToType("int")))
-    
+
     return EC_GOOD;
 }

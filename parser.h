@@ -6,16 +6,8 @@
 #define IFJ20_PARSER_H
 
 #include "symtable.h"
-
-typedef struct trAK {
-    char* name;
-
-    char* boku;
-    char* no;
-    char* pico;
-}trAK;
-
-int generate(trAK *instr);
+#include "scanner.h"
+#include "generator.h"
 
 void assemble(char* name, char* boku, char* no, char* pico, trAK *instr);
 
