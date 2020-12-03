@@ -153,7 +153,6 @@ int idSekv(int eos){
         int checker = 0;
         for (int i = idCount; i >= 0; i--){
             if(!symtableItemGet(actualFunc->key,ids[i])) {
-                assemble("DEFVAR",actualFunc->key,"","",instr);
                 if (!strcmp(ids[i],"_"))
                     continue;
                 checker = 1;
@@ -262,23 +261,32 @@ int idSekv(int eos){
     if (idCount==0 && delim == (tokenType) DEFINITION)
         CHECK_R(!symtableItemGet(actualFunc->key,ids[0]),EC_SEM3)
     for (int i = idCount; i >= 0; i--){
+        char *name = malloc(10+sizeof(ids[i]));
+        char *theInt = malloc(10);
         if (symtableItemGet(actualFunc->key,ids[i])) {
             symtableItem *tmp = symtableItemGet(actualFunc->key, ids[i]);
+            if(!sprintf(theInt,"%d",tmp->i))
+                return INTERNAL_ERROR;
+            strcpy(name,ids[i]);
+            name = strcat(name,theInt);
             if (!strcmp("_",ids[i])){
                 assemble("POPS","dev null","","",instr);
                 continue;
             }
             if (wasFunCalled)
                 CHECK_R(tmp->type == ((tokenType) expTypes[i]), EC_SEM6)
-                else
+            else
                 CHECK_R(tmp->type == ((tokenType) expTypes[i]), EC_SEM7)
         }
-        else
+        else {
+            if(!sprintf(theInt,"%d",varCounter))
+                return INTERNAL_ERROR;
+            strcpy(name,ids[i]);
+            name = strcat(name,theInt);
+            assemble("DEFVAR",name,"","",instr);
             symtableItemInsert(actualFunc->key, ids[i], (itemType) expTypes[i], varCounter++);
-
-
-        assemble("POPS","origShit","","",instr);
-        assemble("MOVE",ids[i],"origShit","",instr);
+        }
+        assemble("POPS",name,"","",instr);
     }
 
     CHECK_R(TTYPE==((tokenType)eos),EC_SYN)
@@ -348,8 +356,18 @@ int rdDef(){
     assemble("FUNC_DEF",TSTR,"","",instr);
     symtableItemInsert(actualFunc->key,"_",0,0);
 
+    getToken(&token);
+
+    while (TTYPE!=RIGHT_ROUND_BRACKET){
+        getToken(&token);
+        if (TTYPE==RIGHT_ROUND_BRACKET)
+            break;
+        assemble("DEFVAR",TSTR,"","",instr);
+        getToken(&token);
+        getToken(&token);
+    }
     while (TTYPE!=LEFT_CURLY_BRACKET)
-    CHECK(getToken(&token));
+        getToken(&token);
 
     CHECK(getToken(&token));
     CHECK_R(TTYPE==EOL_,EC_SYN)
