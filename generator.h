@@ -20,6 +20,19 @@ typedef struct trAK {
     char* pico;
 }trAK;
 
+typedef enum instructionNames{
+    FUNC_DEF, //label, createframe, pushframe
+    FUNC_DEF_END, //popframe, return
+    DEFVAR, //defvar <varName> <value>
+    POPS,
+    PUSHS,
+    MOVE, //assignment --> a = 5 (just a MOVE instr)
+    IF_DEF, //DEFVAR var of type bool- present how to get out of the IF (aka skip it)
+    IF_END, // LABEL name of where to jump if IF is not to be executed
+    FOR_DEF, //DEF LABEL to jump to, iterator, and when to get out
+    FOR_END, // iterator +1, JUMP to LABEL back
+
+}instrNames;
 /** function declarations **/
 
 
