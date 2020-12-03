@@ -305,6 +305,6 @@ void generateInBuilt(){
 }
 
 int generate(trAK instr){
-
+    printf("%s %s %s %s\n",instr.name,instr.boku ? instr.boku : "",instr.no ? instr.no : "",instr.pico ? instr.pico : "");
     return SUCCESS;
 }
