@@ -42,7 +42,7 @@ char* convertToString(dynamicString *s) {
   	char *result = (char *) malloc(sizeof(char) * s->length);
 
 	  for (unsigned int i = 0; i < s->length; i++) {
-		    result[i] += s->str[i];
+		    result[i] = s->str[i];
 	  }
 
 	  return result;
