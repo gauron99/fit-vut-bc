@@ -6,6 +6,7 @@
     @author David Fridrich
 */
 #include <stdio.h>
+#include <stdlib.h>
 #include "generator.h"
 
 
@@ -309,4 +310,42 @@ void generateInBuilt(){
 int generate(trAK instr){
     printf("%s %s %s %s\n",instr.name,instr.boku ? instr.boku : "",instr.no ? instr.no : "",instr.pico ? instr.pico : "");
     return SUCCESS;
+}
+
+int count_digits(unsigned long long int n)
+{
+    int count = 0;
+    while (n != 0) {
+        n /= 10;
+        ++count;
+    }
+    return count;
+}
+
+char* generate_identifier()
+{
+    static unsigned long long iterator;
+    char *identif = malloc((count_digits(iterator) + 5) * sizeof(char));
+    identif[0] = '$';
+    identif[1] = '$';
+    identif[2] = '$';
+    identif[3] = '$';
+    sprintf(&identif[4], "%llu", iterator);
+    iterator++;
+
+    return identif;
+}
+
+char* generate_label()
+{
+    static unsigned long long iterator;
+    char *identif = malloc((count_digits(iterator) + 5) * sizeof(char));
+    identif[0] = '%';
+    identif[1] = '%';
+    identif[2] = '%';
+    identif[3] = '%';
+    sprintf(&identif[4], "%llu", iterator);
+    iterator++;
+
+    return identif;
 }

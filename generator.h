@@ -34,7 +34,9 @@ typedef enum instructionNames{
 
 }instrNames;
 /** function declarations **/
-
+int count_digits(unsigned long long int n);
+char* generate_identifier();
+char* generate_label();
 
 void generateBeginningOfExistence();
 /**
