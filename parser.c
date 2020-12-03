@@ -61,6 +61,13 @@ int getToken(Token *tok){
 }
 
 int fillTknArr(Token *tok){
+    for (int i = 0;i < strlen(tok->value); i++)
+    {
+        if(tok->value[i] == '\005'){
+            printf("louda to zvladnul\n");
+            tok->value[i] = '\0';
+        }
+    }
     tknLoad[tknLoadCount++] = *tok;
     if (!(tknLoad = realloc(tknLoad, sizeof(Token)*(tknLoadCount+1))))
         return INTERNAL_ERROR;
