@@ -239,11 +239,14 @@ bool sPush (s_t* symStack, sElemType *newData) {
                         return false;
                 }
                 else {
+                    data->name = malloc(ID_SIZE);
                     strcpy(data->name, newData->name);
                 }
             }
-            else
+            else {
+                data->name = malloc(ID_SIZE);
                 strcpy(data->name, newData->name);
+            }
         }
         symStack->top++;
         symStack->stack[symStack->top] = data; 

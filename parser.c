@@ -371,23 +371,24 @@ int rdDef(){
 
     while (TTYPE!=RIGHT_ROUND_BRACKET){
         getToken(&token);
-        if(!(args = realloc(args,(argCount+1))))
+        if(!(args = realloc(args,sizeof(char*) * (argCount+1))))
             return INTERNAL_ERROR;
-        if(!(rets = realloc(rets,(argCount+1))))
+        if(!(rets = realloc(rets,sizeof(char*) * (argCount+1))))
             return INTERNAL_ERROR;
         if (TTYPE==RIGHT_ROUND_BRACKET)
             break;
+        args[argCount] = malloc(strlen(TSTR));
         args[argCount++] = TSTR;
         getToken(&token);
         rets[argCount-1] = switchToType(TSTR);
         getToken(&token);
     }
     for (int i = argCount-1; i >= 0; i--){
-        char *name = malloc(10+sizeof(args[i]));
+        char *name = malloc(10+strlen(args[i]));
         char *theInt = malloc(10);
         if(!sprintf(theInt,"%d",varCounter))
             return INTERNAL_ERROR;
-        strcpy(name,args[i]);
+        name = args[i];
         name = strcat(name,theInt);
         symtableItemInsert(actualFunc->key,args[i],rets[i],varCounter++);
         assemble("DEFVAR",name,"","",instr);
