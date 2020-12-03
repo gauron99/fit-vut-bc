@@ -13,9 +13,11 @@
 #include "precanalysis.h"
 #include "parser.h"
 #include "scanner.h"
+#include "generator.h"
 
 extern symtableGlobalItem *actualFunc;
 extern int isInFuncCall;
+extern trAK *instr;
 
 //-----------------INTEGER STACK FUNCTIONS-----------------//
 
@@ -136,6 +138,7 @@ void sGetTop (s_t* symStack, sElemType *data) {
     else {
         data->paType = (symStack->stack[symStack->top])->paType;
         strcpy((symStack->stack[symStack->top])->paToken->value, data->paToken->value);
+        strcpy((symStack->stack[symStack->top])->name, data->name);
         data->paToken->type = (symStack->stack[symStack->top])->paToken->type;
         return;
     }
@@ -145,6 +148,7 @@ void sGetTopPointer(s_t *symStack, sElemType *data) {
     data->paType = (symStack->stack[symStack->top])->paType;
     data->paToken = (symStack->stack[symStack->top])->paToken;
     data->paToken->value = (symStack->stack[symStack->top])->paToken->value;
+    data->name = (symStack->stack[symStack->top])->name;
     //printf("\n-------------sgettoppointer value : %s", (symStack->stack[symStack->top])->paToken->value);
     return;
 }
@@ -158,6 +162,7 @@ void sPop (s_t* symStack) {
             free( (symStack->stack[symStack->top])->paToken->value);
 
         free((symStack->stack[symStack->top])->paToken);
+        free((symStack->stack[symStack->top])->name);
         free(symStack->stack[symStack->top]);
 
         symStack->top--;
@@ -224,9 +229,22 @@ bool sPush (s_t* symStack, sElemType *newData) {
                 else {
                     strcpy(data->paToken->value, newData->paToken->value);
                 }
-            }
+            }    
         }
         
+        if(newData->name != NULL) {
+            if(data->name == NULL) {
+                if((data->name = malloc(ID_SIZE)) == NULL) {
+                        fprintf(stderr, "Malloc failed to allocate memory");
+                        return false;
+                }
+                else {
+                    strcpy(data->name, newData->name);
+                }
+            }
+            else
+                strcpy(data->name, newData->name);
+        }
         symStack->top++;
         symStack->stack[symStack->top] = data; 
     }
@@ -248,10 +266,11 @@ bool sPushPointer(s_t *symStack, sElemType *data) {
     }
     else {
         sElemType *newData;
-        if ((newData = malloc(sizeof(sElemType))) == NULL)
+        if((newData = malloc(sizeof(sElemType))) == NULL)
             return false;
         newData->paType = data->paType;
         newData->paToken = data->paToken;
+        newData->name = data->name;
         symStack->top++;
         symStack->stack[symStack->top] = newData;
     }
@@ -413,7 +432,7 @@ int getPaType(Token *token) {
     return OP_DOLLAR;       // oddelat
 }
 
-int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken) {
+int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, char *name, char *value1, char *value2) {
     //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
     sElemType *tmp = malloc(sizeof(sElemType));
 
@@ -447,20 +466,58 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken) {
                     intStackPush(typeStack, type2);
                     *lastFoundType = BOOL;
                 }
+
+                switch(i) {
+                    case 0:
+                        assemble("ADD", name, value2, value1, instr);
+                        break;
+                    case 1:
+                        assemble("SUB", name, value2, value1, instr);
+                        break;
+                    case 2:
+                        assemble("MUL", name, value2, value1, instr);
+                        break;
+                    case 3:
+                        if(type1 == INTEGER)
+                            assemble("DIV", name, value2, value1, instr);
+                        if(type1 == FLOAT)
+                            assemble("IDIV", name, value2, value1, instr);
+                        break;
+                    case 4:
+                        assemble("LT", name, value2, value1, instr);
+                    case 5:
+                        assemble("LT", name, value2, value1, instr);
+                    case 6:
+                        assemble("GT", name, value2, value1, instr);
+                    case 7:
+                        assemble("GTS", name, value2, value1, instr);
+                    case 8:
+                        assemble("EQ", name, value2, value1, instr);
+                    case 9:
+                        assemble("EQ", name, value2, value1, instr);
+                        assemble("NOT", name, "", "", instr);
+                    case 17:
+                        assemble("IDIV", name, value2, value1, instr);
+                    case 18:
+                        assemble("IDIV", name, value2, value1, instr);
+                }
                 return i;
             }
             else
                 return DIFFERENT_TYPES;
             return i;
         }
+
         if(i == 10) {
-            //printf("|||||||||||||||||||||||||||||||||||||||||||||||||||||||||SOM TUUUUUUU|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||, teken val = %s\n", teken->value);
             symtableItem *item = symtableItemGet(actualFunc->key, teken->value);
             int tmp = item->type;
             //printf("ID DATATYPE PUSED ON STACK: %i   \n", tmp);
             intStackPush(typeStack, tmp);
             *lastFoundType = tmp;
             //printf("po pushi\n");
+            
+            assemble("DEFVAR", name,"","", instr);
+            assemble("MOVE", name, item->key, "", instr);
             return i;
         }
         if(i == 11) {
@@ -468,25 +525,37 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken) {
             int tmp = intStackPop(typeStack);
             intStackPush(typeStack, tmp);
             *lastFoundType = tmp;
-            return i;
+
+                        return i;
         } 
         if(i == 12) {
             *lastFoundType = INTEGER;
             int tmp = INTEGER;
             intStackPush(typeStack, tmp);
             //printf("\n\n %i PUSHED ON STACK\n", *typeStack->iStack[typeStack->top]);
+            
+            assemble("DEFVAR", name, "", "", instr);
+            assemble("MOVE", name, teken->value, "", instr);
+
             return i;
         }
         if(i == 13) {
             *lastFoundType = FLOAT;
             int tmp = FLOAT; 
             intStackPush(typeStack, tmp);
+
+            assemble("DEFVAR", name, "", "", instr);
+            assemble("MOVE", name, teken->value, "", instr);
             return i;
         }
         if(i == 14) {
             *lastFoundType = STRING;
             int tmp = STRING; 
             intStackPush(typeStack, tmp);
+
+            assemble("DEFVAR", name, "", "", instr);
+            assemble("MOVE", name, teken->value, "", instr);
+
             return i;
         }
         if(i == 16) {
@@ -498,8 +567,11 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken) {
     return -2;
 }
 
-int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeStack, int * lastFoundType) {
+int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeStack, int * lastFoundType, char *name) {
     int ruleOnStack[3] = {0, 0, 0};
+    char *values[2];
+    int i = 0;
+
 
     while ((mainStack->stack[mainStack->top])->paType != OP_LESS) {
         if(mainStack->stack[mainStack->top]->paToken->value != NULL)
@@ -507,16 +579,25 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
         sGetTopPointer(mainStack, tmpTerminal);
         if (!sPushPointer(tmpStack, tmpTerminal))
             return -1;
+        if(i == 0)
+            values[0] = mainStack->stack[mainStack->top]->paToken->value;
+        if(i == 2)
+            values[1] = mainStack->stack[mainStack->top]->paToken->value;
         sPopPointer(mainStack);
+        i++;
     }
-
     if (tmpStack->top > 2)
         return -1;
 
     for (int i = tmpStack->top; i > -1; i--)
         ruleOnStack[i] = (tmpStack->stack[i])->paType;
-
-    int usedRule = generateRule(ruleOnStack, typeStack, lastFoundType, tmpStack->stack[0]->paToken);
+    
+    int usedRule;
+    if(tmpStack->top == 0)
+        usedRule = generateRule(ruleOnStack, typeStack, lastFoundType, tmpStack->stack[0]->paToken, name, values[0], NULL);
+    else
+        usedRule = generateRule(ruleOnStack, typeStack, lastFoundType, tmpStack->stack[0]->paToken, name, values[0], values[1]);
+ 
     
     //printf("returning %i\n", usedRule);
     return usedRule;
@@ -535,6 +616,8 @@ int analyzePrecedence() {
     
     sElemType tmpSymbol = {NULL, 0};  // helper symbol struct
 
+    char *name = malloc(100 * sizeof(char));
+
     int precedentTable[25][25];
     pTableInit(precedentTable);
 
@@ -550,6 +633,7 @@ int analyzePrecedence() {
     analyzedSymbol = malloc(sizeof(sElemType));
     analyzedSymbol->paToken = paToken;
     sElemInit(analyzedSymbol);
+    analyzedSymbol->name = malloc(ID_SIZE);
     
     // main symbol stack init
     s_t *mainStack;
@@ -557,6 +641,7 @@ int analyzePrecedence() {
     sInit(mainStack);
     tmpSymbol.paType = OP_DOLLAR;
     tmpSymbol.paToken = NULL;
+    tmpSymbol.name = malloc(ID_SIZE);
     sPush(mainStack, &tmpSymbol);   // push $ onto stack
     
     // tmp symbol stack init
@@ -593,8 +678,9 @@ int analyzePrecedence() {
         //printf("%i\n", action);
         switch(action) {
             case(PA_GREATER):
+                name = generate_identifier();
                 // determine rule on top of the stack
-                findRuleRet = sFindRule(mainStack, tmpStack, &tmpSymbol, typeStack, &lastFoundType);
+                findRuleRet = sFindRule(mainStack, tmpStack, &tmpSymbol, typeStack, &lastFoundType, name);
                 // rule does not exist -> syntactic error
                 if(findRuleRet == -2) {
                     //printf("returning -2\n");
@@ -613,7 +699,9 @@ int analyzePrecedence() {
                  
                 tmpSymbol.paType = OP_EXPRESSION;
                 tmpSymbol.paToken = (tmpStack->stack[tmpStack->top])->paToken;
+                strcpy(tmpSymbol.name, name);
                 
+                //printf("tmpSymbol name: %s\n", tmpSymbol.name);
                 // and replace it with Expression
                 sPushPointer(mainStack, &tmpSymbol);
                 while (!sIsEmpty(tmpStack)) {
@@ -623,18 +711,16 @@ int analyzePrecedence() {
             case(PA_LESS):
                 // copy symbol on stack until the first terminal is found onto tmpStack
                 sCopyUntilTerminal(mainStack, tmpStack, &tmpSymbol);
-
                 //push '<' onto the stack
                 tmpSymbol.paToken = NULL;
 		tmpSymbol.paType = OP_LESS;
+                tmpSymbol.name = NULL;
 		sPush(mainStack, &tmpSymbol);
-                
                 // copy the symbols from tmpStack into mainStack /reversed order/
                 sCopyAll(tmpStack, mainStack, &tmpSymbol);
-
                 // pushes the symbol just where it should be :3
                 sPush(mainStack, analyzedSymbol);
-
+                
                 // get next symbol to analyze
                 getToken(&t);
                 //printf("t->type = %i", t.type);
@@ -654,6 +740,7 @@ int analyzePrecedence() {
         sElemGetData(&t, analyzedSymbol);
     }
     
+    assemble("PUSHS", tmpSymbol.name, "", "", instr);
     ungetToken(&t);
    // printf("LAST FOUND: %i", lastFoundType);
     //printf("returning 0\n");

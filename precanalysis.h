@@ -20,6 +20,8 @@
     #define NOT_FOUND -658  // err const, used when rule wasnt found
     #define DIFFERENT_TYPES -659    // err const, used when types dont match
 
+    #define ID_SIZE 100
+
     // global array that contains rules used by PA automata
     extern int rules[25][25];
 
@@ -31,6 +33,7 @@
     typedef struct {
         Token *paToken;
         int paType;
+        char *name;
     } sElemType;
     
     /**
@@ -289,7 +292,7 @@
      * @param Tekken Token of the first symbol of a rule, useful for IDENTIFIERS /to get its type/
      * @return paType of a specified Token
      */
-    int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *Tekken);
+    int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *Tekken, char *name, char *value1, char *value2);
 
     /**
      * @brief tries to find a rule that shall be used
@@ -299,7 +302,7 @@
      * @param typeStack int stack used for keeping track of types of expressions after being rewritten from datatypes and identifiers
      * @return int value representing index of a suitable rule to be used from the array of rules 
      */
-    int  sFindRule(s_t *mainStack, s_t *helperStack, sElemType *helperTerminal, is_t *typeStack, int *lastFoundType);
+    int  sFindRule(s_t *mainStack, s_t *helperStack, sElemType *helperTerminal, is_t *typeStack, int *lastFoundType, char *name);
 
     /**
      * @brief main PA function
