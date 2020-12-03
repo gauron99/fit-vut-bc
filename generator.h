@@ -11,16 +11,14 @@
 #define GENERATOR_H
 
 #include "error.h"
-#include "parser.h"
 
-typedef struct instruction{
-    char *instr;
+typedef struct trAK {
+    char* name;
 
-    char *one;
-    char *two;
-    char *result;
-
-}instruction;
+    char* boku;
+    char* no;
+    char* pico;
+}trAK;
 
 /** function declarations **/
 

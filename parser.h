@@ -7,14 +7,7 @@
 
 #include "symtable.h"
 #include "scanner.h"
-
-typedef struct trAK {
-    char* name;
-
-    char* boku;
-    char* no;
-    char* pico;
-}trAK;
+#include "generator.h"
 
 void assemble(char* name, char* boku, char* no, char* pico, trAK *instr);
 
