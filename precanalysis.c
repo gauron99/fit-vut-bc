@@ -23,7 +23,11 @@ bool intStackInit(is_t *intStack) {
     intStack->top = STACK_TOP;
     intStack->size = STACK_SIZE;
     intStack->iStack = malloc(STACK_SIZE * sizeof(int *));
-    if (intStack->iStack == NULL) {
+    if(intStack == NULL) {
+        fprintf(stderr, "Malloc failed to allocate memory");
+        return -908;
+    }
+   if(intStack->iStack == NULL) {
         fprintf(stderr, "Malloc failed to allocate memory");
         return false;
     }
@@ -521,18 +525,20 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
 int analyzePrecedence() {
     //printf("\nINA ZAVOLANA FUNKCIA\n");
  
-    int i = 0;              // iterator
-    int action = 0;         // action determined by prectable
+    int action = 0;             // action determined by prectable
     int findRuleRet = 0;
-    int lastFoundType = 0;  // type of most recently analyzed symbol or expression
+    int lastFoundType = 0;      // type of most recently analyzed symbol or expression
     
-    Token t;
-    Token *paToken;
-    sElemType *mainTerminal;
+    Token t;                    // currently analyzed token
+    Token *paToken;             // helper Token
+    sElemType *analyzedSymbol;  // currently analyzed Token and its paType in symbol structure
+    
+    sElemType tmpSymbol = {NULL, 0};  // helper symbol struct
 
-    int prec_tab[25][25];
-    pTableInit(prec_tab);
+    int precedentTable[25][25];
+    pTableInit(precedentTable);
 
+    // paToken struct init
     paToken = malloc(sizeof(Token));
     if(paToken == NULL) {        
         fprintf(stderr, "Malloc failed to allocate memory");
@@ -540,87 +546,112 @@ int analyzePrecedence() {
     }    
     paToken->value = NULL;
     
-    mainTerminal = malloc(sizeof(sElemType));
-    mainTerminal->paToken = paToken;
-    sElemInit(mainTerminal);
-
-    sElemType tmpTerminal = {NULL, 0};
-
+    // analyzedSymbol struct init
+    analyzedSymbol = malloc(sizeof(sElemType));
+    analyzedSymbol->paToken = paToken;
+    sElemInit(analyzedSymbol);
+    
+    // main symbol stack init
     s_t *mainStack;
     mainStack = malloc(sizeof(s_t));
     sInit(mainStack);
-    tmpTerminal.paType = OP_DOLLAR;
-    tmpTerminal.paToken = NULL;
-    sPush(mainStack, &tmpTerminal);
-
+    tmpSymbol.paType = OP_DOLLAR;
+    tmpSymbol.paToken = NULL;
+    sPush(mainStack, &tmpSymbol);   // push $ onto stack
+    
+    // tmp symbol stack init
     s_t *tmpStack;
     tmpStack = malloc(sizeof(s_t));
+    if(tmpStack == NULL) {
+        fprintf(stderr, "Malloc failed to allocate memory");
+        return -908;
+    }
     sInit(tmpStack);
-
-    s_t *typeStack;
-    typeStack = malloc(sizeof(s_t));
-    sInit(typeStack);
+   
+    // integer stack for storage of types
+    is_t *typeStack;
+    typeStack = malloc(sizeof(is_t));
+    if(typeStack == NULL) {
+        fprintf(stderr, "Malloc failed to allocate memory");
+        return -908;
+    }
+    intStackInit(typeStack);       
     
-    is_t *intStack;
-    intStack = malloc(sizeof(is_t));
-    intStackInit(intStack);       
-    
-    getToken(&t);
+    getToken(&t);   // get the first token of expression
     //if(t.value != NULL)
         //printf("\n\n\n%s\n\n\n", t.value);
 
-    mainTerminal->paToken->value = malloc(strlen(t.value) + 1);
+    analyzedSymbol->paToken->value = malloc(strlen(t.value) + 1);
 
-    sElemGetData(&t, mainTerminal);
-    while(!(mainTerminal->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
-        //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), mainTerminal->paType);
-        i++;
-        action = prec_tab[sFindFirstTerminal(mainStack)][mainTerminal->paType];
+    sElemGetData(&t, analyzedSymbol);
+    
+    // implementation of precedence analysis automaton
+    while(!(analyzedSymbol->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
+        //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
+        // detrmine action based on input, top stack terminal and PA table
+        action = precedentTable[sFindFirstTerminal(mainStack)][analyzedSymbol->paType];
         //printf("%i\n", action);
         switch(action) {
             case(PA_GREATER):
-                findRuleRet = sFindRule(mainStack, tmpStack, &tmpTerminal, intStack, &lastFoundType);
+                // determine rule on top of the stack
+                findRuleRet = sFindRule(mainStack, tmpStack, &tmpSymbol, typeStack, &lastFoundType);
+                // rule does not exist -> syntactic error
                 if(findRuleRet == -2) {
                     //printf("returning -2\n");
                     return -2;
                 }
+
+                // conflicting types of symbols -> semantic error
                 if(findRuleRet == DIFFERENT_TYPES)
                 {
                     //printf("returning -2\n");
                     return -5;
                 }
                 
+                // pop the symbol on the top of the stack
                 sPopPointer(mainStack);
                  
-                tmpTerminal.paType = OP_EXPRESSION;
-                tmpTerminal.paToken = (tmpStack->stack[tmpStack->top])->paToken;
-
-                sPushPointer(mainStack, &tmpTerminal);
+                tmpSymbol.paType = OP_EXPRESSION;
+                tmpSymbol.paToken = (tmpStack->stack[tmpStack->top])->paToken;
+                
+                // and replace it with Expression
+                sPushPointer(mainStack, &tmpSymbol);
                 while (!sIsEmpty(tmpStack)) {
 		    sPopPointer(tmpStack);
                 }
                 break;
             case(PA_LESS):
-                sCopyUntilTerminal(mainStack, tmpStack, &tmpTerminal);
-                tmpTerminal.paToken = NULL;
-		tmpTerminal.paType = OP_LESS;
-		sPush(mainStack, &tmpTerminal);
-                sCopyAll(tmpStack, mainStack, &tmpTerminal);
-                sPush(mainStack, mainTerminal);
+                // copy symbol on stack until the first terminal is found onto tmpStack
+                sCopyUntilTerminal(mainStack, tmpStack, &tmpSymbol);
+
+                //push '<' onto the stack
+                tmpSymbol.paToken = NULL;
+		tmpSymbol.paType = OP_LESS;
+		sPush(mainStack, &tmpSymbol);
+                
+                // copy the symbols from tmpStack into mainStack /reversed order/
+                sCopyAll(tmpStack, mainStack, &tmpSymbol);
+
+                // pushes the symbol just where it should be :3
+                sPush(mainStack, analyzedSymbol);
+
+                // get next symbol to analyze
                 getToken(&t);
                 //printf("t->type = %i", t.type);
                 //printf("it->type: %i", t.type);
                 break;
             case(PA_SHIFT):
-                sPush(mainStack, mainTerminal);
+                sPush(mainStack, analyzedSymbol);
                 getToken(&t);
                 //printf("\nHalo dpc: %i \n", t.type);
                 break;
             case(PA_EMPTY):
                 //printf("returning -2\n");
+                // syntactic error
                 return -2;
             }
-        sElemGetData(&t, mainTerminal);
+        // updates the analyzed symbol if new Token was gotten
+        sElemGetData(&t, analyzedSymbol);
     }
     
     ungetToken(&t);
