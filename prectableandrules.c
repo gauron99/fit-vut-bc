@@ -27,7 +27,7 @@ bool pTableInit(int table[25][25]) {
     table[OP_PLUS][OP_MORE_EQUAL] = PA_GREATER;
     table[OP_PLUS][OP_EQUAL] = PA_GREATER;
     table[OP_PLUS][OP_NOT_EQUAL] = PA_GREATER;
-    table[OP_PLUS][OP_NOT] = PA_GREATER;
+    table[OP_PLUS][OP_NOT] = PA_LESS;
     table[OP_PLUS][OP_AND] = PA_GREATER;
     table[OP_PLUS][OP_OR] = PA_GREATER;
     table[OP_PLUS][OP_FUN] = PA_LESS;
@@ -51,7 +51,7 @@ bool pTableInit(int table[25][25]) {
     table[OP_MINUS][OP_MORE_EQUAL] = PA_GREATER;
     table[OP_MINUS][OP_EQUAL] = PA_GREATER;
     table[OP_MINUS][OP_NOT_EQUAL] = PA_GREATER;
-    table[OP_MINUS][OP_NOT] = PA_GREATER;
+    table[OP_MINUS][OP_NOT] = PA_LESS;
     table[OP_MINUS][OP_AND] = PA_GREATER;
     table[OP_MINUS][OP_OR] = PA_GREATER;
     table[OP_MINUS][OP_FUN] = PA_LESS;
@@ -75,7 +75,7 @@ bool pTableInit(int table[25][25]) {
     table[OP_MUL][OP_MORE_EQUAL] = PA_GREATER;
     table[OP_MUL][OP_EQUAL] = PA_GREATER;
     table[OP_MUL][OP_NOT_EQUAL] = PA_GREATER;
-    table[OP_MUL][OP_NOT] = PA_GREATER;
+    table[OP_MUL][OP_NOT] = PA_LESS;
     table[OP_MUL][OP_AND] = PA_GREATER;
     table[OP_MUL][OP_OR] = PA_GREATER;
     table[OP_MUL][OP_FUN] = PA_LESS;
@@ -320,14 +320,14 @@ bool pTableInit(int table[25][25]) {
     table[OP_FUN][OP_OR] = PA_GREATER;
     table[OP_FUN][OP_FUN] = PA_LESS;
     table[OP_FUN][OP_COMMA] = PA_GREATER;
-    table[OP_FUN][OP_FUN] = PA_LESS;
+    table[OP_FUN][OP_FUN] = PA_EMPTY;
     table[OP_FUN][OP_COMMA] = PA_GREATER;   
-    table[OP_FUN][OP_ID] = PA_LESS;
+    table[OP_FUN][OP_ID] = PA_EMPTY;
     table[OP_FUN][OP_DOLLAR] = PA_GREATER;
     table[OP_FUN][OP_INTEGER] = PA_LESS;
-    table[OP_FUN][OP_FLOAT] = PA_LESS;
-    table[OP_FUN][OP_STRING] = PA_LESS;  
-    table[OP_FUN][OP_BOOL] = PA_LESS;
+    table[OP_FUN][OP_FLOAT] = PA_EMPTY;
+    table[OP_FUN][OP_STRING] = PA_EMPTY;  
+    table[OP_FUN][OP_BOOL] = PA_EMPTY;
 
     table[OP_COMMA][OP_PLUS] = PA_LESS;
     table[OP_COMMA][OP_MINUS] = PA_LESS;
@@ -367,7 +367,7 @@ bool pTableInit(int table[25][25]) {
     table[OP_NOT][OP_MORE_EQUAL] = PA_LESS;
     table[OP_NOT][OP_EQUAL] = PA_LESS;
     table[OP_NOT][OP_NOT_EQUAL] = PA_LESS;
-    table[OP_NOT][OP_NOT] = PA_GREATER;
+    table[OP_NOT][OP_NOT] = PA_EMPTY;
     table[OP_NOT][OP_AND] = PA_GREATER;
     table[OP_NOT][OP_OR] = PA_GREATER;
     table[OP_NOT][OP_FUN] = PA_LESS;
@@ -446,7 +446,7 @@ bool pTableInit(int table[25][25]) {
     table[OP_ID][OP_NOT] = PA_EMPTY;
     table[OP_ID][OP_AND] = PA_GREATER;
     table[OP_ID][OP_OR] = PA_GREATER;
-    table[OP_ID][OP_FUN] = PA_LESS;
+    table[OP_ID][OP_FUN] = PA_EMPTY;
     table[OP_ID][OP_COMMA] = PA_GREATER;
     table[OP_ID][OP_ID] = PA_EMPTY;
     table[OP_ID][OP_DOLLAR] = PA_GREATER;
@@ -470,7 +470,7 @@ bool pTableInit(int table[25][25]) {
     table[OP_INTEGER][OP_NOT] = PA_EMPTY;
     table[OP_INTEGER][OP_AND] = PA_GREATER;
     table[OP_INTEGER][OP_OR] = PA_GREATER;
-    table[OP_INTEGER][OP_FUN] = PA_GREATER;
+    table[OP_INTEGER][OP_FUN] = PA_EMPTY;
     table[OP_INTEGER][OP_COMMA] = PA_GREATER;
     table[OP_INTEGER][OP_ID] = PA_EMPTY;
     table[OP_INTEGER][OP_DOLLAR] = PA_GREATER;
@@ -494,7 +494,7 @@ bool pTableInit(int table[25][25]) {
     table[OP_FLOAT][OP_NOT] = PA_EMPTY;
     table[OP_FLOAT][OP_AND] = PA_GREATER;
     table[OP_FLOAT][OP_OR] = PA_GREATER;
-    table[OP_FLOAT][OP_FUN] = PA_GREATER;
+    table[OP_FLOAT][OP_FUN] = PA_EMPTY;
     table[OP_FLOAT][OP_COMMA] = PA_GREATER;
     table[OP_FLOAT][OP_ID] = PA_EMPTY;
     table[OP_FLOAT][OP_DOLLAR] = PA_GREATER;
@@ -518,7 +518,7 @@ bool pTableInit(int table[25][25]) {
     table[OP_STRING][OP_NOT] = PA_EMPTY;
     table[OP_STRING][OP_AND] = PA_GREATER;
     table[OP_STRING][OP_OR] = PA_GREATER;
-    table[OP_STRING][OP_FUN] = PA_GREATER;
+    table[OP_STRING][OP_FUN] = PA_EMPTY;
     table[OP_STRING][OP_COMMA] = PA_GREATER;
     table[OP_STRING][OP_ID] = PA_EMPTY;
     table[OP_STRING][OP_DOLLAR] = PA_GREATER;
@@ -542,7 +542,7 @@ bool pTableInit(int table[25][25]) {
     table[OP_BOOL][OP_NOT] = PA_GREATER;
     table[OP_BOOL][OP_AND] = PA_GREATER;
     table[OP_BOOL][OP_OR] = PA_GREATER;
-    table[OP_BOOL][OP_FUN] = PA_GREATER;
+    table[OP_BOOL][OP_FUN] = PA_EMPTY;
     table[OP_BOOL][OP_COMMA] = PA_GREATER;
     table[OP_BOOL][OP_ID] = PA_EMPTY;
     table[OP_BOOL][OP_DOLLAR] = PA_GREATER;
