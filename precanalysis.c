@@ -452,7 +452,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken) {
         if(i == 10) {
             //printf("|||||||||||||||||||||||||||||||||||||||||||||||||||||||||SOM TUUUUUUU|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||, teken val = %s\n", teken->value);
             symtableItem *item = symtableItemGet(actualFunc->key, teken->value);
-            int tmp = *item->key;
+            int tmp = item->type;
             //printf("ID DATATYPE PUSED ON STACK: %i   \n", tmp);
             intStackPush(typeStack, tmp);
             *lastFoundType = tmp;
