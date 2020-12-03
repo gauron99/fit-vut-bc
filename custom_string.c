@@ -39,7 +39,7 @@ void freeDynamicString(dynamicString *s) {
 }
 
 char* convertToString(dynamicString *s) {
-  	char *result = (char *) malloc(sizeof(char) * s->length);
+  	char *result = (char *) calloc(s->length,sizeof(char));
 
 	  for (unsigned int i = 0; i < s->length; i++) {
 		    result[i] = s->str[i];
