@@ -80,7 +80,6 @@ int loadFuncti(){
 
             actualFunc = symtableItemGetGlobal(token.value);
 
-            assemble("LABEL",token.value,"","",instr);
             CHECK(gettToken(&token));
             CHECK(fillTknArr(&token))
 
@@ -346,7 +345,9 @@ int rdBody(){
 int rdDef(){
     CHECK(getToken(&token));
     actualFunc = symtableItemGetGlobal(TSTR);
+    assemble("FUNC_DEF",TSTR,"","",instr);
     symtableItemInsert(actualFunc->key,"_",0,0);
+
     while (TTYPE!=LEFT_CURLY_BRACKET)
     CHECK(getToken(&token));
 
@@ -355,8 +356,8 @@ int rdDef(){
 
     CHECK(getToken(&token));
     if (TTYPE!=RIGHT_CURLY_BRACKET)
-    CHECK(rdComm())
-
+        CHECK(rdComm())
+    assemble("FUNC_DEF_END","","","",instr);
     return EC_GOOD;
 }
 
