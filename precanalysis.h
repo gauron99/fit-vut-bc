@@ -23,27 +23,43 @@
     // global array that contains rules used by PA automata
     extern int rules[25][25];
 
-    // stack element struct, consists of a token pointer and (int)paType
+    /**
+     * @brief symbol structutre
+     * paToken pointer points to corresponding Token
+     * paType parameter type used by PA
+     */
     typedef struct {
         Token *paToken;
         int paType;
     } sElemType;
     
-    // stack struct, consists of a pointer to the stack, current top index and size
+    /**
+     * @brief symbol stack struct, consists of a pointer to the stack, current top index and size
+     * stack pointer symbol stack array
+     * top parameter index of the top of the symbol stack
+     * size parameter size of the symbol stack
+     */
     typedef struct {
         sElemType **stack;
         int top;
         int size;
     } s_t; // pri refaktorizacii s_t premenovat nakoniec, moze sa vyskytovat aj inde
 
-    // integer stack struct, consists of a pointer to the stack, current top index and size
+    /**
+     * @brief integer stack structure
+     * iStack pointer integer stack array
+     * top parameter index of the top of the integer stack
+     * size parameter size of the integer stack
+     */
     typedef struct {
         int **iStack;
         int top;
         int size;
     } is_t;
  
-    // enumeration of precedence table values
+    /**
+     * @brief enumeration of precedence table values
+     */
     typedef enum {
         PA_LESS = 420,
         PA_GREATER,
@@ -51,7 +67,9 @@
         PA_EMPTY,
     } pTableValue;
    
-    // enumeration of types used by PA
+    /**
+     * @brief enumeration of types used by PA
+     */
     typedef enum {
         OP_PLUS,        // 0
         OP_MINUS,       // 1
@@ -93,18 +111,53 @@
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~FUNCTIONS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
     
     /**
-     * @brief initializes precedence table
-     * @param table empty table to be initialized
-     * @return bool value, true if init was successful, false if not
+     * @brief initializes integer stack
+     * @param intStack integer stack to be initialized
+     * @return bool value, true if initialization was successful, false if not
      */
-    bool pTableInit(int table[25][25]);   // v prec_table_init.c
+    bool intStackInit(is_t *intStack);
     
     /**
-     * @brief determines paType of a token
-     * @param token token to be analyzed
-     * @return paType of a specified Token
+     * @brief frees integer stack
+     * @param intStack integer stack to be freed
      */
-    int getPaType(Token *t);
+    void intStackFree(is_t *intStack);
+
+    /**
+     * @brief is integer stack full?
+     * @param integer stack to be analyzed
+     * @return bool value, true if stack is full, false if not
+     */
+    bool intStackIsFull(is_t *intStack);
+
+    /**
+     * @brief is integer stack empty?
+     * @param intStack integer stack to be analyzed
+     * @return bool value, true if stack is empty, false if not
+     */
+    bool intStackIsEmpty(is_t *intStack);
+
+    /**
+     * @brief pushes a number onto integer stack
+     * @param intStack integer stack to which a number is to be pushed 
+     * @return bool value, true if push succeeded, false if not
+     */
+    bool intStackPush(is_t *intStack, int data);
+     
+     /**
+     * @brief pop the first symbol of a symbol stack and the symbol
+     * @param symStack symbol stack from which a symbol is to be popped
+     */
+    int intStackPop(is_t *intStack);
+
+    /**
+     * @brief initializes precedence table
+     * @param table empty table to be initialized
+     * @return bool value, true if initialization was successful, false if not
+     */
+    bool pTableInit(int table[25][25]);   // v prectableandrules.c
+    
+
     
     /**
      * @brief symbol stack initialization, s must be allocated beforehand
@@ -189,12 +242,13 @@
     void sElemFree(sElemType *data, Token *paToken);     
     
     /**
-     * @brief finds the first terminal symbol on a symbol stack
-     * @param symStack symbol stack to be analyzed
-     * @return paType of the first terminal on symbol stack
+     * @brief fill a symbol structure with data from a Token
+     * @param token token to be analyzed
+     * @param data symbol structure to be filled
+     * @return bool value, true if success, false if not
      */
-    int sFindFirstTerminal(s_t *symStack); 
-    
+    bool sElemGetData(Token *token, sElemType *data); 
+
     /**
      * @brief copies symbols on the top of a symbol stack until the first terminal symbol into another symbol stack
      * @param src source symbol stack
@@ -211,8 +265,31 @@
      * @param helper a helper structure for a symbol     
      * @return bool value, true if copying was successful, false if not
      */
-    bool sCopyAll(s_t *src, s_t *dest, sElemType *helper); 
+    bool sCopyAll(s_t *src, s_t *dest, sElemType *helper);    
     
+    /**
+     * @brief finds the first terminal symbol on a symbol stack
+     * @param symStack symbol stack to be analyzed
+     * @return paType of the first terminal on symbol stack
+     */
+    int sFindFirstTerminal(s_t *symStack); 
+    
+    /**
+     * @brief determines paType of a token
+     * @param token token to be analyzed
+     * @return paType of a specified Token
+     */
+    int getPaType(Token *t);
+    
+    /**
+     * @brief compares the rule on the stack with a predefined set of rules and stores important data like datatypes
+     * @param rule rule on the helper stack
+     * @param typeStack stack to store types of symbols, even types of Expressions
+     * @param lastFoundType the type of last analyzed symbol/expression
+     * @param Tekken Token of the first symbol of a rule, useful for IDENTIFIERS /to get its type/
+     * @return paType of a specified Token
+     */
+    int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *Tekken);
 
     /**
      * @brief tries to find a rule that shall be used
@@ -223,15 +300,7 @@
      * @return int value representing index of a suitable rule to be used from the array of rules 
      */
     int  sFindRule(s_t *mainStack, s_t *helperStack, sElemType *helperTerminal, is_t *typeStack, int *lastFoundType);
-    
-    /**
-     * @brief fill a symbol structure with data from a Token
-     * @param token token to be analyzed
-     * @param data symbol structure to be filled
-     * @return bool value, true if success, false if not
-     */
-    bool sElemGetData(Token *token, sElemType *data);
-    
+
     /**
      * @brief main PA function
      * @return returns code of negative error code if PA finds invalid expression, or the final type of the analyzed expression
