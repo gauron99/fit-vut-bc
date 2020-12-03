@@ -638,7 +638,9 @@ int gettToken(Token *token) {
                 eraseDynamicString(content);
                 currentState = ST_OCTAL_BASE;
             } else if(c == 'x' || c == 'X') {
-                eraseDynamicString(content);
+                eraseDynamicString(content); 
+                char *stored = convertToString(content);
+                printf("This is what it contains: %s", stored);
                 currentState = ST_HEXA_BASE;
             } else if(isdigit(c)) {
                 return LEXICAL_ERROR;
@@ -838,7 +840,9 @@ int gettToken(Token *token) {
         /*----------------------------L_13-----------------------------*/
 
         case ST_HEXA_BASE:
-            if(isHexa(c)) {
+                printf("\nI contain this char: %c", c);
+
+            if(isHexa(c)) { 
                 appendChar(content,c);
                 currentState = ST_HEXA_CORE;
             } else if (c == '_') {
@@ -877,7 +881,7 @@ int gettToken(Token *token) {
         case ST_HEXA_SEPARATOR:
             if(isHexa(c)) {
                 appendChar(content, c);
-                currentState = ST_OCTAL_CORE;
+                currentState = ST_HEXA_CORE;
             } else {
                 return LEXICAL_ERROR;
             }
