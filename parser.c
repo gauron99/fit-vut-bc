@@ -175,7 +175,6 @@ int idSekv(int eos){
     int argTypCount = 0;
     int expTypCount = 0;
     int retType = 0;
-
     if (TTYPE == IDENTIFIER){
         dewit = 0;
         symtableGlobalItem *tempos = symtableItemGetGlobal(TSTR);
@@ -253,6 +252,7 @@ int idSekv(int eos){
             CHECK(getToken(&token));
         }
     }
+
     if (wasFunCalled)
         CHECK_R(expTypCount==idCount,EC_SEM6)
         else
@@ -260,6 +260,7 @@ int idSekv(int eos){
 
     if (idCount==0 && delim == (tokenType) DEFINITION)
         CHECK_R(!symtableItemGet(actualFunc->key,ids[0]),EC_SEM3)
+
     for (int i = idCount; i >= 0; i--){
         char *name = malloc(10+sizeof(ids[i]));
         char *theInt = malloc(10);
