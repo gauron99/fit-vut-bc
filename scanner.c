@@ -461,7 +461,11 @@ int gettToken(Token *token) {
             } else {
                 ungetc(c, input);
 
-                char *stored = convertToString(content);
+                appendChar(content, '\0');
+                char *stored = convertToString(content); 
+                // printf("\n======================");
+                // printf("Length of identif: %lu", strlen(stored));
+                // printf("\n======================"); 
                 
                 if(strcmp("true", stored) == 0) {
                     token->type = BOOL;
