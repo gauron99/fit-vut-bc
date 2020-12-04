@@ -381,7 +381,7 @@ int generate(trAK strInst){
     //funcs
     else if(!strcmp(strInst.name,"FUNC_DEF")){
         printf("LABEL %s\n",strInst.boku);
-        if(!strcmp(strInst.boku,"MAIN")){ //if main, inicialize stack
+        if(!strcmp(strInst.boku,"main")){ //if main, inicialize stack
             printf("CLEARS\n");
         }
         printf("CREATEFRAME\n");
