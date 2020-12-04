@@ -640,7 +640,6 @@ int gettToken(Token *token) {
             } else if(c == 'x' || c == 'X') {
                 eraseDynamicString(content); 
                 char *stored = convertToString(content);
-                printf("This is what it contains: %s", stored);
                 currentState = ST_HEXA_BASE;
             } else if(isdigit(c)) {
                 return LEXICAL_ERROR;
@@ -840,8 +839,6 @@ int gettToken(Token *token) {
         /*----------------------------L_13-----------------------------*/
 
         case ST_HEXA_BASE:
-                printf("\nI contain this char: %c", c);
-
             if(isHexa(c)) { 
                 appendChar(content,c);
                 currentState = ST_HEXA_CORE;
