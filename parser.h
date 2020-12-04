@@ -28,7 +28,7 @@ int rdReturnsN();
 int rdReturnsNamed();
 int rdReturnsNamedN();
 int rdComm();
-int rdElseOrNot();
+int rdElseOrNot(char *end);
 int rdIdsekv();
 int rdExprSekv();
 int rdExprsOrCall();

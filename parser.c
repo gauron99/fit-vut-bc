@@ -583,6 +583,9 @@ int rdComm(){
     else if (TTYPE==KEYWORD && !(strcmp(TSTR,"if"))){
         retType = analyzePrecedence();
         CHECK_R(retType>=0,(returnCode)-retType)
+        char *next = generate_label();
+        char *end = generate_label();
+        assemble("START_IF",next,"","",instr);
         CHECK(getToken(&token));
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
@@ -598,13 +601,15 @@ int rdComm(){
         if (TTYPE!=RIGHT_CURLY_BRACKET)
         CHECK(rdComm())
 
+        assemble("JUMP",end,"","",instr);
+        assemble("LABEL",next,"","",instr);
         CHECK(delScope(actualFunc->key))
 
         CHECK(getToken(&token));
 
         if (TTYPE!=EOL_)
-        CHECK(rdElseOrNot())
-
+        CHECK(rdElseOrNot(end))
+        assemble("LABEL",end,"","",instr);
         CHECK(getToken(&token));
         CHECK(rdComm())
     }
@@ -621,7 +626,7 @@ int rdComm(){
         CHECK(idSekv(SEMICOLON))
 
         CHECK_R(TTYPE==SEMICOLON,EC_SYN)
-        assemble("FOR_DEF",for_start,"","",instr);
+        assemble("LABEL",for_start,"","",instr);
         getToken(&token);
         ungetToken(&token);
         CHECK_R(TTYPE!=SEMICOLON,EC_SYN)
@@ -647,7 +652,7 @@ int rdComm(){
         CHECK_R(TTYPE==RIGHT_CURLY_BRACKET,EC_SYN)
         CHECK(delScope(actualFunc->key))
         CHECK(delScope(actualFunc->key))
-        assemble("FOR_END",aktualizace,za_forem,"",instr);
+        assemble("FOR_FINISH",aktualizace,za_forem,"",instr);
         CHECK(getToken(&token));
         CHECK_R(TTYPE==EOL_,EC_SYN)
         CHECK(getToken(&token));
@@ -725,8 +730,9 @@ int rdComm(){
     return EC_GOOD;
 }
 
-int rdElseOrNot(){
+int rdElseOrNot(char *end){
     int retType = 0;
+    char *next = generate_label();
     CHECK_R(TTYPE==KEYWORD && !strcmp(TSTR,"else"),EC_SYN)
     CHECK(getToken(&token));
 
@@ -745,7 +751,7 @@ int rdElseOrNot(){
         retType = analyzePrecedence();
         CHECK_R(retType>=0,(returnCode)-retType)
         CHECK(getToken(&token));
-
+        assemble("START_IF",next,"","",instr);
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
         CHECK(addScope(actualFunc->key))
         CHECK(getToken(&token));
@@ -756,11 +762,13 @@ int rdElseOrNot(){
 
         if (TTYPE!=RIGHT_CURLY_BRACKET)
         CHECK(rdComm())
+        assemble("JUMP",end,"","",instr);
+        assemble("LABEL",next,"","",instr);
         CHECK(delScope(actualFunc->key))
         CHECK(getToken(&token));
 
         if (TTYPE!=EOL_)
-        CHECK(rdElseOrNot())
+        CHECK(rdElseOrNot(end))
     }
 
     return EC_GOOD;
