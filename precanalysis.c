@@ -470,29 +470,29 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                     *lastFoundType = BOOL;
                 }
                 assemble("DEFVAR",name,"","",instr);                        /// louda code
-
-                symtableItem *val1 = symtableItemGet(actualFunc->key,value1); ///
-                symtableItem *val2 = symtableItemGet(actualFunc->key,value2); ///
                 char *theInt = malloc(10);
 
+                symtableItem *val1 = symtableItemGet(actualFunc->key,value1); ///
                 if (val1){
                     char *varrr = malloc(11+strlen(value1));                ///
                     if(!sprintf(theInt,"%d",val1->i))
                         return -INTERNAL_ERROR;
                     strcpy(varrr,value1);
-                    name = strcat(varrr,"$");
-                    name = strcat(varrr,theInt);
+                    varrr = strcat(varrr,"$");
+                    varrr = strcat(varrr,theInt);
                     value1 = malloc(11+strlen(value1));
                     strcpy(value1,varrr);
                 }
+
+                symtableItem *val2 = symtableItemGet(actualFunc->key,value2); ///
                 if (val2){                                                  ///
                     char *varrr = malloc(11+strlen(value2));
                     if(!sprintf(theInt,"%d",val2->i))
                         return -INTERNAL_ERROR;
                     strcpy(varrr,value2);
-                    name = strcat(varrr,"$");
-                    name = strcat(varrr,theInt);
-                    value1 = malloc(11+strlen(value2));
+                    varrr = strcat(varrr,"$");
+                    varrr = strcat(varrr,theInt);
+                    value2 = malloc(11+strlen(value2));
                     strcpy(value2,varrr);
                 }                                                           /// end of louda code
 
