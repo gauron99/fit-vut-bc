@@ -17,7 +17,7 @@ extern trAK *instr;
 
 void generateBeginningOfExistence(){
     printf(".IFJCODE20\n");
-    printf("JUMP MAIN\n\n");
+    printf("JUMP main\n\n");
 
     generateInBuilt();
 
@@ -372,6 +372,9 @@ int generate(trAK strInst){
     else if(!strcmp(strInst.name,"JUMP")){
         printf("JUMP %s\n",strInst.boku);
     }
+    else if (!strcmp(strInst.name,"CALL")){
+        printf("CALL %s\n",strInst.boku);
+    }
 
     else if(!strcmp(strInst.name,"PRINT")){
         printf("PRINT %s\n",strInst.boku);
@@ -381,11 +384,11 @@ int generate(trAK strInst){
     //funcs
     else if(!strcmp(strInst.name,"FUNC_DEF")){
         printf("LABEL %s\n",strInst.boku);
+        printf("CREATEFRAME\n");
+        printf("PUSHFRAME\n");
         if(!strcmp(strInst.boku,"main")){ //if main, inicialize stack
             printf("CLEARS\n");
         }
-        printf("CREATEFRAME\n");
-        printf("PUSHFRAME\n");
     }
     else if(!strcmp(strInst.name,"FUNC_DEF_END")){
         printf("POPFRAME\n");
