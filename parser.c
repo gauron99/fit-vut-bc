@@ -269,13 +269,14 @@ int idSekv(int eos){
         CHECK_R(!symtableItemGet(actualFunc->key,ids[0]),EC_SEM3)
 
     for (int i = idCount; i >= 0; i--){
-        char *name = malloc(10+sizeof(ids[i]));
+        char *name = malloc(11+strlen(ids[i]));
         char *theInt = malloc(10);
         if (symtableItemGet(actualFunc->key,ids[i])) {
             symtableItem *tmp = symtableItemGet(actualFunc->key, ids[i]);
             if(!sprintf(theInt,"%d",tmp->i))
                 return INTERNAL_ERROR;
             strcpy(name,ids[i]);
+            name = strcat(name,"$");
             name = strcat(name,theInt);
             if (!strcmp("_",ids[i])){
                 assemble("POPS","dev null","","",instr);
@@ -290,6 +291,7 @@ int idSekv(int eos){
             if(!sprintf(theInt,"%d",varCounter))
                 return INTERNAL_ERROR;
             strcpy(name,ids[i]);
+            name = strcat(name,"$");
             name = strcat(name,theInt);
             assemble("DEFVAR",name,"","",instr);
             symtableItemInsert(actualFunc->key, ids[i], (itemType) expTypes[i], varCounter++);
@@ -384,11 +386,12 @@ int rdDef(){
         getToken(&token);
     }
     for (int i = argCount-1; i >= 0; i--){
-        char *name = malloc(10+strlen(args[i]));
+        char *name = malloc(11+strlen(args[i]));
         char *theInt = malloc(10);
         if(!sprintf(theInt,"%d",varCounter))
             return INTERNAL_ERROR;
         name = args[i];
+        name = strcat(name,"$");
         name = strcat(name,theInt);
         symtableItemInsert(actualFunc->key,args[i],rets[i],varCounter++);
         assemble("DEFVAR",name,"","",instr);

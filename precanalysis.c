@@ -229,7 +229,7 @@ bool sPush (s_t* symStack, sElemType *newData) {
                 else {
                     strcpy(data->paToken->value, newData->paToken->value);
                 }
-            }    
+            }
         }
         
         if(newData->name != NULL) {
@@ -469,6 +469,32 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                     intStackPush(typeStack, type2);
                     *lastFoundType = BOOL;
                 }
+                assemble("DEFVAR",name,"","",instr);                        /// louda code
+
+                symtableItem *val1 = symtableItemGet(actualFunc->key,value1); ///
+                symtableItem *val2 = symtableItemGet(actualFunc->key,value2); ///
+                char *theInt = malloc(10);
+
+                if (val1){
+                    char *varrr = malloc(11+strlen(value1));                ///
+                    if(!sprintf(theInt,"%d",val1->i))
+                        return -INTERNAL_ERROR;
+                    strcpy(varrr,value1);
+                    name = strcat(varrr,"$");
+                    name = strcat(varrr,theInt);
+                    value1 = malloc(11+strlen(value1));
+                    strcpy(value1,varrr);
+                }
+                if (val2){                                                  ///
+                    char *varrr = malloc(11+strlen(value2));
+                    if(!sprintf(theInt,"%d",val2->i))
+                        return -INTERNAL_ERROR;
+                    strcpy(varrr,value2);
+                    name = strcat(varrr,"$");
+                    name = strcat(varrr,theInt);
+                    value1 = malloc(11+strlen(value2));
+                    strcpy(value2,varrr);
+                }                                                           /// end of louda code
 
                 switch(i) {
                     case 0:
@@ -518,9 +544,18 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             intStackPush(typeStack, tmp);
             *lastFoundType = tmp;
             //printf("po pushi\n");
-            
+
+            char *varrr = malloc(11+strlen(item->key)); /// louda code
+            char *theInt = malloc(10);                  ///
+
+            if(!sprintf(theInt,"%d",item->i))
+                return -INTERNAL_ERROR;
+            strcpy(varrr,item->key);
+            varrr = strcat(varrr,"$");
+            varrr = strcat(varrr,theInt);               /// louda code end
+
             assemble("DEFVAR", name,"","", instr);
-            assemble("MOVE", name, item->key, "", instr);
+            assemble("MOVE", name, varrr, "", instr);
             return i;
         }
         if(i == 11) {
