@@ -1,0 +1,17 @@
+package main
+
+func zolo(a string, b int)() {
+	return
+}
+
+func main() {
+	if 1<2 {
+	  a := 2
+	} else if 1<2 {
+	  b := 2
+	} else {
+  	  c := 2
+	}
+}
+
+
