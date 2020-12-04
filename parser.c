@@ -687,6 +687,15 @@ int rdComm(){
             CHECK(idSekv(EOL_))
         }
         else if (TTYPE==LEFT_ROUND_BRACKET){
+            if (!strcmp(TSTR,"print")){
+                while (TTYPE!=RIGHT_ROUND_BRACKET){
+                    getToken(&token);
+                    retType = analyzePrecedence();
+                    assemble("CALL","print","","",instr);
+                    getToken(&token);
+                    CHECK_R(TTYPE==COMMA || TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
+                }
+            }
             CHECK_R(!(symtableItemGet(actualFunc->key,tmp.value)),EC_SEM3)
             int *argTypes = malloc(sizeof(int));
             int argTypCount = 0;
