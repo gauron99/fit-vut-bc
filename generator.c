@@ -21,10 +21,6 @@ void generateBeginningOfExistence(){
 
     generateInBuilt();
 
-    printf("LABEL MAIN\n");
-    printf("CREATEFRAME\n");
-    printf("CLEARS\n");
-
     initInC();
 }
 /*
@@ -385,6 +381,9 @@ int generate(trAK strInst){
     //funcs
     else if(!strcmp(strInst.name,"FUNC_DEF")){
         printf("LABEL %s\n",strInst.boku);
+        if(!strcmp(strInst.boku,"MAIN")){ //if main, inicialize stack
+            printf("CLEARS\n");
+        }
         printf("CREATEFRAME\n");
         printf("PUSHFRAME\n");
     }
