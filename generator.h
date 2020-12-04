@@ -31,10 +31,9 @@ extern long long int lenOfArr;
 //     PUSHS, //done
 //     MOVE, //assignment --> a = 5 (just a MOVE instr) //done
 
-//     IF_DEF, //<variable na bool> <dalsi label> //TODO
-//     IF_END, // LABEL name of where to jump if IF is not to be executed //TODO
-//     FOR_DEF, //DEF LABEL to jump to, iterator, and when to get out //TODO
-//     FOR_END, // iterator +1, JUMP to LABEL back //TODO
+//     START_IF, //<variable na bool> <dalsi label>
+
+//     FOR_FINISH, //JUMP & LABEL
 
 //     ADD, //done
 //     SUB, //done
