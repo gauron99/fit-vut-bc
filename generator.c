@@ -310,7 +310,7 @@ void generateInBuilt(){
     printf("\n");
     printf("################################################################################\n");
     printf("\n");
-    printf("#func print() -- called repeatedly, always prints one argument");
+    printf("#func print() -- called repeatedly, always prints one argument\n");
     printf("LABEL print\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
@@ -403,6 +403,7 @@ int generate(trAK strInst){
     }
     else if(!strcmp(strInst.name,"FUNC_DEF_END")){
         printf("POPFRAME\n");
+        if(!strcmp(strInst.boku,"main"));
         printf("RETURN\n");
     }
 
