@@ -183,6 +183,7 @@ int idSekv(int eos){
     int expTypCount = 0;
     int retType = 0;
     if (TTYPE == IDENTIFIER){
+        Token tmp = token;
         dewit = 0;
         symtableGlobalItem *tempos = symtableItemGetGlobal(TSTR);
         CHECK(getToken(&token));
@@ -210,6 +211,7 @@ int idSekv(int eos){
                 CHECK_R(TTYPE==COMMA || TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
                 tknCount+=2;
             }
+            assemble("CALL",tmp.value,"","",instr);
             isInFuncCall = 0;
 
             CHECK(getToken(&token));
@@ -386,14 +388,14 @@ int rdDef(){
         getToken(&token);
     }
     for (int i = argCount-1; i >= 0; i--){
+        symtableItem *it = symtableItemGet(actualFunc->key,args[i]);
         char *name = malloc(11+strlen(args[i]));
         char *theInt = malloc(10);
-        if(!sprintf(theInt,"%d",varCounter))
+        if(!sprintf(theInt,"%d",it->i))
             return INTERNAL_ERROR;
         name = args[i];
         name = strcat(name,"$");
         name = strcat(name,theInt);
-        symtableItemInsert(actualFunc->key,args[i],rets[i],varCounter++);
         assemble("DEFVAR",name,"","",instr);
         assemble("POPS",name,"","",instr);
     }
@@ -607,6 +609,11 @@ int rdComm(){
         CHECK(rdComm())
     }
     else if (TTYPE==KEYWORD && !(strcmp(TSTR,"for"))){
+        char *for_start = generate_label();
+        char *za_forem = generate_label();
+        char *for_body = generate_label();
+        char *aktualizace = generate_label();
+
         CHECK(addScope(actualFunc->key))
         CHECK(getToken(&token));
 
@@ -614,18 +621,22 @@ int rdComm(){
         CHECK(idSekv(SEMICOLON))
 
         CHECK_R(TTYPE==SEMICOLON,EC_SYN)
+        assemble("FOR_DEF",for_start,"","",instr);
         getToken(&token);
         ungetToken(&token);
         CHECK_R(TTYPE!=SEMICOLON,EC_SYN)
         retType = analyzePrecedence();
         CHECK_R(retType>=0,(returnCode)-retType)
-
+        assemble("FOR_COND",za_forem,for_body,"",instr);
         CHECK(getToken(&token));
         CHECK_R(TTYPE==SEMICOLON,EC_SYN)
 
         CHECK(getToken(&token));
+        assemble("LABEL",aktualizace,"","",instr);
         if (TTYPE!=LEFT_CURLY_BRACKET)
-        CHECK(idSekv(LEFT_CURLY_BRACKET))
+            CHECK(idSekv(LEFT_CURLY_BRACKET))
+
+        assemble("FOR_FINISH",for_start,for_body,"",instr);
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
         CHECK(addScope(actualFunc->key))
@@ -636,6 +647,7 @@ int rdComm(){
         CHECK_R(TTYPE==RIGHT_CURLY_BRACKET,EC_SYN)
         CHECK(delScope(actualFunc->key))
         CHECK(delScope(actualFunc->key))
+        assemble("FOR_END",aktualizace,za_forem,"",instr);
         CHECK(getToken(&token));
         CHECK_R(TTYPE==EOL_,EC_SYN)
         CHECK(getToken(&token));
@@ -689,6 +701,7 @@ int rdComm(){
                 CHECK(getToken(&token))
                 CHECK_R(TTYPE==COMMA || TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
             }
+            assemble("CALL",tmp.value,"","",instr);
             CHECK_R(glob->countArgs==argTypCount,EC_SEM6)
             isInFuncCall = 0;
             getToken(&token);
