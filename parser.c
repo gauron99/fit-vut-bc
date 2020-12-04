@@ -687,37 +687,42 @@ int rdComm(){
             CHECK(idSekv(EOL_))
         }
         else if (TTYPE==LEFT_ROUND_BRACKET){
-            if (!strcmp(TSTR,"print")){
+            if (!strcmp(tmp.value,"print")){
+                isInFuncCall = 1;
                 while (TTYPE!=RIGHT_ROUND_BRACKET){
-                    getToken(&token);
                     retType = analyzePrecedence();
                     assemble("CALL","print","","",instr);
                     getToken(&token);
                     CHECK_R(TTYPE==COMMA || TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
                 }
+                isInFuncCall = 0;
             }
-            CHECK_R(!(symtableItemGet(actualFunc->key,tmp.value)),EC_SEM3)
-            int *argTypes = malloc(sizeof(int));
-            int argTypCount = 0;
-            CHECK_R(symtableItemGetGlobal(tmp.value),EC_SEM3)
-            symtableGlobalItem *glob = symtableItemGetGlobal(tmp.value);
-            CHECK_R(glob->countRets==0,EC_SEM6)
-            isInFuncCall = 1;
-            while(TTYPE!=RIGHT_ROUND_BRACKET){
-                getToken(&token);
-                ungetToken(&token);
-                CHECK_R(TTYPE==IDENTIFIER || TTYPE==FLOAT || TTYPE==INTEGER || TTYPE==STRING || TTYPE==BOOL,EC_SYN)
-                retType = analyzePrecedence();
-                CHECK_R(retType >= 0, (returnCode) -retType)
-                CHECK_R((argTypes=realloc(argTypes,++argTypCount*sizeof(int))),EC_INTERNAL)
-                argTypes[argTypCount-1]=retType;
-                CHECK_R((glob->args[argTypCount-1] && argTypes[argTypCount-1]==glob->args[argTypCount-1]),EC_SEM6)
-                CHECK(getToken(&token))
-                CHECK_R(TTYPE==COMMA || TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
+            else {
+                CHECK_R(!(symtableItemGet(actualFunc->key, tmp.value)), EC_SEM3)
+                int *argTypes = malloc(sizeof(int));
+                int argTypCount = 0;
+                CHECK_R(symtableItemGetGlobal(tmp.value), EC_SEM3)
+                symtableGlobalItem *glob = symtableItemGetGlobal(tmp.value);
+                CHECK_R(glob->countRets == 0, EC_SEM6)
+                isInFuncCall = 1;
+                while (TTYPE != RIGHT_ROUND_BRACKET) {
+                    getToken(&token);
+                    ungetToken(&token);
+                    CHECK_R(TTYPE == IDENTIFIER || TTYPE == FLOAT || TTYPE == INTEGER || TTYPE == STRING ||
+                            TTYPE == BOOL, EC_SYN)
+                    retType = analyzePrecedence();
+                    CHECK_R(retType >= 0, (returnCode) -retType)
+                    CHECK_R((argTypes = realloc(argTypes, ++argTypCount * sizeof(int))), EC_INTERNAL)
+                    argTypes[argTypCount - 1] = retType;
+                    CHECK_R((glob->args[argTypCount - 1] && argTypes[argTypCount - 1] == glob->args[argTypCount - 1]),
+                            EC_SEM6)
+                    CHECK(getToken(&token))
+                    CHECK_R(TTYPE == COMMA || TTYPE == RIGHT_ROUND_BRACKET, EC_SYN)
+                }
+                assemble("CALL", tmp.value, "", "", instr);
+                CHECK_R(glob->countArgs == argTypCount, EC_SEM6)
+                isInFuncCall = 0;
             }
-            assemble("CALL",tmp.value,"","",instr);
-            CHECK_R(glob->countArgs==argTypCount,EC_SEM6)
-            isInFuncCall = 0;
             getToken(&token);
         }
         else if (TTYPE==PLUS_EQ||TTYPE==MINUS_EQ||TTYPE==MUL_EQ||TTYPE==DIV_EQ){
