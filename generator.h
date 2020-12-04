@@ -20,19 +20,33 @@ typedef struct trAK {
     char* pico;
 }trAK;
 
-typedef enum instructionNames{
-    FUNC_DEF, //label, createframe, pushframe
-    FUNC_DEF_END, //popframe, return
-    DEFVAR, //defvar <varName> <value>
-    POPS,
-    PUSHS,
-    MOVE, //assignment --> a = 5 (just a MOVE instr)
-    IF_DEF, //DEFVAR var of type bool- present how to get out of the IF (aka skip it)
-    IF_END, // LABEL name of where to jump if IF is not to be executed
-    FOR_DEF, //DEF LABEL to jump to, iterator, and when to get out
-    FOR_END, // iterator +1, JUMP to LABEL back
+extern char **defVars;
+extern long long int lenOfArr;
 
-}instrNames;
+// typedef enum instructionNames{
+//     FUNC_DEF, //label, createframe, pushframe //done
+//     FUNC_DEF_END, //popframe, return //done
+//     DEFVAR, //defvar //done
+//     POPS, //done
+//     PUSHS, //done
+//     MOVE, //assignment --> a = 5 (just a MOVE instr) //done
+
+//     IF_DEF, //<variable na bool> <dalsi label> //TODO
+//     IF_END, // LABEL name of where to jump if IF is not to be executed //TODO
+//     FOR_DEF, //DEF LABEL to jump to, iterator, and when to get out //TODO
+//     FOR_END, // iterator +1, JUMP to LABEL back //TODO
+
+//     ADD, //done
+//     SUB, //done
+//     DIV, //done
+//     MUL, //done
+//     CONCAT,//done
+//     JUMP //done
+//     PRINT //done
+/*     //--------------------------- TODO ---------------------------
+*/
+// }instrNames;
+
 /** function declarations **/
 int count_digits(unsigned long long int n);
 char* generate_identifier();
@@ -51,6 +65,8 @@ void generateInBuilt();
  * TODO -- arguments from parser( array of tokens or something)
  */
 int generate(trAK instr);
+
+void initInC();
 
 
 #endif

@@ -7,18 +7,23 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "generator.h"
 
+char **defVars;
+long long int lenOfArr;
 
 void generateBeginningOfExistence(){
     printf(".IFJCODE20\n");
     printf("JUMP MAIN\n\n");
+
     generateInBuilt();
+
     printf("LABEL MAIN\n");
     printf("CREATEFRAME\n");
     printf("CLEARS\n");
 
-    return;
+    initInC();
 }
 /*
 func inputs() (string,int)
@@ -308,7 +313,106 @@ void generateInBuilt(){
 }
 
 int generate(trAK instr){
-    printf("%s %s %s %s\n",instr.name,instr.boku ? instr.boku : "",instr.no ? instr.no : "",instr.pico ? instr.pico : "");
+    // printf("%s %s %s %s\n",instr.name,instr.boku ? instr.boku : "",instr.no ? instr.no : "",instr.pico ? instr.pico : "");
+    if(!strcmp(instr.name,"DEFVAR")){
+        int found = 0;
+        //check if is already defined
+        for (int i = 0; i < lenOfArr; ++i){
+            if (!strcmp(defVars[i],instr.boku)){
+                found = 1;
+                break;
+            }
+        }
+        if(!found){ //if NOT found, aka variable has NOT YET been defvared, defvar it
+            printf("DEFVAR %s\n",instr.boku);
+            lenOfArr++;
+            defVars = realloc(defVars,lenOfArr*sizeof(instr.boku));
+            defVars[lenOfArr-1] = instr.boku;
+        }
+
+    }
+    else if(!strcmp(instr.name,"MOVE")){
+        printf("MOVE %s %s\n",instr.boku,instr.no);
+    }
+    else if(!strcmp(instr.name,"POPS")){
+        printf("POPS %s\n",instr.boku);
+    }
+    else if(!strcmp(instr.name,"PUSHS")){
+        printf("PUSHS %s\n",instr.boku);
+    }
+
+    // mathematical stuff
+    else if (!strcmp(instr.name,"ADD"))
+    {
+        printf("ADD %s %s %s\n",instr.boku,instr.no,instr.pico);
+    }
+    else if (!strcmp(instr.name,"SUB"))
+    {
+        printf("SUB %s %s %s\n",instr.boku,instr.no,instr.pico);        
+    }
+    else if(!strcmp(instr.name,"MUL")){
+        printf("MUL %s %s %s\n",instr.boku,instr.no,instr.pico);
+    }
+    else if(!strcmp(instr.name,"DIV")){
+        printf("DIV %s %s %s\n",instr.boku,instr.no,instr.pico);
+    }
+    else if(!strcmp(instr.name,"IDIV")){
+        printf("IDIV %s %s %s\n",instr.boku,instr.no,instr.pico);
+    }
+
+    //string +
+    else if(!strcmp(instr.name,"CONCAT")){
+        printf("CONCAT %s %s %s\n",instr.boku,instr.no,instr.pico);
+    }
+    //func stuff
+    else if(!strcmp(instr.name,"LABEL")){
+        printf("LABEL %s\n",instr.boku);
+    }
+    else if(!strcmp(instr.name,"JUMP")){
+        printf("JUMP %s\n",instr.boku);
+    }
+
+    else if(!strcmp(instr.name,"PRINT")){
+        printf("PRINT %s\n",instr.boku);
+    }
+    //lil multiline stuff
+    //funcs
+    else if(!strcmp(instr.name,"FUNC_DEF")){
+        printf("LABEL %s\n",instr.boku);
+        printf("CREATEFRAME %s\n",instr.boku);
+        printf("PUSHFRAME %s\n",instr.boku);
+    }
+    else if(!strcmp(instr.name,"FUNC_DEF_END")){
+        printf("POPFRAME\n");
+        printf("RETURN\n");
+    }
+    else if(!strcmp(instr.name,"DIV")){
+        printf("DIV %s %s %s\n",instr.boku,instr.no,instr.pico);
+    }
+    //if stuff
+    else if(!strcmp(instr.name,"IF_DEF")){ //TODO
+        printf("DEFVAR %s %s %s\n",instr.boku);
+        printf("POPS %s %s %s\n",instr.boku);
+        printf("JUMPIFEQ %s %s %s\n",instr.boku);
+
+    }
+    else if(!strcmp(instr.name,"IF_END")){ //TODO
+        printf("JUMP %s\n",instr.boku);
+    }
+    else if(!strcmp(instr.name,"FOR_DEF")){ //TODO
+        printf(" %s %s %s\n",instr.boku,instr.no,instr.pico);
+    }
+    else if(!strcmp(instr.name,"FOR END")){ //TODO
+        printf(" %s %s %s\n",instr.boku,instr.no,instr.pico);
+    }
+    // else if(!strcmp(instr.name,"DIV")){
+    //     printf("DIV %s %s %s\n",instr.boku,instr.no,instr.pico);
+    // }
+    // else {
+
+    // }
+
+
     return SUCCESS;
 }
 
@@ -348,4 +452,11 @@ char* generate_label()
     iterator++;
 
     return identif;
+}
+
+void initInC(){
+
+    lenOfArr = 0;
+    defVars = malloc(sizeof(char*)); //true malloc overlord
+
 }
