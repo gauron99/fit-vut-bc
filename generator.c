@@ -39,7 +39,7 @@ func chr(i int)(string,int)
 */
 void generateInBuilt(){
     printf("#function inputs() !d\n");
-    printf("LABEL $$__inputs__$$ #0,2\n");
+    printf("LABEL inputs #0,2\n");
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@&&&out_arg1\n");
     printf("DEFVAR LF@&&&out_arg2\n");
@@ -59,7 +59,7 @@ void generateInBuilt(){
     printf("\n");
     printf("\n");
     printf("#function inputi() !d\n");
-    printf("LABEL $$__inputi__$$ #0,2\n");
+    printf("LABEL inputi #0,2\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@&&&out_arg1\n");
@@ -79,7 +79,7 @@ void generateInBuilt(){
     printf("################################################################################\n");
     printf("\n");
     printf("\n");
-    printf("LABEL $$__inputf__$$ #0,2 !done\n");
+    printf("LABEL inputf #0,2 !done\n");
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@&&&out_arg1\n");
     printf("DEFVAR LF@&&&out_arg2\n");
@@ -99,7 +99,7 @@ void generateInBuilt(){
     printf("\n");
     printf("\n");
     printf("#rozsireni bool \n");
-    printf("LABEL $$__inputb__$$ #0,2 !done\n");
+    printf("LABEL inputb #0,2 !done\n");
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@&&&out_arg1\n");
     printf("DEFVAR LF@&&&out_arg2\n");
@@ -119,7 +119,7 @@ void generateInBuilt(){
     printf("\n");
     printf("\n");
     printf("#int2float func !done\n");
-    printf("LABEL $$__int2float__$$ #1,1 #assume input arg is on the stack\n");
+    printf("LABEL int2float #1,1 #assume input arg is on the stack\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@&&&?%%%%***!!!in_arg1\n");
@@ -134,7 +134,7 @@ void generateInBuilt(){
     printf("\n");
     printf("\n");
     printf("#float2int func !done\n");
-    printf("LABEL $$__float2int__$$ #1,1\n");
+    printf("LABEL float2int #1,1\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@&&&?%%%%***!!!in_arg1\n");
@@ -149,7 +149,7 @@ void generateInBuilt(){
     printf("\n");
     printf("\n");
     printf("#func len (string-in,int-o\n");
-    printf("LABEL $$__len__$$ #1,1\n");
+    printf("LABEL len #1,1\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@&&&?%%%%***!!!in_arg1\n");
@@ -165,7 +165,7 @@ void generateInBuilt(){
     printf("\n");
     printf("\n");
     printf("#func substr (string,int,int-in) (string, int-out) #chars start wit\n");
-    printf("LABEL $$__substr__$$ #3,2\n");
+    printf("LABEL substr #3,2\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@$$%%**!!$$%%%%!$in1_s\n");
@@ -230,7 +230,7 @@ void generateInBuilt(){
     printf("################################################################################\n");
     printf("\n");
     printf("#func ord() # indexing starts with 1 COZ FLYGNA WOTCH \n");
-    printf("LABEl $$__ord__$$ #2,2\n");
+    printf("LABEl ord #2,2\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@$&**!%%$*&returnVal\n");
@@ -274,7 +274,7 @@ void generateInBuilt(){
     printf("################################################################################\n");
     printf("\n");
     printf("#func chr() change number (0-255) to c\n");
-    printf("LABEL $$__chr__$$ #1,2\n");
+    printf("LABEL chr #1,2\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@$!&*%%&!*$!&*%%$$_i\n");
@@ -308,6 +308,17 @@ void generateInBuilt(){
     printf("POPFRAME\n");
     printf("RETURN\n");
     printf("\n");
+    printf("################################################################################\n");
+    printf("\n");
+    printf("#func print() -- called repeatedly, always prints one argument");
+    printf("LABEL print\n");
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+    printf("DEFVAR LF@!*$&&*!$*_printer\n");
+    printf("POPS LF@!*$&&*!$*_printer\n");
+    printf("WRITE LF@!*$&&*!$*_printer\n");
+    printf("POPFRAME\n");
+    printf("RETURN\n");
 }
 
 int generate(trAK strInst){
