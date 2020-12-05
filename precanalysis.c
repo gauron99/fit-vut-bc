@@ -436,7 +436,7 @@ int getPaType(Token *token) {
 }
 
 int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, char *name, char *value1, char *value2) {
-    //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
+    printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
     sElemType *tmp = malloc(sizeof(sElemType));
 
     int i = 0;
@@ -563,8 +563,11 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             int tmp = intStackPop(typeStack);
             intStackPush(typeStack, tmp);
             *lastFoundType = tmp;
+            
+            assemble("DEFVAR", name, "", "", instr);
+            assemble("MOVE", name, value2, "", instr);
 
-                        return i;
+            return i;
         } 
         if(i == 12) {
             *lastFoundType = INTEGER;
@@ -607,8 +610,9 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
 
 int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeStack, int * lastFoundType, char *name) {
     int ruleOnStack[3] = {0, 0, 0};
-    char *values[2];
+    char *values[2] = {NULL, NULL};
     int i = 0;
+    char *override = NULL;
 
 
     while ((mainStack->stack[mainStack->top])->paType != OP_LESS) {
@@ -617,13 +621,29 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
         sGetTopPointer(mainStack, tmpTerminal);
         if (!sPushPointer(tmpStack, tmpTerminal))
             return -1;
-        if(i == 0)
-            values[0] = mainStack->stack[mainStack->top]->paToken->value;
-        if(i == 2)
-            values[1] = mainStack->stack[mainStack->top]->paToken->value;
+        if(i == 0) {
+            if(mainStack->stack[mainStack->top]->paType == OP_EXPRESSION)
+                values[0] = mainStack->stack[mainStack->top]->name;
+            else
+                values[0] = mainStack->stack[mainStack->top]->paToken->value;
+        }
+        if(i == 1 && mainStack->stack[mainStack->top]->paType == OP_EXPRESSION) {
+            override = mainStack->stack[mainStack->top]->name;
+        }
+        if(i == 2) {
+             if(mainStack->stack[mainStack->top]->paType == OP_EXPRESSION)
+                values[1] = mainStack->stack[mainStack->top]->name;
+            else
+                values[1] = mainStack->stack[mainStack->top]->paToken->value;
+        }
         sPopPointer(mainStack);
         i++;
     }
+    if(override != NULL) {
+        values[0] = NULL;
+        values[1] = override;
+    }
+
     if (tmpStack->top > 2)
         return -1;
 
@@ -636,7 +656,6 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
     else
         usedRule = generateRule(ruleOnStack, typeStack, lastFoundType, tmpStack->stack[0]->paToken, name, values[0], values[1]);
  
-    
     //printf("returning %i\n", usedRule);
     return usedRule;
 }
