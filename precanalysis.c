@@ -18,6 +18,7 @@
 extern symtableGlobalItem *actualFunc;
 extern int isInFuncCall;
 extern trAK *instr;
+int picovole;
 
 //-----------------INTEGER STACK FUNCTIONS-----------------//
 
@@ -439,12 +440,13 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
     printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
     sElemType *tmp = malloc(sizeof(sElemType));
 
+    char *helpName = malloc(100);
+
     int i = 0;
     int found = 0;
     
     while(i < 20) {
         if(rule[0] == rules[i][0] && rule[1] == rules[i][1] && rule[2] == rules[i][2]) {
-            //return i;
             found = 1;
             break;
         }
@@ -457,7 +459,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
 
             int type1 = intStackPop(typeStack);
             int type2 = intStackPop(typeStack);
-            //printf("type1: %i, type2: %i\n", type1, type2);
+            printf("type1: %i, type2: %i\n", type1, type2);
 
             if(type1 == type2) {
                 if(i < 4 || i == 17 || i == 18) {
@@ -469,6 +471,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                     intStackPush(typeStack, type2);
                     *lastFoundType = BOOL;
                 }
+
                 assemble("DEFVAR",name,"","",instr);                        /// louda code
                 char *theInt = malloc(10);
 
@@ -516,19 +519,27 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                         assemble("LT", name, value2, value1, instr);
                     case 5:
                         assemble("LT", name, value2, value1, instr);
+                        assemble("PUSHS", name, "", "", instr);
+                        assemble("EQ", name, value2, value1, instr);
+                        assemble("PUSHS", name, "", "", instr);
+                        assemble("ORS", name, "", "", instr);
                     case 6:
                         assemble("GT", name, value2, value1, instr);
                     case 7:
-                        assemble("GTS", name, value2, value1, instr);
+                        assemble("GT", name, value2, value1, instr);
+                        assemble("PUSHS", name, "", "", instr);
+                        assemble("EQ", name, value2, value1, instr);
+                        assemble("PUSHS", name, "", "", instr);
+                        assemble("ORS", name, "", "", instr);
                     case 8:
                         assemble("EQ", name, value2, value1, instr);
                     case 9:
                         assemble("EQ", name, value2, value1, instr);
                         assemble("NOT", name, "", "", instr);
                     case 17:
-                        assemble("IDIV", name, value2, value1, instr);
+                        assemble("AND", name, value2, value1, instr);
                     case 18:
-                        assemble("IDIV", name, value2, value1, instr);
+                        assemble("OR", name, value2, value1, instr);
                 }
                 return i;
             }
