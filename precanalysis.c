@@ -18,8 +18,6 @@
 extern symtableGlobalItem *actualFunc;
 extern int isInFuncCall;
 extern trAK *instr;
-int picovole;
-int typeOrVar;
 
 //-----------------INTEGER STACK FUNCTIONS-----------------//
 
@@ -442,7 +440,6 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
     bool found = false;
 
     sElemType *tmp = malloc(sizeof(sElemType));
-
     char *helpName = malloc(100);
 
     //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
@@ -458,19 +455,19 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
     
     if(found) {
         //printf("CHECK 2, i = %i\n", i);
-        if(i < 10 || i == 17 || i == 18) {
+        if(i < 10 || i == 17 || i == 18) {  // two operand rules
 
             int type1 = intStackPop(typeStack);
             int type2 = intStackPop(typeStack);
             //printf("type1: %i, type2: %i\n", type1, type2);
 
-            if(type1 == type2) {
-                if(i < 4 || i == 17 || i == 18) {
-                    intStackPush(typeStack, type1);
+            if(type1 == type2) {    // datatypes match
+                if(i < 4 || i == 17 || i == 18) {   // +, -, *, /, &&, ||
+                    intStackPush(typeStack, type1); // push operand datatype
                     *lastFoundType = type1;
                 }
-                else {
-                    type2 = BOOL;
+                else {      
+                    type2 = BOOL;   // result of operation is boolean
                     intStackPush(typeStack, type2);
                     *lastFoundType = BOOL;
                 }
@@ -525,7 +522,6 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                         assemble("LT", name, value2, value1, instr);
                     case 5:
                         assemble("LT", name, value2, value1, instr);
-                        
                         assemble("PUSHS", name, "", "", instr);
                         assemble("EQ", name, value2, value1, instr);
                         assemble("PUSHS", name, "", "", instr);
@@ -554,8 +550,8 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                 return DIFFERENT_TYPES;
             return i;
         }
-
-        if(i == 10) {
+        
+        if(i == 10) {   // E -> ID
             symtableItem *item = symtableItemGet(actualFunc->key, teken->value);
             int tmp = item->type;
             //printf("ID DATATYPE PUSED ON STACK: %i   \n", tmp);
@@ -578,7 +574,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             assemble("MOVE", name, varrr, "", instr);
             return i;
         }
-        if(i == 11) {
+        if(i == 11) {   // E -> (E)
             //printf("ele1: %i\n", ele1->paType);
             int tmp = intStackPop(typeStack);
             intStackPush(typeStack, tmp);
@@ -590,7 +586,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
 
             return i;
         } 
-        if(i == 12) {
+        if(i == 12) {   // E -> i(int)
             *lastFoundType = INTEGER;
             int tmp = INTEGER;
             intStackPush(typeStack, tmp);
@@ -602,7 +598,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
 
             return i;
         }
-        if(i == 13) {
+        if(i == 13) {   // E -> i(float)
             *lastFoundType = FLOAT;
             int tmp = FLOAT; 
             intStackPush(typeStack, tmp);
@@ -612,7 +608,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             assemble("MOVE", name, teken->value, "", instr);
             return i;
         }
-        if(i == 14) {
+        if(i == 14) {   // E -> i(string)
             *lastFoundType = STRING;
             int tmp = STRING; 
             intStackPush(typeStack, tmp);
@@ -623,12 +619,12 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
 
             return i;
         }
-        if(i == 16) {
+        if(i == 16) {   //  E -> !E
             int tmp = intStackPop(typeStack);
             *lastFoundType = tmp;
             intStackPush(typeStack, tmp);
         }
-        if(i == 19) {
+        if(i == 19) {   // E -> i(bool)
             *lastFoundType = BOOL;
             int tmp = BOOL;
             intStackPush(typeStack, tmp);
@@ -645,24 +641,25 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
 }
 
 int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeStack, int * lastFoundType, char *name) {
-    int ruleOnStack[3] = {0, 0, 0};
-    char *values[2] = {NULL, NULL};
     int i = 0;
+    int usedRule;
+    int ruleOnStack[3] = {0, 0, 0};
+    
+    char *values[2] = {NULL, NULL};
     char *override = NULL;
-    typeOrVar = 0;
-
+    
     while ((mainStack->stack[mainStack->top])->paType != OP_LESS) {
         if(mainStack->stack[mainStack->top]->paToken->value != NULL)
             //printf("SFINDRULE VALUE ON TOP OF STACK : %s\n", mainStack->stack[mainStack->top]->paToken->value);
         sGetTopPointer(mainStack, tmpTerminal);
         if (!sPushPointer(tmpStack, tmpTerminal))
             return -1;
+        
         if(i == 0) {
             if(mainStack->stack[mainStack->top]->paType == OP_EXPRESSION)
                 values[0] = mainStack->stack[mainStack->top]->name;
             else {
                 values[0] = mainStack->stack[mainStack->top]->paToken->value;
-                typeOrVar = 1;
             }
         }
         if(i == 1 && mainStack->stack[mainStack->top]->paType == OP_EXPRESSION) {
@@ -677,18 +674,18 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
         sPopPointer(mainStack);
         i++;
     }
+    
+    if (tmpStack->top > 2)
+        return -1;
+
     if(override != NULL) {
         values[0] = NULL;
         values[1] = override;
     }
 
-    if (tmpStack->top > 2)
-        return -1;
-
-    for (int i = tmpStack->top; i > -1; i--)
+    for (int i = tmpStack->top; i > -1; i--)    // save the content of stack until PA_LESS is read
         ruleOnStack[i] = (tmpStack->stack[i])->paType;
     
-    int usedRule;
     if(tmpStack->top == 0)
         usedRule = generateRule(ruleOnStack, typeStack, lastFoundType, tmpStack->stack[0]->paToken, name, values[0], NULL);
     else
