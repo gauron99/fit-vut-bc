@@ -19,6 +19,7 @@ extern symtableGlobalItem *actualFunc;
 extern int isInFuncCall;
 extern trAK *instr;
 int picovole;
+int typeOrVar;
 
 //-----------------INTEGER STACK FUNCTIONS-----------------//
 
@@ -437,7 +438,7 @@ int getPaType(Token *token) {
 }
 
 int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, char *name, char *value1, char *value2) {
-    printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
+    //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
     sElemType *tmp = malloc(sizeof(sElemType));
 
     char *helpName = malloc(100);
@@ -471,7 +472,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                     intStackPush(typeStack, type2);
                     *lastFoundType = BOOL;
                 }
-
+                
                 assemble("DEFVAR",name,"","",instr);                        /// louda code
                 char *theInt = malloc(10);
 
@@ -497,8 +498,9 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                     varrr = strcat(varrr,theInt);
                     value2 = malloc(11+strlen(value2));
                     strcpy(value2,varrr);
-                }                                                           /// end of louda code
-
+                }                        /// end of louda code
+                
+                //              typy vsetkych operandov vo switchi  su var
                 switch(i) {
                     case 0:
                         assemble("ADD", name, value2, value1, instr);
@@ -510,15 +512,18 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                         assemble("MUL", name, value2, value1, instr);
                         break;
                     case 3:
-                        if(type1 == INTEGER)
+                        if(type1 == INTEGER){
                             assemble("DIV", name, value2, value1, instr);
-                        if(type1 == FLOAT)
+                        }
+                        if(type1 == FLOAT) {
                             assemble("IDIV", name, value2, value1, instr);
+                        }
                         break;
                     case 4:
                         assemble("LT", name, value2, value1, instr);
                     case 5:
                         assemble("LT", name, value2, value1, instr);
+                        
                         assemble("PUSHS", name, "", "", instr);
                         assemble("EQ", name, value2, value1, instr);
                         assemble("PUSHS", name, "", "", instr);
@@ -564,8 +569,10 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             strcpy(varrr,item->key);
             varrr = strcat(varrr,"$");
             varrr = strcat(varrr,theInt);               /// louda code end
-
+                
+            
             assemble("DEFVAR", name,"","", instr);
+            //               var   var
             assemble("MOVE", name, varrr, "", instr);
             return i;
         }
@@ -576,6 +583,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             *lastFoundType = tmp;
             
             assemble("DEFVAR", name, "", "", instr);
+            //               var   var 
             assemble("MOVE", name, value2, "", instr);
 
             return i;
@@ -585,8 +593,9 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             int tmp = INTEGER;
             intStackPush(typeStack, tmp);
             //printf("\n\n %i PUSHED ON STACK\n", *typeStack->iStack[typeStack->top]);
-            
+             
             assemble("DEFVAR", name, "", "", instr);
+            //               var   int
             assemble("MOVE", name, teken->value, "", instr);
 
             return i;
@@ -595,8 +604,9 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             *lastFoundType = FLOAT;
             int tmp = FLOAT; 
             intStackPush(typeStack, tmp);
-
+            
             assemble("DEFVAR", name, "", "", instr);
+            //               var,  float
             assemble("MOVE", name, teken->value, "", instr);
             return i;
         }
@@ -604,8 +614,9 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             *lastFoundType = STRING;
             int tmp = STRING; 
             intStackPush(typeStack, tmp);
-
+            
             assemble("DEFVAR", name, "", "", instr);
+            //               var   string
             assemble("MOVE", name, teken->value, "", instr);
 
             return i;
@@ -615,6 +626,18 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             *lastFoundType = tmp;
             intStackPush(typeStack, tmp);
         }
+        if(i == 19) {
+            *lastFoundType = BOOL;
+            int tmp = BOOL;
+            intStackPush(typeStack, tmp);
+            
+            assemble("DEFVAR", name, "", "", instr);
+            //               var,  bool
+            assemble("MOVE", name, teken->value, "", instr);
+
+            return i;
+        }
+
     }
     return -2;
 }
@@ -624,7 +647,7 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
     char *values[2] = {NULL, NULL};
     int i = 0;
     char *override = NULL;
-
+    typeOrVar = 0;
 
     while ((mainStack->stack[mainStack->top])->paType != OP_LESS) {
         if(mainStack->stack[mainStack->top]->paToken->value != NULL)
@@ -635,8 +658,10 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
         if(i == 0) {
             if(mainStack->stack[mainStack->top]->paType == OP_EXPRESSION)
                 values[0] = mainStack->stack[mainStack->top]->name;
-            else
+            else {
                 values[0] = mainStack->stack[mainStack->top]->paToken->value;
+                typeOrVar = 1;
+            }
         }
         if(i == 1 && mainStack->stack[mainStack->top]->paType == OP_EXPRESSION) {
             override = mainStack->stack[mainStack->top]->name;
@@ -808,6 +833,7 @@ int analyzePrecedence() {
         sElemGetData(&t, analyzedSymbol);
     }
     
+    //                var
     assemble("PUSHS", tmpSymbol.name, "", "", instr);
     ungetToken(&t);
    // printf("LAST FOUND: %i", lastFoundType);
