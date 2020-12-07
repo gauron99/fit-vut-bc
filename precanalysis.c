@@ -361,7 +361,7 @@ int getPaType(Token *token) {
         case KEYWORD:
             return OP_BOOL;
 
-        case IDENTIFIER: {
+        case IDENTIFIER: {          // fun/ID
             /*printf("HALOHOHOHO");
             if(token->value != NULL) {
                 printf("\nPATYPEVALUE: %s\n", token->value);
@@ -371,17 +371,17 @@ int getPaType(Token *token) {
             if(t1.type == LEFT_ROUND_BRACKET) {
                 getToken(&t2);
                 if(t2.type == RIGHT_ROUND_BRACKET) {
-                    return OP_FUN;
+                    return OP_FUN;      // fun()
                 }
                 else {
                     ungetToken(&t1);
                     ungetToken(&t2);
-                    return OP_FUN;
+                    return OP_FUN;      // fun(args)
                 }
             }
             ungetToken(&t1);
             //printf("RETURNING OP_ID in getPaType");
-            return OP_ID;
+            return OP_ID;   // else OP_ID
         }
         case INTEGER:{ 
             return OP_INTEGER;
@@ -417,7 +417,7 @@ int getPaType(Token *token) {
             return OP_LBRAC;
         case RIGHT_ROUND_BRACKET: {
             if(isInFuncCall == 1)
-                return OP_DOLLAR;
+                return OP_DOLLAR;   // special case when processing function arguments
             else
                 return OP_RBRAC;
         }
@@ -434,33 +434,35 @@ int getPaType(Token *token) {
         case LEFT_CURLY_BRACKET:
             return OP_DOLLAR;
     }
-    return OP_DOLLAR;       // oddelat
+    return -1;
 }
 
 int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, char *name, char *value1, char *value2) {
-    //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
+    int i = 0;
+    bool found = false;
+
     sElemType *tmp = malloc(sizeof(sElemType));
 
     char *helpName = malloc(100);
 
-    int i = 0;
-    int found = 0;
+    //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
     
+    // compare with the set of rules in prectableandrules.c
     while(i < 20) {
         if(rule[0] == rules[i][0] && rule[1] == rules[i][1] && rule[2] == rules[i][2]) {
-            found = 1;
+            found = true;
             break;
         }
         i++;
     }
     
-    if(found == 1) {
+    if(found) {
         //printf("CHECK 2, i = %i\n", i);
         if(i < 10 || i == 17 || i == 18) {
 
             int type1 = intStackPop(typeStack);
             int type2 = intStackPop(typeStack);
-            printf("type1: %i, type2: %i\n", type1, type2);
+            //printf("type1: %i, type2: %i\n", type1, type2);
 
             if(type1 == type2) {
                 if(i < 4 || i == 17 || i == 18) {
