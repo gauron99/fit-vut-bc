@@ -37,7 +37,7 @@ do
         LEXfailed=$((LEXfailed+1))
 	    echo -e ${RED}ERROR  - ${eachfile} - return value expected 0, returned $return_value instead
 	else
-	    echo -e ${GREEN}OK  - ${eachfile} - lexically ok, error code is $return_value tho
+	    echo -e ${ORANGE}OK  - ${eachfile} - lexically ok, unexpected return value $return_value
         LEXpassed=$((LEXpassed+1))
 	fi
 done
@@ -66,7 +66,7 @@ do
 	    echo -e ${RED}ERROR  - ${eachfile} - return value expected 1, returned $return_value instead
         LEXfailed=$((LEXfailed+1))
     else
-        echo -e ${GREEN}ERROR  - ${eachfile} - Lexically ok, error code is $return_value tho
+        echo -e ${ORANGE}ERROR  - ${eachfile} - Lexically ok, error code is $return_value tho
         LEXpassed=$((LEXpassed+1))
 	fi
 done
@@ -96,13 +96,28 @@ do
 
 	if [ "$return_value" -eq "0" ]; then
 	    echo -e ${GREEN}OK  - ${eachfile}
-        SEMpassed=$((SEMpassed+1)) 
-    elif [ "$return_value" -eq "1" ]; then
-	    echo -e ${ORANGE}ERROR  - ${eachfile} - Lexical error with err $return_value
-        SEMpassed=$((SEMpassed+1)) 
+        SEMpassed=$((SEMpassed+1))  
+    elif [ "$return_value" -eq "3" ]; then
+        echo -e ${RED}ERROR  - ${eachfile} - unexpected return value $return_value
+        SEMfailed=$((SEMfailed+1)) 
+    elif [ "$return_value" -eq "4" ]; then
+        echo -e ${RED}ERROR  - ${eachfile} - unexpected return value $return_value
+        SEMfailed=$((SEMfailed+1)) 
+    elif [ "$return_value" -eq "5" ]; then
+        echo -e ${RED}ERROR  - ${eachfile} - unexpected return value $return_value
+        SEMfailed=$((SEMfailed+1)) 
+    elif [ "$return_value" -eq "6" ]; then
+        echo -e ${RED}ERROR  - ${eachfile} - unexpected return value $return_value
+        SEMfailed=$((SEMfailed+1)) 
+    elif [ "$return_value" -eq "7" ]; then
+        echo -e ${RED}ERROR  - ${eachfile} - unexpected return value $return_value
+        SEMfailed=$((SEMfailed+1)) 
+    elif [ "$return_value" -eq "9" ]; then
+        echo -e ${RED}ERROR  - ${eachfile} - unexpected return value $return_value
+        SEMfailed=$((SEMfailed+1)) 
 	else
-	    echo -e ${RED}ERROR  - ${eachfile} - return value expected 0, returned $return_value instead
-        SEMfailed=$((SEMfailed+1))
+	    echo -e ${ORANGE}ERROR  - ${eachfile} - unexpected return value $return_value
+        SEMpassed=$((SEMpassed+1))
 	fi
 done
 
@@ -142,12 +157,12 @@ do
         SEMpassed=$((SEMpassed+1)) 
     elif [ "$return_value" -eq "9" ]; then
         echo -e ${GREEN}OK  - ${eachfile}
-        SEMpassed=$((SEMpassed+1))  
-    elif [ "$return_value" -eq "1" ]; then
-	    echo -e ${ORANGE}ERROR  - ${eachfile} - Lexical error with err $return_value
-        SEMpassed=$((SEMpassed+1))    
+        SEMpassed=$((SEMpassed+1)) 
+    elif [ "$return_value" -eq "0" ]; then
+        echo -e ${RED}ERROR  - ${eachfile} - passed successfully, expected error
+        SEMpassed=$((SEMpassed+1))            
 	else
-	  echo -e ${RED}ERROR  - ${eachfile} - error return value expected, returned $return_value instead
+	  echo -e ${ORANGE}ERROR  - ${eachfile} - unexpected return value $return_value
       SEMfailed=$((SEMfailed+1))
 	fi
 done
