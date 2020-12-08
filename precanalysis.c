@@ -455,6 +455,25 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
     
     if(found) {
         //printf("CHECK 2, i = %i\n", i);
+         
+        char *nameGen = malloc(100);
+        char *valueGen1 = malloc(100);
+        char *valueGen2 = malloc(100);
+        char *varrrGen = malloc(100);
+        char *tekenGen = malloc(100);
+        
+        nameGen = NULL;
+        valueGen1 = NULL;
+        valueGen2 = NULL;
+        varrrGen = NULL;
+        tekenGen = NULL;
+
+        nameGen = concat("LF@", name);
+        valueGen1 = concat("LF@", value1);
+
+        if(value2)
+            valueGen2 = concat("LF@", value2);
+
         if(i < 10 || i == 17 || i == 18) {  // two operand rules
 
             int type1 = intStackPop(typeStack);
@@ -471,8 +490,9 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                     intStackPush(typeStack, type2);
                     *lastFoundType = BOOL;
                 }
+               
+                assemble("DEFVAR",nameGen,"","",instr);                        /// louda code
                 
-                assemble("DEFVAR",name,"","",instr);                        /// louda code
                 char *theInt = malloc(10);
 
                 symtableItem *val1 = symtableItemGet(actualFunc->key,value1); ///
@@ -501,48 +521,51 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                 
                 //              typy vsetkych operandov vo switchi  su var
                 switch(i) {
-                    case 0:
-                        assemble("ADD", name, value2, value1, instr);
+                    case 0: {
+                        assemble("ADD", nameGen, valueGen2, valueGen1, instr);
                         break;
+                    }
                     case 1:
-                        assemble("SUB", name, value2, value1, instr);
+                        assemble("SUB", nameGen, valueGen2, valueGen1, instr);
                         break;
                     case 2:
-                        assemble("MUL", name, value2, value1, instr);
+                        assemble("MUL", nameGen, valueGen2, valueGen1, instr);
                         break;
                     case 3:
                         if(type1 == INTEGER){
-                            assemble("DIV", name, value2, value1, instr);
+                            assemble("DIV", nameGen, valueGen2, valueGen1, instr);
                         }
                         if(type1 == FLOAT) {
-                            assemble("IDIV", name, value2, value1, instr);
+                            assemble("IDIV", nameGen, valueGen2, valueGen1, instr);
                         }
                         break;
                     case 4:
-                        assemble("LT", name, value2, value1, instr);
+                        assemble("LT", nameGen, valueGen2, valueGen1, instr);
                     case 5:
-                        assemble("LT", name, value2, value1, instr);
-                        assemble("PUSHS", name, "", "", instr);
-                        assemble("EQ", name, value2, value1, instr);
-                        assemble("PUSHS", name, "", "", instr);
-                        assemble("ORS", name, "", "", instr);
+                        assemble("LT", nameGen, valueGen2, valueGen1, instr);
+                        assemble("PUSHS", nameGen, "", "", instr);
+                        assemble("EQ", nameGen, valueGen2, valueGen1, instr);
+                        assemble("PUSHS", nameGen, "", "", instr);
+                        assemble("ORS", nameGen, "", "", instr);
                     case 6:
-                        assemble("GT", name, value2, value1, instr);
+                        assemble("GT", nameGen, valueGen2, valueGen1, instr);
                     case 7:
-                        assemble("GT", name, value2, value1, instr);
-                        assemble("PUSHS", name, "", "", instr);
-                        assemble("EQ", name, value2, value1, instr);
-                        assemble("PUSHS", name, "", "", instr);
-                        assemble("ORS", name, "", "", instr);
+                        assemble("GT", nameGen, valueGen2, valueGen1, instr);
+                        assemble("PUSHS", nameGen, "", "", instr);
+                        assemble("EQ", nameGen, valueGen2, valueGen1, instr);
+                        assemble("PUSHS", nameGen, "", "", instr);
+                        assemble("ORS", nameGen, "", "", instr);
                     case 8:
-                        assemble("EQ", name, value2, value1, instr);
+                        assemble("EQ", nameGen, valueGen2, valueGen1, instr);
                     case 9:
-                        assemble("EQ", name, value2, value1, instr);
-                        assemble("NOT", name, "", "", instr);
+                        assemble("EQ", nameGen, valueGen2, valueGen1, instr);
+                        assemble("NOT", nameGen, "", "", instr);
                     case 17:
-                        assemble("AND", name, value2, value1, instr);
+                        assemble("AND", nameGen, valueGen2, valueGen1, instr);
                     case 18:
-                        assemble("OR", name, value2, value1, instr);
+                        assemble("PUSHS", valueGen2, "", "", instr);
+                        assemble("PUSHS", valueGen1, "", "", instr);
+                        assemble("ORS", nameGen, "", "", instr);
                 }
                 return i;
             }
@@ -567,11 +590,10 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             strcpy(varrr,item->key);
             varrr = strcat(varrr,"$");
             varrr = strcat(varrr,theInt);               /// louda code end
-                
             
-            assemble("DEFVAR", name,"","", instr);
-            //               var   var
-            assemble("MOVE", name, varrr, "", instr);
+            assemble("DEFVAR", nameGen,"","", instr);
+            varrrGen = concat("LF@", varrr);
+            assemble("MOVE", nameGen, varrrGen, "", instr);
             return i;
         }
         if(i == 11) {   // E -> (E)
@@ -580,9 +602,9 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             intStackPush(typeStack, tmp);
             *lastFoundType = tmp;
             
-            assemble("DEFVAR", name, "", "", instr);
-            //               var   var 
-            assemble("MOVE", name, value2, "", instr);
+            assemble("DEFVAR", nameGen, "", "", instr);
+            //               var   var
+            assemble("MOVE", nameGen, valueGen2, "", instr);
 
             return i;
         } 
@@ -592,9 +614,10 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             intStackPush(typeStack, tmp);
             //printf("\n\n %i PUSHED ON STACK\n", *typeStack->iStack[typeStack->top]);
              
-            assemble("DEFVAR", name, "", "", instr);
-            //               var   int
-            assemble("MOVE", name, teken->value, "", instr);
+            assemble("DEFVAR", nameGen, "", "", instr);
+
+            tekenGen = concat("int@", teken->value); 
+            assemble("MOVE", nameGen, tekenGen, "", instr);
 
             return i;
         }
@@ -603,9 +626,9 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             int tmp = FLOAT; 
             intStackPush(typeStack, tmp);
             
-            assemble("DEFVAR", name, "", "", instr);
-            //               var,  float
-            assemble("MOVE", name, teken->value, "", instr);
+            assemble("DEFVAR", nameGen, "", "", instr);
+            tekenGen = concat("float@", teken->value);
+            assemble("MOVE", nameGen, tekenGen, "", instr);
             return i;
         }
         if(i == 14) {   // E -> i(string)
@@ -613,9 +636,10 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             int tmp = STRING; 
             intStackPush(typeStack, tmp);
             
-            assemble("DEFVAR", name, "", "", instr);
-            //               var   string
-            assemble("MOVE", name, teken->value, "", instr);
+            assemble("DEFVAR", nameGen, "", "", instr);
+            
+            tekenGen = concat("string@", teken->value);
+            assemble("MOVE", nameGen, tekenGen, "", instr);
 
             return i;
         }
@@ -629,9 +653,10 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             int tmp = BOOL;
             intStackPush(typeStack, tmp);
             
-            assemble("DEFVAR", name, "", "", instr);
-            //               var,  bool
-            assemble("MOVE", name, teken->value, "", instr);
+            assemble("DEFVAR", nameGen, "", "", instr);
+            
+            tekenGen = concat("bool@", teken->value);
+            assemble("MOVE", nameGen, tekenGen, "", instr);
 
             return i;
         }
@@ -764,7 +789,7 @@ int analyzePrecedence() {
     
     // implementation of precedence analysis automaton
     while(!(analyzedSymbol->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
-        //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
+        printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
         // detrmine action based on input, top stack terminal and PA table
         action = precedentTable[sFindFirstTerminal(mainStack)][analyzedSymbol->paType];
         //printf("%i\n", action);
