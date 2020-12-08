@@ -21,6 +21,7 @@
 #define EOL '\n'
 
 int gettToken(Token *token) {
+   int linesPassed = 0;
    int numOfKeywords = 9;
    char *keyWords[] = {
                     "else",
@@ -41,6 +42,7 @@ int gettToken(Token *token) {
     dynamicString string;
     dynamicString *content = &string;
     if (initDynamicString(content) == -1) {
+        printf("INTERNAL ERROR: malloc failed");
         return INTERNAL_ERROR;
     } 
 
@@ -98,15 +100,24 @@ int gettToken(Token *token) {
             } else if(c == ':') {
                 currentState = ST_COLON;
             } else if(c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) { /*identifier/keyword*/
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_IDENTIF_KEYWORD;
             } else if(c == '\"') { /*string*/
                 currentState = ST_STRING_START;
             } else if(isdigit(c) && c == '0') { /*literal*/
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_NUM_WHOLE_PART_ZERO;
             } else if(isdigit(c) && c != '0') { /*literal*/
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_NUM_WHOLE_PART_NONZERO;
             } else if(c == '/') {  /*division/comment*/
                 currentState = ST_SLASH;
@@ -463,12 +474,17 @@ int gettToken(Token *token) {
 
         case ST_IDENTIF_KEYWORD:
             if((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_') {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_IDENTIF_KEYWORD;
             } else {
                 ungetc(c, input);
-
-                appendChar(content, '\0');
+                if (appendChar(content, '\0') == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 char *stored = convertToString(content); 
                 // printf("\n======================");
                 // printf("Length of identif: %lu", strlen(stored));
@@ -520,13 +536,19 @@ int gettToken(Token *token) {
             if(c == '\"') {
                 currentState = ST_STRING_END;
             } else if(c == '\\') {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_STRING_ESC_START;
             } else if(c == EOL || (c >= 0 && c <= 31) || c == EOF){
                 printf("LEXICAL ERROR: Invalid string \n");
                 return LEXICAL_ERROR;
             } else {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_STRING_START;
             }
 
@@ -535,9 +557,19 @@ int gettToken(Token *token) {
 
         case ST_STRING_END:
             ungetc(c, input);
+            //here  
+            appendChar(content, '\0');
 
+            char* stored = convertToString(content);
+            // printf("\nDlzka stringu: %lu \n", strlen(stored));
+            // for(int i = 0; i < strlen(stored); i++) {
+            //     printf(" >> %c\n", stored[i]);
+            // }
             token->type = STRING;
-            token->value = content->str;
+            token->value = stored; 
+
+            eraseDynamicString(content);
+            freeDynamicString(content);
 
             return SUCCESS;
 
@@ -545,10 +577,12 @@ int gettToken(Token *token) {
 
         case ST_STRING_ESC_START:
             if(c == '\"' || c == 'n' || c == 't' || c == '\\') {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_STRING_START;
             } else if(c == 'x') {
-               // appendChar(content, c);
                 currentState = ST_STRING_HEXA_1;
             } else {
                 printf("LEXICAL ERROR: Invalid escape sequence in string \n");
@@ -562,7 +596,6 @@ int gettToken(Token *token) {
         case ST_STRING_HEXA_1:
             if(isHexa(c)) {
                 hexaEscape[0] = c;
-               // appendChar(content, c);
                 currentState = ST_STRING_HEXA_2;
             } else {
                 printf("LEXICAL ERROR: Invalid character in hexa escape sequence \n");
@@ -593,18 +626,51 @@ int gettToken(Token *token) {
                 int hexaVal = strtol(hexaEscape, &ptr, 16);
 
                 if(hexaVal <= 9) {
-                    appendChar(content, '0');
-                    appendChar(content, '0');
+                    if (appendChar(content, '0') == -1) {
+                        printf("INTERNAL ERROR: malloc failed");
+                        return INTERNAL_ERROR;
+                    }
+
+                    if (appendChar(content, '0') == -1) {
+                        printf("INTERNAL ERROR: malloc failed");
+                        return INTERNAL_ERROR;
+                    }
+
                     char temp = hexaVal + 48;
-                    appendChar(content, temp);
+                    if (appendChar(content, temp) == -1) {
+                        printf("INTERNAL ERROR: malloc failed");
+                        return INTERNAL_ERROR;
+                    }
                 } else if(hexaVal >= 10 && hexaVal <= 99) {
-                    appendChar(content, '0');
-                    appendChar(content, (hexaVal / 10) + 48);
-                    appendChar(content, (hexaVal % 10) + 48);
+                    if (appendChar(content, '0') == -1) {
+                        printf("INTERNAL ERROR: malloc failed");
+                        return INTERNAL_ERROR;
+                    }
+
+                    if (appendChar(content, (hexaVal / 10) + 48) == -1) {
+                        printf("INTERNAL ERROR: malloc failed");
+                        return INTERNAL_ERROR;
+                    }
+
+                    if (appendChar(content, (hexaVal % 10) + 48) == -1) {
+                        printf("INTERNAL ERROR: malloc failed");
+                        return INTERNAL_ERROR;
+                    }
                 } else {
-                    appendChar(content, (hexaVal / 100) + 48);
-                    appendChar(content, ((hexaVal % 100) / 10) + 48);
-                    appendChar(content, (hexaVal % 10) + 48);
+                    if (appendChar(content, (hexaVal / 100) + 48) == -1) {
+                        printf("INTERNAL ERROR: malloc failed");
+                        return INTERNAL_ERROR;
+                    } 
+
+                    if (appendChar(content, ((hexaVal % 100) / 10) + 48) == -1) {
+                        printf("INTERNAL ERROR: malloc failed");
+                        return INTERNAL_ERROR;
+                    } 
+
+                    if (appendChar(content, (hexaVal % 10) + 48) == -1) {
+                        printf("INTERNAL ERROR: malloc failed");
+                        return INTERNAL_ERROR;
+                    }
                 }
             } else {
                 printf("LEXICAL ERROR: Invalid character in hexa escape sequence \n");
@@ -618,19 +684,35 @@ int gettToken(Token *token) {
 
         case ST_NUM_WHOLE_PART_NONZERO:
             if(isdigit(c)) {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_NUM_WHOLE_PART_NONZERO;
             } else if(c == '.') {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_NUM_DECIMAL_POINT;
             } else if(c == 'e' || c == 'E') {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_NUM_EXPONENT;
             } else {
                 ungetc(c, input);
 
+                //here 
+                appendChar(content, '\0');
+                char* stored = convertToString(content);
+
                 token->type = INTEGER;
-                token->value = content->str;
+                token->value = stored;
+
+                eraseDynamicString(content);
+                freeDynamicString(content);
 
                 return SUCCESS;
             }
@@ -641,10 +723,16 @@ int gettToken(Token *token) {
             
         case ST_NUM_WHOLE_PART_ZERO:
             if(c == '.') {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_NUM_DECIMAL_POINT;
             } else if(c == 'e' || c == 'E') {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_NUM_EXPONENT;
             } else if(c == 'b' || c == 'B'){
                 eraseDynamicString(content);
@@ -661,8 +749,15 @@ int gettToken(Token *token) {
                 return LEXICAL_ERROR;
             } else {
                 ungetc(c, input);
+                //here 
+                appendChar(content, '\0');
+                char* stored = convertToString(content);
+
                 token->type = INTEGER;
-                token->value = content->str;
+                token->value = stored; 
+
+                eraseDynamicString(content);
+                freeDynamicString(content);
 
                 return SUCCESS;
             }
@@ -672,7 +767,10 @@ int gettToken(Token *token) {
 
         case ST_NUM_DECIMAL_POINT:
             if(isdigit(c)) {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_NUM_FRACTIONAL_PART;
             } else {
                 printf("LEXICAL ERROR: Invalid literal - terminated by '.' \n");
@@ -685,18 +783,27 @@ int gettToken(Token *token) {
 
         case ST_NUM_FRACTIONAL_PART:
             if(isdigit(c)) {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_NUM_FRACTIONAL_PART;
             } else if(c == 'e' || c == 'E') {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_NUM_EXPONENT;
             } else {
                 ungetc(c, input);
+                //here 
+                appendChar(content, '\0');
+                char* stored = convertToString(content);
                 token->type = FLOAT;
+                token->value = stored;
 
-                // double fNumber = atof(content->str);
-                token->value = content->str;
-
+                eraseDynamicString(content);
+                freeDynamicString(content);
                 return SUCCESS;
             }
 
@@ -706,10 +813,16 @@ int gettToken(Token *token) {
 
         case ST_NUM_EXPONENT:
             if(isdigit(c)) {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_NUM_EXPONENT_POWER;
             } else if (c == '+' || c == '-') {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_NUM_EXPONENT_MUST;
             } else {
                 printf("LEXICAL ERROR: Invalid literal - missing exponent \n");
@@ -722,18 +835,25 @@ int gettToken(Token *token) {
 
         case ST_NUM_EXPONENT_MUST:
             if(isdigit(c)) {
-                appendChar(content, c);
+                printf("Tu som teraz %c", c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_NUM_EXPONENT_POWER;
             } else {
                 printf("LEXICAL ERROR: Invalid literal - invalid exponent \n");
                 return LEXICAL_ERROR;
             }
-
+            break;
         /*-----------------------------L_5-----------------------------*/
 
         case ST_NUM_EXPONENT_POWER:
             if(isdigit(c)) {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_NUM_EXPONENT_POWER;
             } else {
                 ungetc(c, input);
@@ -747,9 +867,14 @@ int gettToken(Token *token) {
                 //     token->type = FLOAT;
                 //     token->value.floatValue = fNumber;
                 // }
+                //here 
+                appendChar(content, '\0');
+                char* stored = convertToString(content);
                 token->type = FLOAT;
-                token->value = content->str;
+                token->value = stored;
 
+                eraseDynamicString(content);
+                freeDynamicString(content);
                 return SUCCESS;
             }
 
@@ -760,7 +885,10 @@ int gettToken(Token *token) {
 
         case ST_BINARY_BASE:
             if(isBinary(c)) {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_BINARY_CORE;
             } else if(c == '_') {
                 currentState = ST_BINARY_SEPARATOR;
@@ -773,7 +901,10 @@ int gettToken(Token *token) {
 
         case ST_BINARY_CORE:
             if(isBinary(c)) {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_BINARY_CORE;
             } else if(c == '_') {
                 currentState = ST_BINARY_SEPARATOR;
@@ -786,8 +917,12 @@ int gettToken(Token *token) {
 
                 int length = snprintf(NULL, 0, "%d", binaryValue);
                 char* converted = malloc(length +1);
+                if(converted == NULL) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 snprintf(converted, length + 1, "%d", binaryValue);
-
+                //tuto co akoze?
                 token->type = INTEGER;
                 token->value = converted;
 
@@ -799,7 +934,10 @@ int gettToken(Token *token) {
 
         case ST_BINARY_SEPARATOR:
             if(isBinary(c)) {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_BINARY_CORE;
             } else {
                 printf("LEXICAL ERROR: Invalid digit in binary base \n");
@@ -812,7 +950,10 @@ int gettToken(Token *token) {
 
         case ST_OCTAL_BASE:
             if(isOctal(c)) {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_OCTAL_CORE;
             } else if(c == '_') {
                 currentState = ST_OCTAL_SEPARATOR;
@@ -825,7 +966,10 @@ int gettToken(Token *token) {
 
         case ST_OCTAL_CORE:
             if(isOctal(c)) {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_OCTAL_CORE;
             } else if(c == '_') {
                 currentState = ST_OCTAL_SEPARATOR;
@@ -835,6 +979,10 @@ int gettToken(Token *token) {
                 int octalValue = strtol(content->str, &ptr, 8);
                 int length = snprintf(NULL, 0, "%d", octalValue);
                 char* converted = malloc(length +1);
+                if(converted == NULL) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 snprintf(converted, length + 1, "%d", octalValue);
 
                 token->type = INTEGER;
@@ -849,7 +997,10 @@ int gettToken(Token *token) {
 
         case ST_OCTAL_SEPARATOR:
             if(isOctal(c)) {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_OCTAL_CORE;
             } else {
                 printf("LEXICAL ERROR: Invalid digit in octal base \n");
@@ -862,7 +1013,10 @@ int gettToken(Token *token) {
 
         case ST_HEXA_BASE:
             if(isHexa(c)) { 
-                appendChar(content,c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_HEXA_CORE;
             } else if (c == '_') {
                 currentState = ST_HEXA_SEPARATOR;
@@ -875,7 +1029,10 @@ int gettToken(Token *token) {
 
         case ST_HEXA_CORE:
             if(isHexa(c)) {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_HEXA_CORE;
             } else if (c == '_') {
                 currentState = ST_HEXA_SEPARATOR;
@@ -887,6 +1044,10 @@ int gettToken(Token *token) {
 
                 int length = snprintf(NULL, 0, "%d", hexaValue);
                 char* converted = malloc(length +1);
+                if(converted == NULL) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 snprintf(converted, length + 1, "%d", hexaValue);
 
                 token->type = INTEGER;
@@ -900,7 +1061,10 @@ int gettToken(Token *token) {
 
         case ST_HEXA_SEPARATOR:
             if(isHexa(c)) {
-                appendChar(content, c);
+                if (appendChar(content, c) == -1) {
+                    printf("INTERNAL ERROR: malloc failed");
+                    return INTERNAL_ERROR;
+                }
                 currentState = ST_HEXA_CORE;
             } else {
                 printf("LEXICAL ERROR: Invalid digit in hexa base \n");
