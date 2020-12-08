@@ -229,6 +229,7 @@ int gettToken(Token *token) {
             if(c == '*') {
                 currentState = ST_MULTI_LC_PRE_END;
             } else if (c == EOF) {
+                printf("LEXICAL ERROR: End of file in multi-line comment \n");
                 return LEXICAL_ERROR;
             } else {
                 currentState = ST_MULTI_L_COMMENT;
@@ -251,6 +252,7 @@ int gettToken(Token *token) {
             if(c == '/') {
                 currentState = INIT_ST;
             } else if (c == EOF) {
+                printf("LEXICAL ERROR: End of file in multi-line comment \n");
                 return LEXICAL_ERROR;
             } else if (c == '*') {
                 currentState = ST_MULTI_LC_PRE_END;
@@ -325,6 +327,7 @@ int gettToken(Token *token) {
         case ST_LESS_EQUAL:
             token->type = LESS_OR_EQUAL;
             token->value = "<=";
+            ungetc(c, input);
             return SUCCESS;
 
         /*----------------------------O_2--------------------->--------*/
@@ -346,6 +349,7 @@ int gettToken(Token *token) {
         case ST_GREATER_EQUAL:
             token->type = GREATER_OR_EQUAL;
             token->value = ">=";
+            ungetc(c, input);
             return SUCCESS;
 
         /*-------------------------ASSIGNMENT-----------------=--------*/
@@ -400,6 +404,7 @@ int gettToken(Token *token) {
                 currentState = ST_AND;
             } else {
                 ungetc(c, input);
+                printf("LEXICAL ERROR: Invalid charcter '&' \n");
                 return LEXICAL_ERROR;
             }
             break;
@@ -417,7 +422,8 @@ int gettToken(Token *token) {
             if(c == '|') {
                 currentState = ST_OR;
             } else {
-                ungetc(c, input);
+                ungetc(c, input); 
+                printf("LEXICAL ERROR: Invalid charcter '|' \n");
                 return LEXICAL_ERROR;
             }
             break;
@@ -437,6 +443,7 @@ int gettToken(Token *token) {
                 currentState = ST_DEFINITION;
             } else {
                 ungetc(c, input);
+                printf("LEXICAL ERROR: Invalid charcter ':' \n");
                 return LEXICAL_ERROR;
             }
 
@@ -516,6 +523,7 @@ int gettToken(Token *token) {
                 appendChar(content, c);
                 currentState = ST_STRING_ESC_START;
             } else if(c == EOL || (c >= 0 && c <= 31) || c == EOF){
+                printf("LEXICAL ERROR: Invalid string \n");
                 return LEXICAL_ERROR;
             } else {
                 appendChar(content, c);
@@ -543,6 +551,7 @@ int gettToken(Token *token) {
                // appendChar(content, c);
                 currentState = ST_STRING_HEXA_1;
             } else {
+                printf("LEXICAL ERROR: Invalid escape sequence in string \n");
                 return LEXICAL_ERROR;
             }
 
@@ -556,6 +565,7 @@ int gettToken(Token *token) {
                // appendChar(content, c);
                 currentState = ST_STRING_HEXA_2;
             } else {
+                printf("LEXICAL ERROR: Invalid character in hexa escape sequence \n");
                 return LEXICAL_ERROR;
             }
 
@@ -597,6 +607,7 @@ int gettToken(Token *token) {
                     appendChar(content, (hexaVal % 10) + 48);
                 }
             } else {
+                printf("LEXICAL ERROR: Invalid character in hexa escape sequence \n");
                 return LEXICAL_ERROR;
             }
 
@@ -646,6 +657,7 @@ int gettToken(Token *token) {
                 char *stored = convertToString(content);
                 currentState = ST_HEXA_BASE;
             } else if(isdigit(c)) {
+                printf("LEXICAL ERROR: Invalid literal - leading with zero \n");
                 return LEXICAL_ERROR;
             } else {
                 ungetc(c, input);
@@ -663,6 +675,7 @@ int gettToken(Token *token) {
                 appendChar(content, c);
                 currentState = ST_NUM_FRACTIONAL_PART;
             } else {
+                printf("LEXICAL ERROR: Invalid literal - terminated by '.' \n");
                 return LEXICAL_ERROR;
             }
 
@@ -699,6 +712,7 @@ int gettToken(Token *token) {
                 appendChar(content, c);
                 currentState = ST_NUM_EXPONENT_MUST;
             } else {
+                printf("LEXICAL ERROR: Invalid literal - missing exponent \n");
                 return LEXICAL_ERROR;
             }
 
@@ -711,6 +725,7 @@ int gettToken(Token *token) {
                 appendChar(content, c);
                 currentState = ST_NUM_EXPONENT_POWER;
             } else {
+                printf("LEXICAL ERROR: Invalid literal - invalid exponent \n");
                 return LEXICAL_ERROR;
             }
 
@@ -750,6 +765,7 @@ int gettToken(Token *token) {
             } else if(c == '_') {
                 currentState = ST_BINARY_SEPARATOR;
             } else {
+                printf("LEXICAL ERROR: Invalid digit in binary \n");
                 return LEXICAL_ERROR;
             }
             break;
@@ -786,6 +802,7 @@ int gettToken(Token *token) {
                 appendChar(content, c);
                 currentState = ST_BINARY_CORE;
             } else {
+                printf("LEXICAL ERROR: Invalid digit in binary base \n");
                 return LEXICAL_ERROR;
             }
             break;    
@@ -835,6 +852,7 @@ int gettToken(Token *token) {
                 appendChar(content, c);
                 currentState = ST_OCTAL_CORE;
             } else {
+                printf("LEXICAL ERROR: Invalid digit in octal base \n");
                 return LEXICAL_ERROR;
             }
             break;     
@@ -849,6 +867,7 @@ int gettToken(Token *token) {
             } else if (c == '_') {
                 currentState = ST_HEXA_SEPARATOR;
             } else {
+                printf("LEXICAL ERROR: Invalid digit in hexa base \n");
                 return LEXICAL_ERROR;
             }
             break;
@@ -884,6 +903,7 @@ int gettToken(Token *token) {
                 appendChar(content, c);
                 currentState = ST_HEXA_CORE;
             } else {
+                printf("LEXICAL ERROR: Invalid digit in hexa base \n");
                 return LEXICAL_ERROR;
             }
             break;
@@ -892,9 +912,11 @@ int gettToken(Token *token) {
         /*-------------------------------------------------------------*/
 
         case ST_ERROR:
+            printf("LEXICAL ERROR: Unexpected character \n");
           return LEXICAL_ERROR;
           
         default:
+            printf("LEXICAL ERROR: Unexpected character \n");
             return LEXICAL_ERROR;
         }
     }
