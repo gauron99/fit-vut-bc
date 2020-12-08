@@ -11,7 +11,6 @@ echo
 echo ====================================================================
 echo - - - [TESTS SET 1] - Lexical Analysis tests - - - - - - - - - - - -
 echo These input source codes should pass lexical analysis without any error.
-echo ${ORANGE}ahoj
 echo
 let i=0
 let LEXpassed=0
