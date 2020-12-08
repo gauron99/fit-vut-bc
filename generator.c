@@ -319,6 +319,9 @@ void generateInBuilt(){
     printf("WRITE LF@!*$&&*!$*_printer\n");
     printf("POPFRAME\n");
     printf("RETURN\n");
+    printf("################################################################################\n");
+    printf("\n");
+
 }
 
 int generate(trAK strInst){
@@ -403,7 +406,7 @@ int generate(trAK strInst){
         printf("GT %s %s %s\n",strInst.boku,strInst.no,strInst.pico);
     }
     else if (!strcmp(strInst.name,"ORS")){
-        printf("ORS %s\n",strInst.boku);
+        printf("ORS\n");
     }
     else if (!strcmp(strInst.name,"NOT")){
         printf("NOT %s %s\n",strInst.boku,strInst.name);

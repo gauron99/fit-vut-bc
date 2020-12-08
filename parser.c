@@ -329,6 +329,7 @@ int switchToType(char* type){
 int prolog(){
     if(loudaFirstBoi){ //kuli was here
         instr = malloc(sizeof(trAK));
+        addInbuilt();
         CHECK(allocUnget())
         CHECK(loadFuncti())
         loudaFirstBoi = 0; //kuli was here
