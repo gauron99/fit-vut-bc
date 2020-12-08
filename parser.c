@@ -25,6 +25,8 @@ Token* tkns;
 int ungot = 0;
 int dewit = 1;
 
+int loudaFirstBoi = 1; //kuli was here
+
 int ungetToken(Token *tk) {
     tkns[ungot++] = *tk;
     if (!(tkns = realloc(tkns, sizeof(Token)*(ungot+1))))
@@ -36,6 +38,8 @@ int allocUnget(){
         return INTERNAL_ERROR;
     if (!(tknLoad = malloc(sizeof(Token))))
         return INTERNAL_ERROR;
+        tknLoad->value = NULL; //kuli was here
+        tkns->value = NULL; //kuli was here
     return EC_GOOD;
 }
 
@@ -61,13 +65,13 @@ int getToken(Token *tok){
 }
 
 int fillTknArr(Token *tok){
-    for (int i = 0;i < strlen(tok->value); i++)
-    {
-        if(tok->value[i] == '\005'){
-            printf("louda to zvladnul\n");
-            tok->value[i] = '\0';
-        }
-    }
+    // for (int i = 0;i < strlen(tok->value); i++)
+    // {
+    //     if(tok->value[i] == '\005'){
+    //         printf("louda to zvladnul\n");
+    //         tok->value[i] = '\0';
+    //     }
+    // }
     tknLoad[tknLoadCount++] = *tok;
     if (!(tknLoad = realloc(tknLoad, sizeof(Token)*(tknLoadCount+1))))
         return INTERNAL_ERROR;
@@ -323,9 +327,12 @@ int switchToType(char* type){
 }
 
 int prolog(){
-    instr = malloc(sizeof(trAK));
-    CHECK(allocUnget())
-    CHECK(loadFuncti())
+    if(loudaFirstBoi){ //kuli was here
+        instr = malloc(sizeof(trAK));
+        CHECK(allocUnget())
+        CHECK(loadFuncti())
+        loudaFirstBoi = 0; //kuli was here
+    }
     if (!instr){
         fprintf(stderr,"NANI\n");
         return INTERNAL_ERROR;
