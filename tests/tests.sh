@@ -14,9 +14,11 @@ echo These input source codes should pass lexical analysis without any error.
 echo
 let i=0
 let LEXpassed=0
+let LEXwarning=0
 let LEXfailed=0
 let LEXtotal=0
 let SEMpassed=0
+let SEMwarning=0
 let SEMfailed=0
 let SEMtotal=0
 lexTests1=`ls tests/lexPASS/*.go`
@@ -38,7 +40,7 @@ do
 	    echo -e ${RED}ERROR  - ${eachfile} - return value expected 0, returned $return_value instead
 	else
 	    echo -e ${ORANGE}OK  - ${eachfile} - lexically ok, unexpected return value $return_value
-        LEXpassed=$((LEXpassed+1))
+        LEXwarning=$((LEXwarning+1))
 	fi
 done
 
@@ -67,7 +69,7 @@ do
         LEXfailed=$((LEXfailed+1))
     else
         echo -e ${ORANGE}ERROR  - ${eachfile} - Lexically ok, error code is $return_value tho
-        LEXpassed=$((LEXpassed+1))
+        LEXwarning=$((LEXwarning+1))
 	fi
 done
 
@@ -75,6 +77,7 @@ echo -e ${BASIC}================================================================
 echo -e ${BASIC}=========================LEX=SUMMARY================================
 echo -e ${BASIC}Total number of tests: ${LEXtotal}
 echo -e ${GREEN}PASSED: ${LEXpassed} tests
+echo -e ${ORANGE}WARNINGS: ${LEXwarning} tests - possible segfault
 echo -e ${RED}FAILED: ${LEXfailed} tests
 echo -e ${BASIC}====================================================================
 
@@ -117,7 +120,7 @@ do
         SEMfailed=$((SEMfailed+1)) 
 	else
 	    echo -e ${ORANGE}ERROR  - ${eachfile} - unexpected return value $return_value
-        SEMpassed=$((SEMpassed+1))
+        SEMwarning=$((SEMwarning+1))
 	fi
 done
 
@@ -160,10 +163,10 @@ do
         SEMpassed=$((SEMpassed+1)) 
     elif [ "$return_value" -eq "0" ]; then
         echo -e ${RED}ERROR  - ${eachfile} - passed successfully, expected error
-        SEMpassed=$((SEMpassed+1))            
+        SEMfailed=$((SEMfailed+1))            
 	else
 	  echo -e ${ORANGE}ERROR  - ${eachfile} - unexpected return value $return_value
-      SEMfailed=$((SEMfailed+1))
+      SEMwarning=$((SEMwarning+1))
 	fi
 done
 
@@ -172,5 +175,6 @@ echo -e ${BASIC}================================================================
 echo -e ${BASIC}=========================SEM=SUMMARY================================
 echo -e ${BASIC}Total number of tests: ${SEMtotal}
 echo -e ${GREEN}PASSED: ${SEMpassed} tests
+echo -e ${ORANGE}WARNINGS: ${SEMwarning} tests - possible segfault etc
 echo -e ${RED}FAILED: ${SEMfailed} tests
 echo -e ${BASIC}====================================================================
