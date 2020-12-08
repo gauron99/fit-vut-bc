@@ -2,48 +2,64 @@
 #include <stdio.h>
 
 #include "custom_string.h"
+#include "error.h"
 
-int initDynamicString(dynamicString *s) {
-    if (!(s->str = (char *) malloc(ADD_ALLOC_SIZE))) {
+int initDynamicString(dynamicString *dynStr) {
+	dynStr->str = ((char *) malloc(SIZE_ALLOC));
+
+    if (dynStr->str == NULL) {
+			printf("INTERNAL ERROR: malloc failed");
 		    return -1;
-	  }
+	}
 
-    eraseDynamicString(s);
-	  s->alloc_size = ADD_ALLOC_SIZE;
+    eraseDynamicString(dynStr);
+	dynStr->alloc_size = SIZE_ALLOC;
 
-	  return 0;
+	return SUCCESS;
 }
 
 int appendChar(dynamicString *s, char c) {
-     if (s->length + 1 >= s->alloc_size) {
-		     unsigned long new_size = s->length + ADD_ALLOC_SIZE;
-		     if (!(s->str = (char *) realloc(s->str, new_size))) {
-			        return -1;
-		     }
-		     s->alloc_size = new_size;
-     }
+    if (s->length + 1 >= s->alloc_size) { 
 
-	   s->str[s->length++] = c;
+	unsigned long new_size = s->length + SIZE_ALLOC;
+		s->str = ((char *) realloc(s->str, new_size));
+
+		if(s->str == NULL) {
+			printf("INTERNAL ERROR: realloc failed");
+			return -1;
+		}
+		
+		s->alloc_size = new_size;
+    }
+
+	   s->str[s->length] = c;
+
+	   s->length++;
 	   s->str[s->length] = '\0';
 
-	   return 0;
+	   return SUCCESS;
 }
 
-void eraseDynamicString(dynamicString *s) {
-    s->length = 0;
-	s->str[s->length] = '\0';
+char* convertToString(dynamicString *dynStr) {
+  	char *converted;
+	converted = (char *) malloc(sizeof(char) * dynStr->length);
+
+	// if(result == NULL) {
+	// 	printf("INTERNAL ERROR: malloc failed");
+	// 	return error;
+	// }
+
+	for(unsigned int i = 0; i < dynStr->length; i++) {
+		    converted[i] = dynStr->str[i]; 
+	}
+	return converted;
+} 
+
+void eraseDynamicString(dynamicString *dynStr) {
+    dynStr->length = 0;
+	dynStr->str[0] = '\0';
 }
 
-void freeDynamicString(dynamicString *s) {
-	  free(s->str);
-}
-
-char* convertToString(dynamicString *s) {
-  	char *result = (char *) calloc(s->length,sizeof(char));
-
-	  for (unsigned int i = 0; i < s->length; i++) {
-		    result[i] = s->str[i];
-	  }
-
-	  return result;
+void freeDynamicString(dynamicString *dynStr) {
+	free(dynStr->str);
 }
