@@ -391,6 +391,27 @@ int generate(trAK strInst){
         printf("PRINT %s\n",strInst.boku);
     }
 
+    //eq lt gt ors pushs not and 
+    //compare stuff for mace
+    else if (!strcmp(strInst.name,"EQ")){
+        printf("EQ %s %s %s\n",strInst.boku,strInst.no,strInst.pico);   
+    }
+    else if (!strcmp(strInst.name,"LT")){
+        printf("LT %s %s %s\n",strInst.boku,strInst.no,strInst.pico);
+    }
+    else if (!strcmp(strInst.name,"GT")){
+        printf("GT %s %s %s\n",strInst.boku,strInst.no,strInst.pico);
+    }
+    else if (!strcmp(strInst.name,"ORS")){
+        printf("ORS %s\n",strInst.boku);
+    }
+    else if (!strcmp(strInst.name,"NOT")){
+        printf("NOT %s %s\n",strInst.boku,strInst.name);
+    }
+    else if (!strcmp(strInst.name,"AND")){
+        printf("AND %s %s %s\n",strInst.boku,strInst.no,strInst.pico);
+    }
+
     //lil multiline stuff
     //funcs
     else if(!strcmp(strInst.name,"FUNC_DEF")){
