@@ -567,10 +567,26 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                         assemble("PUSHS", valueGen1, "", "", instr);
                         assemble("ORS", nameGen, "", "", instr);
                 }
+                free(nameGen);
+                free(valueGen1);
+                free(valueGen2);
+                free(varrrGen);
+                free(tekenGen);
                 return i;
             }
-            else
+            else {
+                free(nameGen);
+                free(valueGen1);
+                free(valueGen2);
+                free(varrrGen);
+                free(tekenGen);
                 return DIFFERENT_TYPES;
+            }
+            free(nameGen);
+            free(valueGen1);
+            free(valueGen2);
+            free(varrrGen);
+            free(tekenGen);
             return i;
         }
         
@@ -594,6 +610,13 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             assemble("DEFVAR", nameGen,"","", instr);
             varrrGen = concat("LF@", varrr);
             assemble("MOVE", nameGen, varrrGen, "", instr);
+            
+            free(nameGen);
+            free(valueGen1);
+            free(valueGen2);
+            free(varrrGen);
+            free(tekenGen);
+
             return i;
         }
         if(i == 11) {   // E -> (E)
@@ -619,6 +642,12 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             tekenGen = concat("int@", teken->value); 
             assemble("MOVE", nameGen, tekenGen, "", instr);
 
+            free(nameGen);
+            free(valueGen1);
+            free(valueGen2);
+            free(varrrGen);
+            free(tekenGen);
+
             return i;
         }
         if(i == 13) {   // E -> i(float)
@@ -629,6 +658,13 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             assemble("DEFVAR", nameGen, "", "", instr);
             tekenGen = concat("float@", teken->value);
             assemble("MOVE", nameGen, tekenGen, "", instr);
+            
+            free(nameGen);
+            free(valueGen1);
+            free(valueGen2);
+            free(varrrGen);
+            free(tekenGen);
+
             return i;
         }
         if(i == 14) {   // E -> i(string)
@@ -640,6 +676,12 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             
             tekenGen = concat("string@", teken->value);
             assemble("MOVE", nameGen, tekenGen, "", instr);
+
+            free(nameGen);
+            free(valueGen1);
+            free(valueGen2);
+            free(varrrGen);
+            free(tekenGen);
 
             return i;
         }
@@ -657,6 +699,12 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             
             tekenGen = concat("bool@", teken->value);
             assemble("MOVE", nameGen, tekenGen, "", instr);
+
+            free(nameGen);
+            free(valueGen1);
+            free(valueGen2);
+            free(varrrGen);
+            free(tekenGen);
 
             return i;
         }
