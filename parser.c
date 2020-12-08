@@ -639,6 +639,7 @@ int rdComm(){
         CHECK_R(TTYPE!=SEMICOLON,EC_SYN)
         retType = analyzePrecedence();
         CHECK_R(retType>=0,(returnCode)-retType)
+        CHECK_R(retType==BOOL,EC_SEM5)
         assemble("FOR_COND",za_forem,for_body,"",instr);
         CHECK(getToken(&token));
         CHECK_R(TTYPE==SEMICOLON,EC_SYN)

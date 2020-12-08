@@ -23,28 +23,6 @@ typedef struct trAK {
 extern char **defVars;
 extern long long int lenOfArr;
 
-// typedef enum instructionNames{
-//     FUNC_DEF, //label, createframe, pushframe //done
-//     FUNC_DEF_END, //popframe, return //done
-//     DEFVAR, //defvar //done
-//     POPS, //done
-//     PUSHS, //done
-//     MOVE, //assignment --> a = 5 (just a MOVE instr) //done
-
-//     START_IF, //<variable na bool> <dalsi label>
-
-//     FOR_FINISH, //JUMP & LABEL
-
-//     ADD, //done
-//     SUB, //done
-//     DIV, //done
-//     MUL, //done
-//     CONCAT,//done
-//     JUMP //done
-//     PRINT //done
-/*     //--------------------------- TODO ---------------------------
-*/
-// }instrNames;
 
 /** function declarations **/
 int count_digits(unsigned long long int n);
@@ -60,12 +38,11 @@ void generateBeginningOfExistence();
 void generateInBuilt();
 /**
  * @brief main function of generator.c 
- * function will be the base of the whole file
- * TODO -- arguments from parser( array of tokens or something)
  */
 int generate(trAK instr);
 
 void initInC();
 
+char* concat(const char *s1, const char *s2);
 
 #endif

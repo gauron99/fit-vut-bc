@@ -391,6 +391,27 @@ int generate(trAK strInst){
         printf("PRINT %s\n",strInst.boku);
     }
 
+    //eq lt gt ors pushs not and 
+    //compare stuff for mace
+    else if (!strcmp(strInst.name,"EQ")){
+        printf("EQ %s %s %s\n",strInst.boku,strInst.no,strInst.pico);   
+    }
+    else if (!strcmp(strInst.name,"LT")){
+        printf("LT %s %s %s\n",strInst.boku,strInst.no,strInst.pico);
+    }
+    else if (!strcmp(strInst.name,"GT")){
+        printf("GT %s %s %s\n",strInst.boku,strInst.no,strInst.pico);
+    }
+    else if (!strcmp(strInst.name,"ORS")){
+        printf("ORS %s\n",strInst.boku);
+    }
+    else if (!strcmp(strInst.name,"NOT")){
+        printf("NOT %s %s\n",strInst.boku,strInst.name);
+    }
+    else if (!strcmp(strInst.name,"AND")){
+        printf("AND %s %s %s\n",strInst.boku,strInst.no,strInst.pico);
+    }
+
     //lil multiline stuff
     //funcs
     else if(!strcmp(strInst.name,"FUNC_DEF")){
@@ -474,4 +495,18 @@ void initInC(){
     lenOfArr = 0;
     defVars = malloc(sizeof(char*)); //true malloc overlord
 
+}
+
+char* concat(const char *s1, const char *s2)
+{
+    const size_t len1 = strlen(s1);
+    const size_t len2 = strlen(s2);
+    char *result = malloc(len1 + len2 + 1); // +1 for the null-terminator
+    if(!result){
+        fprintf(stderr,">>> malloc in concat() failed[generator.c]\n");
+        return NULL;
+    }
+    memcpy(result, s1, len1);
+    memcpy(result + len1, s2, len2 + 1); // +1 to copy the null-terminator
+    return result;
 }
