@@ -427,25 +427,33 @@ int generate(trAK strInst){
     }
     else if(!strcmp(strInst.name,"FUNC_DEF_END")){
         printf("POPFRAME\n");
-        if(!strcmp(strInst.boku,"main"));
-        printf("RETURN\n");
+        if(!strcmp(strInst.boku,"main")){
+            printf("EXIT int@0\n");
+        }
+        else{
+            printf("RETURN\n");
+        }
     }
 
     //if stuff
     else if(!strcmp(strInst.name,"START_IF")){ //every if or else-if start
         char *tmp = generate_identifier();
+        tmp = concat("LF@",tmp);
         assemble("DEFVAR",tmp,"","",instr);//to def new variable
         printf("POPS %s\n",tmp);
         printf("JUMPIFNEQ %s %s bool@true\n",strInst.boku,tmp);
+        free(tmp);
     }
 
     //for stuff
     else if(!strcmp(strInst.name,"FOR_COND")){
         char *tmp = generate_identifier();
+        tmp = concat("LF@",tmp);
         assemble("DEFVAR",tmp,"","",instr);//to def new variable
-        printf("POPS %s\n",tmp);
+        assemble("POPS",tmp,"","",instr);
         printf("JUMPIFEQ %s %s bool@false\n",strInst.boku,tmp); //jump to for_end (condition is not true)
         printf("JUMP %s\n",strInst.no);//continue INTO for body 
+        free(tmp);
     }
     else if(!strcmp(strInst.name,"FOR_FINISH")){        
         printf("JUMP %s\n",strInst.boku);//jump to start of the for cycle
@@ -496,7 +504,7 @@ char* generate_label()
 void initInC(){
 
     lenOfArr = 0;
-    defVars = malloc(sizeof(char*)); //true malloc overlord
+    defVars = malloc(1); //true malloc overlord
 
 }
 

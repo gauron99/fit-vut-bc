@@ -95,6 +95,27 @@ symtableItemGet(char *funcKey, char *key){
     //returns NULL when nothing is found
     return NULL;
 }
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+
+symtableItem*
+symtableItemGetAct(char *funcKey, char *key){
+
+    symtableGlobalItem *func = symtableItemGetGlobal(funcKey);
+    symtable *tab  = &(func->localTabs[func->countTabs-1]);
+    symtableItem *found;
+    int hash = hashFunc(key);
+    found = (*tab)[hash];
+    while(found){
+        if(!strcmp(key,found->key)){
+            return found;
+        }
+        found=found->next;
+    }
+
+    //returns NULL when nothing is found
+    return NULL;
+}
+
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 void

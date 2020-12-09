@@ -846,7 +846,7 @@ int analyzePrecedence() {
     
     // implementation of precedence analysis automaton
     while(!(analyzedSymbol->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
-        printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
+        //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
         // detrmine action based on input, top stack terminal and PA table
         action = precedentTable[sFindFirstTerminal(mainStack)][analyzedSymbol->paType];
         //printf("%i\n", action);
@@ -914,9 +914,11 @@ int analyzePrecedence() {
         sElemGetData(&t, analyzedSymbol);
     }
     
+    char *tmpSymbolGenUniq = concat("LF@",tmpSymbol.name);//kuli was here
     //                var
-    assemble("PUSHS", tmpSymbol.name, "", "", instr);
+    assemble("PUSHS", tmpSymbolGenUniq, "", "", instr);//kuli was here
     ungetToken(&t);
+    free(tmpSymbolGenUniq);//kuli was here
    // printf("LAST FOUND: %i", lastFoundType);
     //printf("returning 0\n");
     return lastFoundType;

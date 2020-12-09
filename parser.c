@@ -87,6 +87,7 @@ int loadFuncti(){
             CHECK(fillTknArr(&token))
 
             CHECK_R(token.type==IDENTIFIER,EC_SYN)
+            CHECK_R(!symtableItemGetGlobal(token.value),EC_SEM3)
             CHECK(symtableItemInsertGlobal(token.value))
 
             actualFunc = symtableItemGetGlobal(token.value);
@@ -98,8 +99,10 @@ int loadFuncti(){
 
             CHECK(gettToken(&token));
             CHECK(fillTknArr(&token))
-            if (token.type!=RIGHT_ROUND_BRACKET)
-            CHECK(rdParams())
+            if (token.type!=RIGHT_ROUND_BRACKET) {
+                CHECK_R(strcmp(actualFunc->key,"main"),EC_SEM6)
+                CHECK(rdParams())
+            }
 
             CHECK(gettToken(&token));
             CHECK(fillTknArr(&token))
@@ -115,6 +118,7 @@ int loadFuncti(){
 
         CHECK(gettToken(&token))
     }
+    CHECK_R(symtableItemGetGlobal("main"),EC_SEM3)
 
     tknLoad[tknLoadCount++] = token;
 
@@ -134,7 +138,6 @@ void assemble(char* name, char* boku, char* no, char* pico, trAK *instruct) {
 int idSekv(int eos){
     int delim;
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
-
     int wasFunCalled = 0;
 
     char** ids = malloc(sizeof(ids));
@@ -143,7 +146,6 @@ int idSekv(int eos){
     strcpy(ids[0], TSTR);
 
     CHECK(getToken(&token));
-
     while (TTYPE!=DEFINITION && TTYPE!=ASSIGNMENT){
         CHECK_R(TTYPE==COMMA,EC_SYN)
         CHECK(getToken(&token));
@@ -158,12 +160,13 @@ int idSekv(int eos){
         strcpy(ids[idCount], TSTR);
         CHECK(getToken(&token));
     }
+
     delim = TTYPE;
 
     if (((tokenType)delim) == DEFINITION){
         int checker = 0;
         for (int i = idCount; i >= 0; i--){
-            if(!symtableItemGet(actualFunc->key,ids[i])) {
+            if(!symtableItemGetAct(actualFunc->key,ids[i])) {
                 if (!strcmp(ids[i],"_"))
                     continue;
                 checker = 1;
@@ -209,7 +212,8 @@ int idSekv(int eos){
                 CHECK_R(retType >= 0, (returnCode) -retType)
                 CHECK_R((argTypes=realloc(argTypes,++argTypCount*sizeof(int))),EC_INTERNAL)
                 argTypes[argTypCount-1]=retType;
-                CHECK_R((tempos->args[argTypCount-1] && argTypes[argTypCount-1]==tempos->args[argTypCount-1]),EC_SEM6)
+                CHECK_R(tempos->countArgs>=argTypCount,EC_SEM6)
+                CHECK_R(argTypes[argTypCount-1]==tempos->args[argTypCount-1],EC_SEM6)
                 CHECK(getToken(&token))
                 ungetToken(&token);
                 CHECK_R(TTYPE==COMMA || TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
@@ -272,11 +276,15 @@ int idSekv(int eos){
         CHECK_R(expTypCount==idCount,EC_SEM6)
 
     if (idCount==0 && delim == (tokenType) DEFINITION)
-        CHECK_R(!symtableItemGet(actualFunc->key,ids[0]),EC_SEM3)
+        CHECK_R(!symtableItemGetAct(actualFunc->key,ids[0]),EC_SEM3)
+
+    CHECK_R(idCount==expTypCount,EC_SEM7)
 
     for (int i = idCount; i >= 0; i--){
         char *name = malloc(11+strlen(ids[i]));
         char *theInt = malloc(10);
+        char *pls = malloc(11+strlen(ids[i])+3);
+        strcpy(pls,"LF@");
         if (symtableItemGet(actualFunc->key,ids[i])) {
             symtableItem *tmp = symtableItemGet(actualFunc->key, ids[i]);
             if(!sprintf(theInt,"%d",tmp->i))
@@ -284,14 +292,17 @@ int idSekv(int eos){
             strcpy(name,ids[i]);
             name = strcat(name,"$");
             name = strcat(name,theInt);
+            strcat(pls,name);
             if (!strcmp("_",ids[i])){
                 assemble("POPS","dev null","","",instr);
                 continue;
             }
-            if (wasFunCalled)
-                CHECK_R(tmp->type == ((tokenType) expTypes[i]), EC_SEM6)
-            else
-                CHECK_R(tmp->type == ((tokenType) expTypes[i]), EC_SEM7)
+            if (wasFunCalled) {
+                CHECK_R(tmp->type == (tokenType) expTypes[i], EC_SEM6)
+            }
+            else {
+                CHECK_R(tmp->type == (tokenType) expTypes[i], EC_SEM7)
+            }
         }
         else {
             if(!sprintf(theInt,"%d",varCounter))
@@ -299,10 +310,11 @@ int idSekv(int eos){
             strcpy(name,ids[i]);
             name = strcat(name,"$");
             name = strcat(name,theInt);
-            assemble("DEFVAR",name,"","",instr);
+            strcat(pls,name);
+            assemble("DEFVAR",pls,"","",instr);
             symtableItemInsert(actualFunc->key, ids[i], (itemType) expTypes[i], varCounter++);
         }
-        assemble("POPS",name,"","",instr);
+        assemble("POPS",pls,"","",instr);
     }
 
     CHECK_R(TTYPE==((tokenType)eos),EC_SYN)
@@ -341,7 +353,7 @@ int prolog(){
 
     CHECK(getToken(&token));
     if (TTYPE == EOL_)
-    CHECK(prolog())
+        CHECK(prolog())
     else if (TTYPE == KEYWORD){
         CHECK_R(!strcmp(TSTR,"package"),EC_SYN)
         CHECK(getToken(&token));
@@ -404,8 +416,11 @@ int rdDef(){
         name = args[i];
         name = strcat(name,"$");
         name = strcat(name,theInt);
-        assemble("DEFVAR",name,"","",instr);
-        assemble("POPS",name,"","",instr);
+        char *pls = malloc(strlen(name)+3);
+        strcpy(pls,"LF@");
+        strcat(pls,name);
+        assemble("DEFVAR",pls,"","",instr);
+        assemble("POPS",pls,"","",instr);
     }
     while (TTYPE!=LEFT_CURLY_BRACKET)
         getToken(&token);
@@ -416,7 +431,7 @@ int rdDef(){
     CHECK(getToken(&token));
     if (TTYPE!=RIGHT_CURLY_BRACKET)
         CHECK(rdComm())
-    assemble("FUNC_DEF_END","","","",instr);
+    assemble("FUNC_DEF_END",actualFunc->key,"","",instr);
     return EC_GOOD;
 }
 
@@ -484,9 +499,10 @@ int rdReturns(){
     CHECK(gettToken(&token))
     CHECK(fillTknArr(&token))
 
-    if (TTYPE!=RIGHT_ROUND_BRACKET) {
+    if (TTYPE!=RIGHT_ROUND_BRACKET){
+        CHECK_R(strcmp(actualFunc->key,"main"),EC_SEM6)
         CHECK(rdReturnsNamed())
-        CHECK(gettToken(&token));
+        CHECK(gettToken(&token))
         CHECK(fillTknArr(&token))
     }
     else {
@@ -591,6 +607,7 @@ int rdComm(){
     else if (TTYPE==KEYWORD && !(strcmp(TSTR,"if"))){
         retType = analyzePrecedence();
         CHECK_R(retType>=0,(returnCode)-retType)
+        CHECK_R(retType==BOOL,EC_SEM7)
         char *next = generate_label();
         char *end = generate_label();
         assemble("START_IF",next,"","",instr);
@@ -649,7 +666,6 @@ int rdComm(){
         assemble("LABEL",aktualizace,"","",instr);
         if (TTYPE!=LEFT_CURLY_BRACKET)
             CHECK(idSekv(LEFT_CURLY_BRACKET))
-
         assemble("FOR_FINISH",for_start,for_body,"",instr);
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
@@ -723,8 +739,8 @@ int rdComm(){
                     CHECK_R(retType >= 0, (returnCode) -retType)
                     CHECK_R((argTypes = realloc(argTypes, ++argTypCount * sizeof(int))), EC_INTERNAL)
                     argTypes[argTypCount - 1] = retType;
-                    CHECK_R((glob->args[argTypCount - 1] && argTypes[argTypCount - 1] == glob->args[argTypCount - 1]),
-                            EC_SEM6)
+                    CHECK_R(argTypCount==glob->countArgs,EC_SEM6)
+                    CHECK_R(argTypes[argTypCount - 1] == glob->args[argTypCount - 1],EC_SEM6)
                     CHECK(getToken(&token))
                     CHECK_R(TTYPE == COMMA || TTYPE == RIGHT_ROUND_BRACKET, EC_SYN)
                 }
@@ -896,8 +912,8 @@ int addInbuilt(){
     CHECK(pushRet("int2float",switchToType("float64")))
 
     CHECK(symtableItemInsertGlobal("float2int"))
-    CHECK(pushArg("int2float",switchToType("float64")))
-    CHECK(pushRet("int2float",switchToType("int")))
+    CHECK(pushArg("float2int",switchToType("float64")))
+    CHECK(pushRet("float2int",switchToType("int")))
 
     CHECK(symtableItemInsertGlobal("len"))
     CHECK(pushArg("len",switchToType("string")))

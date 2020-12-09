@@ -14,8 +14,9 @@
 
 
 /**
- *
- *
+ * tokenType contains all
+ * the possible and valid tokens
+ * that can be found in IFJ20
  */
 typedef enum {
     KEYWORD,                // {else, float64, for, func, if, int, package, return, string, ?bool, true, false}
@@ -66,8 +67,9 @@ typedef enum {
 } tokenType;
 
 /**
- *
- *
+ * structure Token represents
+ * the type and particular content
+ * of individual token
  */
 typedef struct {
     
@@ -77,8 +79,10 @@ typedef struct {
 } Token;
 
 /**
- *
- *
+ * enum stateType contains all states
+ * of Finite State Automaton on which the lexical
+ * analysis is based. The automaton is designed
+ * on the basis of rules defining valid structure of IFJ20
  */
 typedef enum { /*state num, read lexeme*/
 
@@ -144,21 +148,38 @@ typedef enum { /*state num, read lexeme*/
 
 
 /**
- *
- *
+ * Function gettToken reads the stream of characters from the source code and
+ * assigns proper value and type once valid token is read.
+ * It returns SUCCESS if the operation was successfull, LEXICAL_ERROR if invalid character
+ * was found within the code, or INTERNAL_ERROR in case of failed allocation of memory
  */
-/* vracia navratovy kod */
 int gettToken(Token *token);
 
+/**
+ * Function ungetToken returns last read token 
+ * back to the stream of source code
+ */
 int ungetToken(Token *token);
 
-/*returns true if c has binary value*/
+/**
+* Function returns 1 if c is 
+* a valid charcter of binary base, 
+* otherwise 0 is returned.
+*/
 int isBinary(char c);
 
-/*returns true if c has octal value*/
+/**
+* Function returns 1 if c is 
+* a valid charcter of octal base, 
+* otherwise 0 is returned.
+*/
 int isOctal(char c);
  
-/*returns true if c has hexadecimal value*/
+/**
+* Function returns 1 if c is 
+* a valid charcter of hexadecimal base, 
+* otherwise 0 is returned.
+*/
 int isHexa(char c);
 
 /*frees up the memory*/
