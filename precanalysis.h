@@ -25,6 +25,7 @@
 
     #define PA_ERR -1
     #define SYNTAX_ERR -2
+    #define SEM_ERR -3
     #define SEM_ERR_COMP_MINUS -5
     #define ID_SIZE 100
 
