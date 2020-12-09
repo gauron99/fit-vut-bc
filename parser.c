@@ -423,7 +423,7 @@ int rdDef(){
     CHECK(getToken(&token));
     if (TTYPE!=RIGHT_CURLY_BRACKET)
         CHECK(rdComm())
-    assemble("FUNC_DEF_END","","","",instr);
+    assemble("FUNC_DEF_END",actualFunc->key,"","",instr);
     return EC_GOOD;
 }
 
