@@ -450,7 +450,7 @@ int getPaType(Token *token) {
         case LEFT_CURLY_BRACKET:
             return OP_DOLLAR;
     }
-    printf("type: --- %i\n", token->type);
+    //printf("type: --- %i\n", token->type);
     return SYMBOL_NOT_RECOGNIZED;
 }
 
@@ -716,10 +716,10 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             return i;
         }
         if(i == 16) {   // E -> FUN E
-            printf("value2: %s\n", value2);
+            //printf("value2: %s\n", value2);
             symtableGlobalItem *fun;
             if((fun = symtableItemGetGlobal(value2)) == NULL)
-                printf("itemjenull\n");
+                //printf("itemjenull\n");
             if(fun->countRets == 1) {
                 int tmp = fun->returns[0];
                 *lastFoundType = tmp;
@@ -821,12 +821,12 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
     else
         usedRule = generateRule(ruleOnStack, typeStack, lastFoundType, tmpStack->stack[0]->paToken, name, values[0], values[1]);
  
-    printf("returning %i\n", usedRule);
+    //printf("returning %i\n", usedRule);
     return usedRule;
 }
 
 int analyzePrecedence() {
-    printf("\nINA ZAVOLANA FUNKCIA\n");
+    //printf("\nINA ZAVOLANA FUNKCIA\n");
  
     int action = 0;             // action determined by prectable
     int findRuleRet = 0;
@@ -899,7 +899,7 @@ int analyzePrecedence() {
     
     // implementation of precedence analysis automaton
     while(!(analyzedSymbol->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
-        printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
+        //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
         // detrmine action based on input, top stack terminal and PA table
         action = precedentTable[sFindFirstTerminal(mainStack)][analyzedSymbol->paType];
         printf("%i\n", action);
@@ -945,7 +945,7 @@ int analyzePrecedence() {
                 
                 // get next symbol to analyze
                 getToken(&t);
-                printf("%i\n", t.type);
+                //printf("%i\n", t.type);
                 break;
             case(PA_SHIFT):
                 sPush(mainStack, analyzedSymbol);
@@ -966,6 +966,6 @@ int analyzePrecedence() {
     assemble("PUSHS", tmpSymbolGenUniq, "", "", instr);//kuli was here
     ungetToken(&t);
     free(tmpSymbolGenUniq);//kuli was here
-    printf("LAST FOUND: %i\n\n", lastFoundType);
+    //printf("LAST FOUND: %i\n\n", lastFoundType);
     return lastFoundType;
 }
