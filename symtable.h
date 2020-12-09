@@ -98,6 +98,9 @@ symtableItemDelete(symtable *tab, char *key);
 symtableItem*
 symtableItemGet(char *funcKey, char *key);
 
+symtableItem*
+symtableItemGetAct(char *funcKey, char *key);
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 int
