@@ -228,14 +228,12 @@ int idSekv(int eos){
                     ungot++;
 
                     do {
-                        retType = analyzePrecedence();
-
                         CHECK_R(retType >= 0, (returnCode) -retType)
                         CHECK_R((argTypes=realloc(argTypes,++argTypCount*sizeof(int))),EC_INTERNAL)
                         argTypes[argTypCount-1]=retType;
                         CHECK_R(tempos->countArgs>=argTypCount,EC_SEM6)
                         CHECK_R(argTypes[argTypCount-1]==tempos->args[argTypCount-1],EC_SEM6)
-                        getToken(&token);
+                        token = tkns[--ungot];
                         CHECK_R(TTYPE==COMMA || TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
                     } while (TTYPE==COMMA);
                     CHECK_R(TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
