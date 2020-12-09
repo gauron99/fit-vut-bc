@@ -228,6 +228,7 @@ int idSekv(int eos){
                     ungot++;
 
                     do {
+                        retType = analyzePrecedence();
                         CHECK_R(retType >= 0, (returnCode) -retType)
                         CHECK_R((argTypes=realloc(argTypes,++argTypCount*sizeof(int))),EC_INTERNAL)
                         argTypes[argTypCount-1]=retType;
