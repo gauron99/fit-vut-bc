@@ -1,5 +1,5 @@
 //
-// Created by louda on 11/11/20.
+// Created by Ludek Burda on 11/11/20.
 //
 
 #include <stdlib.h>
@@ -195,53 +195,61 @@ int idSekv(int eos){
         symtableGlobalItem *tempos = symtableItemGetGlobal(TSTR);
         CHECK(getToken(&token));
         ungetToken(&token);
-        int tknCount = 2;
-
+        int brCount = 1;
         if (TTYPE==LEFT_ROUND_BRACKET){
-            wasFunCalled = 1;
             isInFuncCall = 1;
-            while(TTYPE!=RIGHT_ROUND_BRACKET){
+            wasFunCalled = 1;
+            while(brCount!=0){
                 CHECK(getToken(&token));
                 ungetToken(&token);
-                if (TTYPE==RIGHT_ROUND_BRACKET) {
-                    tknCount++;
-                    break;
-                }
-                CHECK_R(TTYPE==IDENTIFIER || TTYPE==FLOAT || TTYPE==INTEGER || TTYPE==STRING || TTYPE==BOOL,EC_SYN)
-                retType = analyzePrecedence();
-                CHECK_R(retType >= 0, (returnCode) -retType)
-                CHECK_R((argTypes=realloc(argTypes,++argTypCount*sizeof(int))),EC_INTERNAL)
-                argTypes[argTypCount-1]=retType;
-                CHECK_R(tempos->countArgs>=argTypCount,EC_SEM6)
-                CHECK_R(argTypes[argTypCount-1]==tempos->args[argTypCount-1],EC_SEM6)
-                CHECK(getToken(&token))
-                ungetToken(&token);
-                CHECK_R(TTYPE==COMMA || TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
-                tknCount+=2;
+                if (TTYPE==LEFT_ROUND_BRACKET)
+                    brCount++;
+                if (TTYPE==RIGHT_ROUND_BRACKET)
+                    brCount--;
+                if(TTYPE==EOF_)
+                    return EC_SEM7;
             }
-            assemble("CALL",tmp.value,"","",instr);
-            isInFuncCall = 0;
-
-            CHECK(getToken(&token));
+            getToken(&token);
             ungetToken(&token);
             if (TTYPE==EOL_) {
+                dewit = 1;
+                getToken(&token);
+                CHECK_R(symtableItemGetGlobal(TSTR),EC_SEM3)
+                getToken(&token);
+                CHECK_R(TTYPE==LEFT_ROUND_BRACKET,EC_SYN)
+                getToken(&token);
+                if (TTYPE!=RIGHT_ROUND_BRACKET){
+                    if (!(tkns = realloc(tkns, sizeof(Token)*(ungot+1))))
+                        return INTERNAL_ERROR;
+                    for (int oops = ungot; 0<oops; oops--){
+                        tkns[oops] = tkns[oops-1];
+                    }
+                    tkns[0] = token;
+                    do {
+                        retType = analyzePrecedence();
+                        CHECK_R(retType >= 0, (returnCode) -retType)
+                        CHECK_R((argTypes=realloc(argTypes,++argTypCount*sizeof(int))),EC_INTERNAL)
+                        argTypes[argTypCount-1]=retType;
+                        CHECK_R(tempos->countArgs>=argTypCount,EC_SEM6)
+                        CHECK_R(argTypes[argTypCount-1]==tempos->args[argTypCount-1],EC_SEM6)
+                        token = tkns[--ungot];
+                        CHECK_R(TTYPE==COMMA || TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
+                    } while (TTYPE==COMMA);
+                    getToken(&token);
+                    CHECK_R(TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
+                }
+                isInFuncCall = 0;
+
                 CHECK_R(tempos->countRets == idCount+1, EC_SEM6)
                 expTypCount=tempos->countRets-1;
                 for (int i = 0; i < tempos->countRets;i++){
                     expTypes[i]=tempos->returns[i];
                 }
                 dewit = 1;
-                for (int i = 1; i<tknCount;i++){
-                    getToken(&token);
-                }
-
             }
-            else if (TTYPE==COMMA) {
+            else {
+                dewit = 1;
                 goto dere;
-            }
-            dewit = 1;
-            for (int i = 1; i<tknCount;i++){
-                getToken(&token);
             }
         }
         else{
