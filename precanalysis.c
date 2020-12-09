@@ -443,7 +443,7 @@ int getPaType(Token *token) {
             if(isInFuncCall == 1)
                 return OP_DOLLAR;
             else
-                return OP_COMMA;
+                return OP_DOLLAR;
             }
         case EOL_:
         case SEMICOLON:
