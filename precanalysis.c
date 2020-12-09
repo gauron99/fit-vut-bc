@@ -425,8 +425,12 @@ int getPaType(Token *token) {
             return OP_AND;
         case OR:
             return OP_OR;
-        case COMMA:
-            return OP_DOLLAR;
+        case COMMA: {
+            if(isInFuncCall == 1)
+                return OP_DOLLAR;
+            else
+                return OP_COMMA;
+            }
         case EOL_:
         case SEMICOLON:
         case LEFT_CURLY_BRACKET:
@@ -684,6 +688,11 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             free(tekenGen);
 
             return i;
+        }
+        if(i == 15) {
+            printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%s\n", value1);
+            //symtableItem *val1 = symtableItemGet(actualFunc->key,value1);
+                        
         }
         if(i == 16) {   //  E -> !E
             int tmp = intStackPop(typeStack);
