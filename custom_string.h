@@ -8,7 +8,7 @@
  *  @see Public course pages  *
  * 	 with private materials   *
  *         for str.h          *
- *      @date 10/11/2020      *
+ *      @date 17/10/20        *
  *                            *
  * * * * * * * * * * * * * *  */
 
