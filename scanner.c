@@ -965,6 +965,7 @@ int gettToken(Token *token) {
             } else if(c == '_') {
                 currentState = ST_OCTAL_SEPARATOR;
             } else {
+                fprintf(stderr, "LEXICAL ERROR: Invalid digit in octal base on line %d \n", linesPassed);
                 return LEXICAL_ERROR;
             }
             break; 
