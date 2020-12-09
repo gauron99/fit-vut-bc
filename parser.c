@@ -277,7 +277,7 @@ int idSekv(int eos){
     for (int i = idCount; i >= 0; i--){
         char *name = malloc(11+strlen(ids[i]));
         char *theInt = malloc(10);
-        char *pls = malloc(strlen(name)+3);
+        char *pls = malloc(11+strlen(ids[i])+3);
         strcpy(pls,"LF@");
         if (symtableItemGet(actualFunc->key,ids[i])) {
             symtableItem *tmp = symtableItemGet(actualFunc->key, ids[i]);
