@@ -127,7 +127,7 @@ bool pTableInit(int table[25][25]) {
     table[OP_LBRAC][OP_AND] = PA_LESS;
     table[OP_LBRAC][OP_OR] = PA_LESS;
     table[OP_LBRAC][OP_FUN] = PA_LESS;
-    table[OP_LBRAC][OP_COMMA] = PA_GREATER;
+    table[OP_LBRAC][OP_COMMA] = PA_LESS;
     table[OP_LBRAC][OP_ID] = PA_LESS;
     table[OP_LBRAC][OP_DOLLAR] = PA_EMPTY;
     table[OP_LBRAC][OP_INTEGER] = PA_LESS;

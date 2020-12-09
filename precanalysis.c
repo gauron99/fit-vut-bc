@@ -429,7 +429,7 @@ int getPaType(Token *token) {
             return OP_LBRAC;
         case RIGHT_ROUND_BRACKET: {
             if(isInFuncCall == 1)
-                return OP_DOLLAR;   // special case when processing function arguments
+                return OP_RBRAC;   // special case when processing function arguments
             else
                 return OP_RBRAC;
         }
@@ -450,7 +450,7 @@ int getPaType(Token *token) {
         case LEFT_CURLY_BRACKET:
             return OP_DOLLAR;
     }
-    return -1;
+    return SYMBOL_NOT_RECOGNIZED;
 }
 
 int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, char *name, char *value1, char *value2) {
@@ -462,7 +462,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
     char *helpName = NULL;
     helpName = malloc(100);
 
-    printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
+    //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
     
     // compare with the set of rules in prectableandrules.c
     while(i < 20) {
@@ -474,7 +474,6 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
     }
     
     if(found) {
-        //printf("CHECK 2, i = %i\n", i);
         char *nameGen = NULL;
         char *valueGen1 = NULL;
         char *valueGen2 = NULL;
@@ -487,7 +486,6 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
         varrrGen = malloc(100);
         tekenGen = malloc(100);
         
-
         nameGen = concat("LF@", name);
         if(value1)
             valueGen1 = concat("LF@", value1);
@@ -499,7 +497,6 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
 
             int type1 = intStackPop(typeStack);
             int type2 = intStackPop(typeStack);
-            //printf("type1: %i, type2: %i\n", type1, type2);
 
             if(type1 == type2) {    // datatypes match
                 if(i < 4 || i == 17 || i == 18) {   // +, -, *, /, &&, ||
@@ -512,13 +509,13 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                     *lastFoundType = BOOL;
                 }
                
-                assemble("DEFVAR",nameGen,"","",instr);                        /// louda code
+                assemble("DEFVAR",nameGen,"","",instr);
                 
                 char *theInt = malloc(10);
 
-                symtableItem *val1 = symtableItemGet(actualFunc->key,value1); ///
+                symtableItem *val1 = symtableItemGet(actualFunc->key,value1);
                 if (val1){
-                    char *varrr = malloc(11+strlen(value1));                ///
+                    char *varrr = malloc(11+strlen(value1));
                     if(!sprintf(theInt,"%d",val1->i))
                         return -INTERNAL_ERROR;
                     strcpy(varrr,value1);
@@ -528,8 +525,8 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                     strcpy(value1,varrr);
                 }
 
-                symtableItem *val2 = symtableItemGet(actualFunc->key,value2); ///
-                if (val2){                                                  ///
+                symtableItem *val2 = symtableItemGet(actualFunc->key,value2);
+                if (val2){
                     char *varrr = malloc(11+strlen(value2));
                     if(!sprintf(theInt,"%d",val2->i))
                         return -INTERNAL_ERROR;
@@ -538,9 +535,8 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                     varrr = strcat(varrr,theInt);
                     value2 = malloc(11+strlen(value2));
                     strcpy(value2,varrr);
-                }                        /// end of louda code
+                }
                 
-                //              typy vsetkych operandov vo switchi  su var
                 switch(i) {
                     case 0: {
                         assemble("ADD", nameGen, valueGen2, valueGen1, instr);
@@ -714,6 +710,10 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
 
             return i;
         }
+        if(i == 15) {
+            *lastFoundType = NO_TYPE_OPERATION;
+            return i;
+        }
         if(i == 16) {   // E -> FUN E
             printf("value2: %s\n", value2);
             symtableGlobalItem *fun;
@@ -725,8 +725,8 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                 intStackPush(typeStack, tmp);
             }
             else
-                return -2;
-            return i;            
+                return SYNTAX_ERR;      // too many return values, max 1
+            return i;
         }
         if(i == 17) {   //  E -> !E
             int tmp = intStackPop(typeStack);
@@ -753,7 +753,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
         }
 
     }
-    return -2;
+    return SYNTAX_ERR;
 }
 
 int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeStack, int * lastFoundType, char *name) {
@@ -773,7 +773,7 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
         }*/
         sGetTopPointer(mainStack, tmpTerminal);
         if (!sPushPointer(tmpStack, tmpTerminal))
-            return -1;
+            return PA_ERR;
         
         if(i == 0) {
             printf("STACK 0: %i\n", mainStack->stack[mainStack->top]->paType); 
@@ -804,14 +804,14 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
     }
     
     if (tmpStack->top > 2)
-        return -1;
+        return PA_ERR;
 
     if(override != NULL) {
         values[0] = NULL;
         values[1] = override;
     }
 
-    for (int i = tmpStack->top; i > -1; i--)    // save the content of stack until PA_LESS is read
+    for (int i = tmpStack->top; i > STACK_TOP; i--)    // save the content of stack until PA_LESS is read
         ruleOnStack[i] = (tmpStack->stack[i])->paType;
     
     if(tmpStack->top == 0) {
@@ -848,7 +848,7 @@ int analyzePrecedence() {
     paToken = malloc(sizeof(Token));
     if(paToken == NULL) {        
         fprintf(stderr, "Malloc failed to allocate memory");
-        return -908;
+        return MALLOC_ERR;
     }    
     paToken->value = NULL;
     
@@ -874,7 +874,7 @@ int analyzePrecedence() {
     tmpStack = malloc(sizeof(s_t));
     if(tmpStack == NULL) {
         fprintf(stderr, "Malloc failed to allocate memory");
-        return -908;
+        return MALLOC_ERR;
     }
     sInit(tmpStack);
    
@@ -883,7 +883,7 @@ int analyzePrecedence() {
     typeStack = malloc(sizeof(is_t));
     if(typeStack == NULL) {
         fprintf(stderr, "Malloc failed to allocate memory");
-        return -908;
+        return MALLOC_ERR;
     }
     intStackInit(typeStack);       
     
@@ -908,17 +908,12 @@ int analyzePrecedence() {
                 // determine rule on top of the stack
                 findRuleRet = sFindRule(mainStack, tmpStack, tmpSymbol, typeStack, &lastFoundType, name);
                 // rule does not exist -> syntactic error
-                if(findRuleRet == -2) {
-                    //printf("returning -2\n");
-                    return -2;
-                }
+                if(findRuleRet == SYNTAX_ERR)
+                    return SYNTAX_ERR;
 
                 // conflicting types of symbols -> semantic error
                 if(findRuleRet == DIFFERENT_TYPES)
-                {
-                    //printf("returning -2\n");
-                    return -5;
-                }
+                    return SEM_ERR_COMP_MINUS;
                 
                 // pop the symbol on the top of the stack
                 sPopPointer(mainStack);
@@ -949,29 +944,23 @@ int analyzePrecedence() {
                 
                 // get next symbol to analyze
                 getToken(&t);
-                //printf("t->type = %i", t.type);
-                //printf("it->type: %i", t.type);
                 break;
             case(PA_SHIFT):
                 sPush(mainStack, analyzedSymbol);
                 getToken(&t);
-                //printf("\nHalo dpc: %i \n", t.type);
                 break;
             case(PA_EMPTY):
-                //printf("returning -2\n");
                 // syntactic error
-                return -2;
+                return SYNTAX_ERR;
             }
         // updates the analyzed symbol if new Token was gotten
         sElemGetData(&t, analyzedSymbol);
     }
     
     char *tmpSymbolGenUniq = concat("LF@",tmpSymbol->name);//kuli was here
-    //                var
     assemble("PUSHS", tmpSymbolGenUniq, "", "", instr);//kuli was here
     ungetToken(&t);
     free(tmpSymbolGenUniq);//kuli was here
     printf("LAST FOUND: %i\n\n", lastFoundType);
-    //printf("returning 0\n");
     return lastFoundType;
 }

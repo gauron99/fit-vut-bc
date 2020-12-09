@@ -18,8 +18,14 @@
     #define STACK_TOP -1    // default index of the top of the stack
     
     #define NOT_FOUND -658  // err const, used when rule wasnt found
+    #define SYMBOL_NOT_RECOGNIZED -659
     #define DIFFERENT_TYPES -659    // err const, used when types dont match
+    #define NO_TYPE_OPERATION -660
+    #define MALLOC_ERR -661
 
+    #define PA_ERR -1
+    #define SYNTAX_ERR -2
+    #define SEM_ERR_COMP_MINUS -5
     #define ID_SIZE 100
 
     // global array that contains rules used by PA automata
