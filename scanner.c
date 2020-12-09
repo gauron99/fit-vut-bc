@@ -418,7 +418,7 @@ int gettToken(Token *token) {
                 currentState = ST_AND;
             } else {
                 ungetc(c, input);
-                fprintf(stderr, "LEXICAL ERROR: Invalid charcter '&' on line %d \n", linesPassed);
+                fprintf(stderr, "LEXICAL ERROR: Invalid character '&' on line %d \n", linesPassed);
                 return LEXICAL_ERROR;
             }
             break;
