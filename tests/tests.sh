@@ -10,7 +10,7 @@ echo
 
 echo ====================================================================
 echo - - - [TESTS SET 1] - Lexical Analysis tests - - - - - - - - - - - -
-echo These input source codes should pass lexical analysis without any error.
+echo These input source codes should pass lexical analysis with no error
 echo
 let i=0
 let LEXpassed=0
@@ -39,7 +39,7 @@ do
         LEXfailed=$((LEXfailed+1))
 	    echo -e ${RED}ERROR  - ${eachfile} - return value expected 0, returned $return_value instead
 	else
-	    echo -e ${ORANGE}OK  - ${eachfile} - lexically ok, unexpected return value $return_value
+	    echo -e ${ORANGE}OK  - ${eachfile} - lexically ok, return value $return_value
         LEXwarning=$((LEXwarning+1))
 	fi
 done
@@ -47,7 +47,7 @@ done
 echo
 echo -e ${BASIC}====================================================================
 echo - - - [TESTS SET 2] - Lexical Analysis tests - - - - - - - - - - - -
-echo These input source codes should pass lexical analysis with error code 1 = Error in Lexical analysis
+echo These input source codes should pass lexical analysis with error code 1
 echo
 
 let j=0
@@ -83,7 +83,7 @@ echo -e ${BASIC}================================================================
 
 echo ====================================================================
 echo - - - [TESTS SET 1] - Semantic Analysis tests - - - - -- - - - - - -
-echo These input source codes should pass lexical analysis without any error.
+echo These input source codes should pass lexical analysis with no error.
 echo  
 
 let k=0
@@ -119,7 +119,7 @@ do
         echo -e ${RED}ERROR  - ${eachfile} - unexpected return value $return_value
         SEMfailed=$((SEMfailed+1)) 
 	else
-	    echo -e ${ORANGE}ERROR  - ${eachfile} - unexpected return value $return_value
+	    echo -e ${ORANGE}ERROR  - ${eachfile} - semantically ok, return value $return_value
         SEMwarning=$((SEMwarning+1))
 	fi
 done
