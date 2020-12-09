@@ -1,3 +1,15 @@
+/** * * * * * * * * * * * * * *
+ *                            *
+ * 		@brief IFJ 2020  	  *
+ *       Custom string        *
+ *                            *
+ *  @author Sabina Gulcikova  *
+ *    	  @see  str.c         *
+ *                            *
+ *      @date 10/11/2020      *
+ *                            *
+ * * * * * * * * * * * * * *  */
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -8,7 +20,7 @@ int initDynamicString(dynamicString *dynStr) {
 	dynStr->str = ((char *) malloc(SIZE_ALLOC));
 
     if (dynStr->str == NULL) {
-			printf("INTERNAL ERROR: malloc failed");
+			fprintf(stderr, "INTERNAL ERROR: malloc failed");
 		    return -1;
 	}
 
@@ -25,7 +37,7 @@ int appendChar(dynamicString *s, char c) {
 		s->str = ((char *) realloc(s->str, new_size));
 
 		if(s->str == NULL) {
-			printf("INTERNAL ERROR: realloc failed");
+			fprintf(stderr, "INTERNAL ERROR: realloc failed");
 			return -1;
 		}
 		
