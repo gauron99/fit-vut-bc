@@ -549,12 +549,18 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                         break;
                     }
                     case 1:
+                        if(type1 == STRING)
+                            return SYNTAX_ERR;
                         assemble("SUB", nameGen, valueGen2, valueGen1, instr);
                         break;
                     case 2:
+                        if(type1 == STRING)
+                            return SYNTAX_ERR;
                         assemble("MUL", nameGen, valueGen2, valueGen1, instr);
                         break;
                     case 3:
+                        if(type1 == STRING)
+                            return SYNTAX_ERR;
                         if(type1 == INTEGER){
                             assemble("DIV", nameGen, valueGen2, valueGen1, instr);
                         }
@@ -587,12 +593,14 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                         break;
                     case 9:
                         assemble("EQ", nameGen, valueGen2, valueGen1, instr);
-                        assemble("NOT", nameGen, "", "", instr);
+                        assemble("NOT", nameGen, nameGen, "", instr);
                         break;
                     case 17:
+                        assemble("NOT", nameGen, nameGen, "", instr);
+                    case 18:
                         assemble("AND", nameGen, valueGen2, valueGen1, instr);
                         break;
-                    case 18:
+                    case 19:
                         assemble("PUSHS", valueGen2, "", "", instr);
                         assemble("PUSHS", valueGen1, "", "", instr);
                         assemble("ORS", nameGen, "", "", instr);
