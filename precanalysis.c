@@ -905,9 +905,11 @@ int analyzePrecedence() {
         sElemGetData(&t, analyzedSymbol);
     }
     
+    char *tmpSymbolGenUniq = concat("LF@",tmpSymbol.name);//kuli was here
     //                var
-    assemble("PUSHS", tmpSymbol.name, "", "", instr);
+    assemble("PUSHS", tmpSymbolGenUniq, "", "", instr);//kuli was here
     ungetToken(&t);
+    free(tmpSymbolGenUniq);//kuli was here
    // printf("LAST FOUND: %i", lastFoundType);
     //printf("returning 0\n");
     return lastFoundType;
