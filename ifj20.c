@@ -1,5 +1,5 @@
 //
-// Created by louda on 11/10/20.
+// Created by Burda Ludek on 11/10/20.
 //
 
 #include <stdio.h>
@@ -13,41 +13,19 @@
 
 symtableGI symGlobal;
 
-
-
 int main(){
 
     //create global symtable
-    symtableCreateGlobal(&symGlobal); //works
+    symtableCreateGlobal(&symGlobal); 
     generateBeginningOfExistence();
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
-
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
     int lexicalResult = 0; //Scanner return code
     Token token;
 
-    /*while(token.type != EOF_) {
-        lexicalResult = getToken(&token);
-        if(lexicalResult == 1) {
-            break;
-        }
-        if(token.type == INTEGER) {
-            printf(" \n Recognized token: %d, with value: %d with error code: %d \n", token.type, token.value.intValue, lexicalResult);
-        } else if(token.type == FLOAT) {
-            printf(" \n Recognized token: %d, with value: %f with error code: %d \n", token.type, token.value.floatValue, lexicalResult);
-        } else {
-            printf(" \n Recognized token: %d, with value: %s with error code: %d \n", token.type, token.value.stringValue, lexicalResult);
-        }
-    }*/
     CHECK(prolog())
 
-    //printf("--- Status code: %d\n", lexicalResult);
     return lexicalResult;
-    return 0;
 }

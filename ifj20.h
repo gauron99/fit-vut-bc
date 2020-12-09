@@ -13,7 +13,7 @@
 #define TSTR token.value
 
 
-typedef enum {
+typedef enum { /*enum of error codes*/
     EC_GOOD     = 0,
     EC_LEX      = 1,
     EC_SYN      = 2,
