@@ -463,7 +463,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
     char *helpName = NULL;
     helpName = malloc(100);
 
-    //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
+    printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
     
     // compare with the set of rules in prectableandrules.c
     while(i < 20) {
@@ -473,7 +473,6 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
         }
         i++;
     }
-    
     if(found) {
         char *nameGen = NULL;
         char *valueGen1 = NULL;
@@ -494,7 +493,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
         if(value2)
             valueGen2 = concat("LF@", value2);
 
-        if(i < 10 || i == 17 || i == 18) {  // two operand rules
+        if(i < 10 || i == 18 || i == 19) {  // two operand rules
 
             int type1 = intStackPop(typeStack);
             int type2 = intStackPop(typeStack);
@@ -596,7 +595,6 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                         assemble("NOT", nameGen, nameGen, "", instr);
                         break;
                     case 17:
-                        assemble("NOT", nameGen, nameGen, "", instr);
                     case 18:
                         assemble("AND", nameGen, valueGen2, valueGen1, instr);
                         break;
@@ -743,11 +741,14 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             return i;
         }
         if(i == 17) {   //  E -> !E
+            assemble("NOT", nameGen, nameGen, "", instr);
             int tmp = intStackPop(typeStack);
-            *lastFoundType = tmp;
+            tmp = BOOL;
+            *lastFoundType = BOOL;
             intStackPush(typeStack, tmp);
+            return i;
         }
-        if(i == 19) {   // E -> i(bool)
+        if(i == 20) {   // E -> i(bool)
             *lastFoundType = BOOL;
             int tmp = BOOL;
             intStackPush(typeStack, tmp);
@@ -839,7 +840,7 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
 }
 
 int analyzePrecedence() {
-    //printf("\nINA ZAVOLANA FUNKCIA\n");
+    printf("\nINA ZAVOLANA FUNKCIA\n");
  
     int action = 0;             // action determined by prectable
     int findRuleRet = 0;
@@ -912,10 +913,10 @@ int analyzePrecedence() {
     
     // implementation of precedence analysis automaton
     while(!(analyzedSymbol->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
-        //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
+        printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
         // detrmine action based on input, top stack terminal and PA table
         action = precedentTable[sFindFirstTerminal(mainStack)][analyzedSymbol->paType];
-        //printf("%i\n", action);
+        printf("%i\n", action);
         switch(action) {
             case(PA_GREATER):
                 name = generate_identifier();
