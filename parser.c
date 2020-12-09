@@ -38,8 +38,8 @@ int allocUnget(){
         return INTERNAL_ERROR;
     if (!(tknLoad = malloc(sizeof(Token))))
         return INTERNAL_ERROR;
-        tknLoad->value = NULL; //kuli was here
-        tkns->value = NULL; //kuli was here
+    tknLoad->value = NULL; //kuli was here
+    tkns->value = NULL; //kuli was here
     return EC_GOOD;
 }
 
@@ -356,7 +356,7 @@ int prolog(){
 
     CHECK(getToken(&token));
     if (TTYPE == EOL_)
-        CHECK(prolog())
+    CHECK(prolog())
     else if (TTYPE == KEYWORD){
         CHECK_R(!strcmp(TSTR,"package"),EC_SYN)
         CHECK(getToken(&token));
@@ -433,7 +433,7 @@ int rdDef(){
 
     CHECK(getToken(&token));
     if (TTYPE!=RIGHT_CURLY_BRACKET)
-        CHECK(rdComm())
+    CHECK(rdComm())
     assemble("FUNC_DEF_END",actualFunc->key,"","",instr);
     return EC_GOOD;
 }
@@ -668,7 +668,7 @@ int rdComm(){
         CHECK(getToken(&token));
         assemble("LABEL",aktualizace,"","",instr);
         if (TTYPE!=LEFT_CURLY_BRACKET)
-            CHECK(idSekv(LEFT_CURLY_BRACKET))
+        CHECK(idSekv(LEFT_CURLY_BRACKET))
         assemble("FOR_FINISH",for_start,for_body,"",instr);
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
