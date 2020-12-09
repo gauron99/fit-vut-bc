@@ -428,7 +428,7 @@ int generate(trAK strInst){
     else if(!strcmp(strInst.name,"FUNC_DEF_END")){
         printf("POPFRAME\n");
         if(!strcmp(strInst.boku,"main")){
-            printf("EXIT 0\n");
+            printf("EXIT int@0\n");
         }
         else{
             printf("RETURN\n");
