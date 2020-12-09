@@ -28,7 +28,7 @@ bool intStackInit(is_t *intStack) {
     intStack->iStack = malloc(STACK_SIZE * sizeof(int *));
     if(intStack == NULL) {
         fprintf(stderr, "Malloc failed to allocate memory");
-        return -908;
+        return MALLOC_ERR;
     }
    if(intStack->iStack == NULL) {
         fprintf(stderr, "Malloc failed to allocate memory");
@@ -95,7 +95,7 @@ int intStackPop(is_t *intStack) {
         return ret;
     }
     else
-        return -1;
+        return PA_ERR;
 }
 
 //-----------------SYMBOL STACK FUNCTIONS-----------------//
@@ -429,7 +429,7 @@ int getPaType(Token *token) {
             return OP_LBRAC;
         case RIGHT_ROUND_BRACKET: {
             if(isInFuncCall == 1)
-                return OP_RBRAC;   // special case when processing function arguments
+                return OP_DOLLAR;   // special case when processing function arguments
             else
                 return OP_RBRAC;
         }
@@ -450,6 +450,7 @@ int getPaType(Token *token) {
         case LEFT_CURLY_BRACKET:
             return OP_DOLLAR;
     }
+    //printf("type: --- %i\n", token->type);
     return SYMBOL_NOT_RECOGNIZED;
 }
 
@@ -715,10 +716,10 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             return i;
         }
         if(i == 16) {   // E -> FUN E
-            printf("value2: %s\n", value2);
+            //printf("value2: %s\n", value2);
             symtableGlobalItem *fun;
             if((fun = symtableItemGetGlobal(value2)) == NULL)
-                printf("itemjenull\n");
+                //printf("itemjenull\n");
             if(fun->countRets == 1) {
                 int tmp = fun->returns[0];
                 *lastFoundType = tmp;
@@ -765,7 +766,7 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
     char *override = NULL;
     
     while ((mainStack->stack[mainStack->top])->paType != OP_LESS) {
-        printf("cycle\n");
+        //printf("cycle\n");
         
         /*if(mainStack->stack[mainStack->top]->paToken != NULL) {
             if(mainStack->stack[mainStack->top]->paToken->value != NULL)
@@ -776,7 +777,7 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
             return PA_ERR;
         
         if(i == 0) {
-            printf("STACK 0: %i\n", mainStack->stack[mainStack->top]->paType); 
+            //printf("STACK 0: %i\n", mainStack->stack[mainStack->top]->paType); 
             if(mainStack->stack[mainStack->top]->paType == OP_EXPRESSION)
                 values[0] = mainStack->stack[mainStack->top]->name;
             else if(mainStack->stack[mainStack->top]->paType != OP_RBRAC) {
@@ -784,16 +785,16 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
             }
         }
         if(i == 1 && mainStack->stack[mainStack->top]->paType == OP_EXPRESSION) {
-            printf("STACK 1: %i\n", mainStack->stack[mainStack->top]->paType); 
-            printf("overrajdik\n");
+            //printf("STACK 1: %i\n", mainStack->stack[mainStack->top]->paType); 
+            //printf("overrajdik\n");
             override = mainStack->stack[mainStack->top]->name;
         }
         if(i == 1 && mainStack->stack[mainStack->top]->paType == OP_FUN) {
-            printf("STACK 1: %i\n", mainStack->stack[mainStack->top]->paType); 
+            //printf("STACK 1: %i\n", mainStack->stack[mainStack->top]->paType); 
             override = mainStack->stack[mainStack->top]->paToken->value;
         }
         if(i == 2) {            
-            printf("STACK 2: %i\n", mainStack->stack[mainStack->top]->paType); 
+            //printf("STACK 2: %i\n", mainStack->stack[mainStack->top]->paType); 
             if(mainStack->stack[mainStack->top]->paType == OP_EXPRESSION)
                 values[1] = mainStack->stack[mainStack->top]->name;
             else
@@ -820,12 +821,12 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
     else
         usedRule = generateRule(ruleOnStack, typeStack, lastFoundType, tmpStack->stack[0]->paToken, name, values[0], values[1]);
  
-    printf("returning %i\n", usedRule);
+    //printf("returning %i\n", usedRule);
     return usedRule;
 }
 
 int analyzePrecedence() {
-    printf("\nINA ZAVOLANA FUNKCIA\n");
+    //printf("\nINA ZAVOLANA FUNKCIA\n");
  
     int action = 0;             // action determined by prectable
     int findRuleRet = 0;
@@ -890,7 +891,7 @@ int analyzePrecedence() {
     getToken(&t);   // get the first token of expression
     //if(t.value != NULL)
         //printf("\n\n\n%s\n\n\n", t.value);
-    printf("token:%i \n", t.type);
+    //printf("token:%i \n", t.type);
     analyzedSymbol->paToken->value = NULL;
     analyzedSymbol->paToken->value = malloc(strlen(t.value) + 1);
 
@@ -898,10 +899,10 @@ int analyzePrecedence() {
     
     // implementation of precedence analysis automaton
     while(!(analyzedSymbol->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
-        printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
+        //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
         // detrmine action based on input, top stack terminal and PA table
         action = precedentTable[sFindFirstTerminal(mainStack)][analyzedSymbol->paType];
-        printf("%i\n", action);
+        //printf("%i\n", action);
         switch(action) {
             case(PA_GREATER):
                 name = generate_identifier();
@@ -944,6 +945,7 @@ int analyzePrecedence() {
                 
                 // get next symbol to analyze
                 getToken(&t);
+                //printf("%i\n", t.type);
                 break;
             case(PA_SHIFT):
                 sPush(mainStack, analyzedSymbol);
@@ -955,12 +957,15 @@ int analyzePrecedence() {
             }
         // updates the analyzed symbol if new Token was gotten
         sElemGetData(&t, analyzedSymbol);
+        if(analyzedSymbol->paType == SYMBOL_NOT_RECOGNIZED) {
+            return SYNTAX_ERR;
+        }
     }
     
     char *tmpSymbolGenUniq = concat("LF@",tmpSymbol->name);//kuli was here
     assemble("PUSHS", tmpSymbolGenUniq, "", "", instr);//kuli was here
     ungetToken(&t);
     free(tmpSymbolGenUniq);//kuli was here
-    printf("LAST FOUND: %i\n\n", lastFoundType);
+    //printf("LAST FOUND: %i\n\n", lastFoundType);
     return lastFoundType;
 }

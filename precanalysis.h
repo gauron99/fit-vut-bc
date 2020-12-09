@@ -19,9 +19,9 @@
     
     #define NOT_FOUND -658  // err const, used when rule wasnt found
     #define SYMBOL_NOT_RECOGNIZED -659
-    #define DIFFERENT_TYPES -659    // err const, used when types dont match
-    #define NO_TYPE_OPERATION -660
-    #define MALLOC_ERR -661
+    #define DIFFERENT_TYPES -660    // err const, used when types dont match
+    #define NO_TYPE_OPERATION -661
+    #define MALLOC_ERR -662
 
     #define PA_ERR -1
     #define SYNTAX_ERR -2
