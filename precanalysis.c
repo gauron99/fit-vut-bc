@@ -429,7 +429,7 @@ int getPaType(Token *token) {
             return OP_LBRAC;
         case RIGHT_ROUND_BRACKET: {
             if(isInFuncCall == 1)
-                return OP_DOLLAR;   // special case when processing function arguments
+                return OP_RBRAC;   // special case when processing function arguments
             else
                 return OP_RBRAC;
         }
@@ -712,6 +712,10 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             free(varrrGen);
             free(tekenGen);
 
+            return i;
+        }
+        if(i == 15) {
+            *lastFoundType = -64;
             return i;
         }
         if(i == 16) {   // E -> FUN E
