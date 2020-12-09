@@ -598,9 +598,9 @@ int rules[25][25] = {
     {OP_STRING, 0, 0},                             // E -> i
 
     {OP_EXPRESSION, OP_COMMA, OP_EXPRESSION},        // E -> E , E
-    {OP_FUN, OP_EXPRESSION, 0},                     // E -> FUNCTION
+    {OP_EXPRESSION, OP_FUN, 0},                     // E -> FUNCTION
 
-    {OP_NOT, OP_EXPRESSION, 0},
+    {OP_EXPRESSION, OP_NOT, 0},
     {OP_EXPRESSION, OP_AND, OP_EXPRESSION},
     {OP_EXPRESSION, OP_OR, OP_EXPRESSION},
     {OP_BOOL, 0, 0},
