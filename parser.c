@@ -298,7 +298,7 @@ int idSekv(int eos){
         char *theInt = malloc(10);
         char *pls = malloc(11+strlen(ids[i])+3);
         strcpy(pls,"LF@");
-        if (symtableItemGet(actualFunc->key,ids[i])) {
+        if (symtableItemGetAct(actualFunc->key,ids[i])) {
             symtableItem *tmp = symtableItemGet(actualFunc->key, ids[i]);
             if(!sprintf(theInt,"%d",tmp->i))
                 return INTERNAL_ERROR;
@@ -316,6 +316,7 @@ int idSekv(int eos){
             else {
                 CHECK_R(tmp->type == (tokenType) expTypes[i], EC_SEM7)
             }
+
         }
         else {
             if(!sprintf(theInt,"%d",varCounter))
@@ -662,7 +663,6 @@ int rdComm(){
 
         if (TTYPE!=SEMICOLON)
         CHECK(idSekv(SEMICOLON))
-
         CHECK_R(TTYPE==SEMICOLON,EC_SYN)
         assemble("LABEL",for_start,"","",instr);
         getToken(&token);
@@ -678,7 +678,7 @@ int rdComm(){
         CHECK(getToken(&token));
         assemble("LABEL",aktualizace,"","",instr);
         if (TTYPE!=LEFT_CURLY_BRACKET)
-        CHECK(idSekv(LEFT_CURLY_BRACKET))
+            CHECK(idSekv(LEFT_CURLY_BRACKET))
         assemble("FOR_FINISH",for_start,for_body,"",instr);
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
