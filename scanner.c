@@ -129,7 +129,7 @@ int gettToken(Token *token) {
             }
 
             break;
-            
+
         /*--------------------------ADDITION---------------+-----------*/
         /*----------------------------O_10-----------------------------*/
 
@@ -796,11 +796,6 @@ int gettToken(Token *token) {
                 currentState = ST_OCTAL_BASE;
             } else if(c == 'x' || c == 'X') {
                 eraseDynamicString(content); 
-                char *stored = convertToString(content); //?????
-                if(stored == NULL) {
-                    return INTERNAL_ERROR;
-                }
-
                 currentState = ST_HEXA_BASE;
             } else if(isdigit(c)) {
                 fprintf(stderr, "LEXICAL ERROR: Invalid literal - leading with zero on line %d \n", linesPassed);
