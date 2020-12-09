@@ -30,7 +30,7 @@
      * paToken pointer points to corresponding Token
      * paType parameter type used by PA
      */
-    typedef struct {
+    typedef struct sElemType{
         Token *paToken;
         int paType;
         char *name;
@@ -42,7 +42,7 @@
      * top parameter index of the top of the symbol stack
      * size parameter size of the symbol stack
      */
-    typedef struct {
+    typedef struct s_t{
         sElemType **stack;
         int top;
         int size;

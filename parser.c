@@ -21,7 +21,7 @@ trAK *instr;
 Token *tknLoad;
 int tknLoadCount = 0;
 
-Token* tkns;
+Token* tkns = NULL; //kuli was here
 int ungot = 0;
 int dewit = 1;
 
