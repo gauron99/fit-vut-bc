@@ -18,6 +18,9 @@
 extern symtableGlobalItem *actualFunc;
 extern int isInFuncCall;
 extern trAK *instr;
+extern int dewit;
+extern int ungot;
+extern Token *tkns;
 
 //-----------------INTEGER STACK FUNCTIONS-----------------//
 
@@ -391,7 +394,18 @@ int getPaType(Token *token) {
                     return OP_FUN;      // fun(args)
                 }
             }
-            ungetToken(&t1);
+            if (ungot){
+                if (!(tkns = realloc(tkns, sizeof(Token)*(ungot+1))))
+                    return INTERNAL_ERROR;
+                for (int oops = ungot; 0<oops; oops--){
+                    tkns[oops] = tkns[oops-1];
+                }
+                tkns[0] = t1;
+                ungot++;
+            }
+            else {
+                ungetToken(&t1);
+            }
             //printf("RETURNING OP_ID in getPaType");
             return OP_ID;   // else OP_ID
         }
