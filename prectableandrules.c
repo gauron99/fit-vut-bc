@@ -597,7 +597,7 @@ int rules[25][25] = {
     {OP_FLOAT, 0, 0},                             // E -> i
     {OP_STRING, 0, 0},                             // E -> i
 
-    //{OP_EXPRESSION, OP_COMMA, OP_EXPRESSION},        // E -> E , E
+    {OP_EXPRESSION, OP_COMMA, OP_EXPRESSION},        // E -> E , E
     {OP_FUN, OP_EXPRESSION, 0},                     // E -> FUNCTION
 
     {OP_NOT, OP_EXPRESSION, 0},
