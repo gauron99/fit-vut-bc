@@ -341,7 +341,7 @@ int prolog(){
 
     CHECK(getToken(&token));
     if (TTYPE == EOL_)
-    CHECK(prolog())
+        CHECK(prolog())
     else if (TTYPE == KEYWORD){
         CHECK_R(!strcmp(TSTR,"package"),EC_SYN)
         CHECK(getToken(&token));
