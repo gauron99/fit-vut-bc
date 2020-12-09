@@ -28,7 +28,7 @@ bool intStackInit(is_t *intStack) {
     intStack->iStack = malloc(STACK_SIZE * sizeof(int *));
     if(intStack == NULL) {
         fprintf(stderr, "Malloc failed to allocate memory");
-        return -908;
+        return MALLOC_ERR;
     }
    if(intStack->iStack == NULL) {
         fprintf(stderr, "Malloc failed to allocate memory");
@@ -95,7 +95,7 @@ int intStackPop(is_t *intStack) {
         return ret;
     }
     else
-        return -1;
+        return PA_ERR;
 }
 
 //-----------------SYMBOL STACK FUNCTIONS-----------------//
@@ -450,6 +450,7 @@ int getPaType(Token *token) {
         case LEFT_CURLY_BRACKET:
             return OP_DOLLAR;
     }
+    printf("type: --- %i\n", token->type);
     return SYMBOL_NOT_RECOGNIZED;
 }
 
@@ -765,7 +766,7 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
     char *override = NULL;
     
     while ((mainStack->stack[mainStack->top])->paType != OP_LESS) {
-        printf("cycle\n");
+        //printf("cycle\n");
         
         /*if(mainStack->stack[mainStack->top]->paToken != NULL) {
             if(mainStack->stack[mainStack->top]->paToken->value != NULL)
@@ -776,7 +777,7 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
             return PA_ERR;
         
         if(i == 0) {
-            printf("STACK 0: %i\n", mainStack->stack[mainStack->top]->paType); 
+            //printf("STACK 0: %i\n", mainStack->stack[mainStack->top]->paType); 
             if(mainStack->stack[mainStack->top]->paType == OP_EXPRESSION)
                 values[0] = mainStack->stack[mainStack->top]->name;
             else if(mainStack->stack[mainStack->top]->paType != OP_RBRAC) {
@@ -784,16 +785,16 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
             }
         }
         if(i == 1 && mainStack->stack[mainStack->top]->paType == OP_EXPRESSION) {
-            printf("STACK 1: %i\n", mainStack->stack[mainStack->top]->paType); 
-            printf("overrajdik\n");
+            //printf("STACK 1: %i\n", mainStack->stack[mainStack->top]->paType); 
+            //printf("overrajdik\n");
             override = mainStack->stack[mainStack->top]->name;
         }
         if(i == 1 && mainStack->stack[mainStack->top]->paType == OP_FUN) {
-            printf("STACK 1: %i\n", mainStack->stack[mainStack->top]->paType); 
+            //printf("STACK 1: %i\n", mainStack->stack[mainStack->top]->paType); 
             override = mainStack->stack[mainStack->top]->paToken->value;
         }
         if(i == 2) {            
-            printf("STACK 2: %i\n", mainStack->stack[mainStack->top]->paType); 
+            //printf("STACK 2: %i\n", mainStack->stack[mainStack->top]->paType); 
             if(mainStack->stack[mainStack->top]->paType == OP_EXPRESSION)
                 values[1] = mainStack->stack[mainStack->top]->name;
             else
@@ -944,6 +945,7 @@ int analyzePrecedence() {
                 
                 // get next symbol to analyze
                 getToken(&t);
+                printf("%i\n", t.type);
                 break;
             case(PA_SHIFT):
                 sPush(mainStack, analyzedSymbol);
@@ -955,6 +957,9 @@ int analyzePrecedence() {
             }
         // updates the analyzed symbol if new Token was gotten
         sElemGetData(&t, analyzedSymbol);
+        if(analyzedSymbol->paType == SYMBOL_NOT_RECOGNIZED) {
+            return SYNTAX_ERR;
+        }
     }
     
     char *tmpSymbolGenUniq = concat("LF@",tmpSymbol->name);//kuli was here
