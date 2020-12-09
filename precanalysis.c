@@ -429,7 +429,7 @@ int getPaType(Token *token) {
             return OP_LBRAC;
         case RIGHT_ROUND_BRACKET: {
             if(isInFuncCall == 1)
-                return OP_RBRAC;   // special case when processing function arguments
+                return OP_DOLLAR;   // special case when processing function arguments
             else
                 return OP_RBRAC;
         }
@@ -891,7 +891,7 @@ int analyzePrecedence() {
     getToken(&t);   // get the first token of expression
     //if(t.value != NULL)
         //printf("\n\n\n%s\n\n\n", t.value);
-    printf("token:%i \n", t.type);
+    //printf("token:%i \n", t.type);
     analyzedSymbol->paToken->value = NULL;
     analyzedSymbol->paToken->value = malloc(strlen(t.value) + 1);
 
@@ -902,7 +902,7 @@ int analyzePrecedence() {
         //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
         // detrmine action based on input, top stack terminal and PA table
         action = precedentTable[sFindFirstTerminal(mainStack)][analyzedSymbol->paType];
-        printf("%i\n", action);
+        //printf("%i\n", action);
         switch(action) {
             case(PA_GREATER):
                 name = generate_identifier();
