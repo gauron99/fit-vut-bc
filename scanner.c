@@ -243,6 +243,9 @@ int gettToken(Token *token) {
             } else if(c == EOF) {
                 fprintf(stderr, "LEXICAL ERROR: End of file in multi-line comment \n");
                 return LEXICAL_ERROR;
+            } else if(c == EOL) {
+                linesPassed++;
+                currentState = ST_MULTI_L_COMMENT;    
             } else {
                 currentState = ST_MULTI_L_COMMENT;
             }
@@ -435,7 +438,7 @@ int gettToken(Token *token) {
                 currentState = ST_OR;
             } else {
                 ungetc(c, input); 
-                fprintf(stderr, "LEXICAL ERROR: Invalid charcter '|' on line %d \n", linesPassed);
+                fprintf(stderr, "LEXICAL ERROR: Invalid character '|' on line %d \n", linesPassed);
                 return LEXICAL_ERROR;
             }
             break;
@@ -455,7 +458,7 @@ int gettToken(Token *token) {
                 currentState = ST_DEFINITION;
             } else {
                 ungetc(c, input);
-                fprintf(stderr, "LEXICAL ERROR: Invalid charcter ':' on line %d \n", linesPassed);
+                fprintf(stderr, "LEXICAL ERROR: Invalid character ':' on line %d \n", linesPassed);
                 return LEXICAL_ERROR;
             }
 
