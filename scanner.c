@@ -48,12 +48,12 @@ int gettToken(Token *token) {
         return INTERNAL_ERROR;
     } 
 
-    char hexaEscape[3];
+    char hexaEscape[3]; /*contains hexa value appearing in string*/
     char c = '\0';
 
     stateType currentState = INIT_ST; /*beginning in initial state*/
 
-    while((c = getc(input))) {
+    while((c = getc(input))) { 
         switch (currentState) {
         case INIT_ST:
             if(c == EOF) { /*end of file*/
@@ -127,7 +127,9 @@ int gettToken(Token *token) {
             } else {
               currentState = ST_ERROR;
             }
+
             break;
+            
         /*--------------------------ADDITION---------------+-----------*/
         /*----------------------------O_10-----------------------------*/
 
@@ -140,6 +142,7 @@ int gettToken(Token *token) {
                 ungetc(c, input);
                 return SUCCESS;
             }
+
             break;
 
         /*-------UNARY:-------------ADDITION----------------+=----------*/
@@ -163,6 +166,7 @@ int gettToken(Token *token) {
                 ungetc(c,input);
                 return SUCCESS;
             }
+
             break;
 
         /*-------UNARY:------------SUBTRACTION---------------=---------*/
@@ -186,11 +190,11 @@ int gettToken(Token *token) {
                 ungetc(c, input);
                 return SUCCESS;
             }
+
             break;
 
         /*------UNARY------------MULTIPLICATION------------*=----------*/
         /*----------------------------O_15-----------------------------*/
-
 
         case ST_MUL_EQ:
             token->type = MUL_EQ;
@@ -214,6 +218,7 @@ int gettToken(Token *token) {
                 ungetc(c, input);
                 return SUCCESS;
             }
+
             break;
 
         /*-----------------------------C_3-----------------------------*/
@@ -233,6 +238,7 @@ int gettToken(Token *token) {
             } else {
                 currentState = ST_SINGLE_L_COMMENT;
             }
+
             break;
 
         /*-----------------------------C_1-----------------------------*/
@@ -249,6 +255,7 @@ int gettToken(Token *token) {
             } else {
                 currentState = ST_MULTI_L_COMMENT;
             }
+
             break;
 
         /*----------------------------C_2------------------------------*/
@@ -264,6 +271,7 @@ int gettToken(Token *token) {
             } else {
                 currentState = ST_MULTI_L_COMMENT;
             }
+
             break;
 
         /*------UNARY---------------DIVISION---------------/=----------*/
@@ -421,6 +429,7 @@ int gettToken(Token *token) {
                 fprintf(stderr, "LEXICAL ERROR: Invalid character '&' on line %d \n", linesPassed);
                 return LEXICAL_ERROR;
             }
+
             break;
 
         /*-----BOOLTHEN---------------O_18----------------------&&-----*/
@@ -441,6 +450,7 @@ int gettToken(Token *token) {
                 fprintf(stderr, "LEXICAL ERROR: Invalid character '|' on line %d \n", linesPassed);
                 return LEXICAL_ERROR;
             }
+
             break;
 
         /*-----BOOLTHEN---------------O_20----------------------||-----*/
@@ -477,7 +487,7 @@ int gettToken(Token *token) {
         /*----------------------------I_0------------------------------*/
 
         case ST_IDENTIF_KEYWORD:
-            if((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_') {
+            if(isIdentif(c)) {
                 if(appendChar(content, c) == -1) {
                     return INTERNAL_ERROR;
                 }
@@ -494,7 +504,8 @@ int gettToken(Token *token) {
                     return INTERNAL_ERROR;
                 }
                 
-                if(strcmp("true", stored) == 0) {
+                /*checks whether read token has bool value true*/
+                if(strcmp("true", stored) == 0) { 
                     token->type = BOOL;
                     token->value = stored;
 
@@ -503,6 +514,7 @@ int gettToken(Token *token) {
                     return SUCCESS;
                 } 
 
+                /*checks whether read token has bool value false*/
                 if(strcmp("false", stored) == 0) {
                     token->type = BOOL;
                     token->value = stored;
@@ -512,7 +524,9 @@ int gettToken(Token *token) {
                     return SUCCESS;
                 }
 
-                for(int i = 0; i < numOfKeywords; i++) {
+                /* checks whether read token is keyword or identifier, by comparing it
+                   to reserved keywords of IFJ20 */
+                for(int i = 0; i < numOfKeywords; i++) { 
                     if(strcmp(keyWords[i], stored) == 0) {
                         token->type = KEYWORD;
                         token->value = stored;
@@ -522,6 +536,7 @@ int gettToken(Token *token) {
                         return SUCCESS;
                     }
                 }
+
                 token->type = IDENTIFIER;
                 token->value = stored;
 
@@ -544,7 +559,7 @@ int gettToken(Token *token) {
                     return INTERNAL_ERROR;
                 }
                 currentState = ST_STRING_ESC_START;
-            } else if(c == EOL || (c >= 0 && c <= 31) || c == EOF){
+            } else if(c == EOL || (c >= 0 && c <= 31) || c == EOF) { /*invalid characters in string*/
                 if(c == EOL) {
                     linesPassed++;
                 }
@@ -563,7 +578,7 @@ int gettToken(Token *token) {
 
         case ST_STRING_END:
             ungetc(c, input);
-            //here  
+
             if(appendChar(content, '\0') == -1) {
                 return INTERNAL_ERROR;
             }
@@ -584,6 +599,8 @@ int gettToken(Token *token) {
         /*-----------------------------S_3-----------------------------*/
 
         case ST_STRING_ESC_START:
+            /*If escape sequence is found in string, it is converted
+              to its decimal representation*/
             if(c == '\"') { /* \" == \034 */
                 if(appendChar(content, '0') == -1) {
                     return INTERNAL_ERROR;
@@ -738,7 +755,6 @@ int gettToken(Token *token) {
             } else {
                 ungetc(c, input);
 
-                //here 
                 if(appendChar(content, '\0') == -1) {
                     return INTERNAL_ERROR;
                 }   
@@ -772,7 +788,7 @@ int gettToken(Token *token) {
                     return INTERNAL_ERROR;
                 }
                 currentState = ST_NUM_EXPONENT;
-            } else if(c == 'b' || c == 'B'){
+            } else if(c == 'b' || c == 'B') {
                 eraseDynamicString(content);
                 currentState = ST_BINARY_BASE;
             } else if(c == 'o' || c == 'O') {
@@ -791,7 +807,7 @@ int gettToken(Token *token) {
                 return LEXICAL_ERROR;
             } else {
                 ungetc(c, input);
-                //here 
+                
                 if(appendChar(content, '\0') == -1) {
                     return INTERNAL_ERROR;
                 } 
@@ -809,6 +825,7 @@ int gettToken(Token *token) {
 
                 return SUCCESS;
             }
+
             break;
 
         /*-----------------------------L_2-----------------------------*/
@@ -841,7 +858,7 @@ int gettToken(Token *token) {
                 currentState = ST_NUM_EXPONENT;
             } else {
                 ungetc(c, input);
-                //here 
+                 
                 if(appendChar(content, '\0') == -1) {
                     return INTERNAL_ERROR;
                 }
@@ -893,6 +910,7 @@ int gettToken(Token *token) {
                 fprintf(stderr, "LEXICAL ERROR: Invalid literal - invalid exponent on line %d \n", linesPassed);
                 return LEXICAL_ERROR;
             }
+
             break;
         /*-----------------------------L_5-----------------------------*/
 
@@ -904,7 +922,7 @@ int gettToken(Token *token) {
                 currentState = ST_NUM_EXPONENT_POWER;
             } else {
                 ungetc(c, input);
-                //here 
+                
                 if(appendChar(content, '\0') == -1) {
                     return INTERNAL_ERROR;
                 }
@@ -939,6 +957,7 @@ int gettToken(Token *token) {
                 fprintf(stderr, "LEXICAL ERROR: Invalid digit in binary on line %d \n", linesPassed);
                 return LEXICAL_ERROR;
             }
+
             break;
         /*-----------------------------L_8-----------------------------*/
 
@@ -952,11 +971,12 @@ int gettToken(Token *token) {
                 currentState = ST_BINARY_SEPARATOR;
             } else {
                 ungetc(c, input);
+
                 /*converting string containing binary number to integer*/
                 char *ptr;
                 int binaryValue = strtol(content->str, &ptr, 2);
+                
                 /*converting integer value into string*/
-
                 int length = snprintf(NULL, 0, "%d", binaryValue);
                 char* converted = malloc(length +1);
                 if(converted == NULL) {
@@ -964,14 +984,15 @@ int gettToken(Token *token) {
                     return INTERNAL_ERROR;
                 }
                 snprintf(converted, length + 1, "%d", binaryValue);
-                //tuto co akoze?
+                
                 token->type = INTEGER;
                 token->value = converted;
 
-                //free(converted);
                 return SUCCESS;
             }
+
             break; 
+
         /*-----------------------------L_9-----------------------------*/
 
         case ST_BINARY_SEPARATOR:
@@ -984,6 +1005,7 @@ int gettToken(Token *token) {
                 fprintf(stderr, "LEXICAL ERROR: Invalid digit in binary base on line %d \n", linesPassed);
                 return LEXICAL_ERROR;
             }
+
             break;    
             
         /*----------------------------OCTAL----------------------------*/
@@ -1001,6 +1023,7 @@ int gettToken(Token *token) {
                 fprintf(stderr, "LEXICAL ERROR: Invalid digit in octal base on line %d \n", linesPassed);
                 return LEXICAL_ERROR;
             }
+
             break; 
 
         /*----------------------------L_11-----------------------------*/
@@ -1015,8 +1038,12 @@ int gettToken(Token *token) {
                 currentState = ST_OCTAL_SEPARATOR;
             } else {
                 ungetc(c, input);
+
+                /*converting string containing octal number to integer*/
                 char *ptr;
                 int octalValue = strtol(content->str, &ptr, 8);
+
+                /*converting integer value into string*/
                 int length = snprintf(NULL, 0, "%d", octalValue);
                 char* converted = malloc(length +1);
                 if(converted == NULL) {
@@ -1028,9 +1055,9 @@ int gettToken(Token *token) {
                 token->type = INTEGER;
                 token->value = converted;
 
-                //free(converted)
                 return SUCCESS;
             }
+
             break;  
 
         /*----------------------------L_12-----------------------------*/
@@ -1045,6 +1072,7 @@ int gettToken(Token *token) {
                 fprintf(stderr, "LEXICAL ERROR: Invalid digit in octal base on line %d \n", linesPassed);
                 return LEXICAL_ERROR;
             }
+
             break;     
 
         /*-------------------------HEXADECIMAL-------------------------*/
@@ -1062,6 +1090,7 @@ int gettToken(Token *token) {
                 fprintf(stderr, "LEXICAL ERROR: Invalid digit in hexa base on line %d \n", linesPassed);
                 return LEXICAL_ERROR;
             }
+
             break;
 
         /*----------------------------L_14-----------------------------*/
@@ -1076,10 +1105,12 @@ int gettToken(Token *token) {
                 currentState = ST_HEXA_SEPARATOR;
             } else {
                 ungetc(c, input);
+
                 /*converting string containing hexa number to integer*/
                 char *ptr;
                 int hexaValue = strtol(content->str, &ptr, 16);
 
+                /*converting integer value into string*/
                 int length = snprintf(NULL, 0, "%d", hexaValue);
                 char* converted = malloc(length +1);
                 if(converted == NULL) {
@@ -1091,9 +1122,9 @@ int gettToken(Token *token) {
                 token->type = INTEGER;
                 token->value = converted;
                 
-                //free(converted);
                 return SUCCESS;
             }
+
             break;    
 
         /*----------------------------L_15-----------------------------*/
@@ -1108,6 +1139,7 @@ int gettToken(Token *token) {
                 fprintf(stderr, "LEXICAL ERROR: Invalid digit in hexa base on line %d \n", linesPassed);
                 return LEXICAL_ERROR;
             }
+
             break;
 
         /*-------------------------------------------------------------*/    
@@ -1143,6 +1175,14 @@ int isOctal(char c) {
 
 int isHexa(char c) {
     if((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+int isIdentif(char c) {
+    if((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_') {
         return 1;
     } else {
         return 0;

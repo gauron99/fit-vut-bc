@@ -182,4 +182,11 @@ int isOctal(char c);
 */
 int isHexa(char c);
 
+/**
+* Function returns 1 if c is 
+* a valid charcter of identifier name, 
+* otherwise 0 is returned.
+*/
+int isIdentif(char c);
+
 #endif // !SCANNER_H
