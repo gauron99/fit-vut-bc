@@ -138,7 +138,6 @@ void assemble(char* name, char* boku, char* no, char* pico, trAK *instruct) {
 int idSekv(int eos){
     int delim;
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
-
     int wasFunCalled = 0;
 
     char** ids = malloc(sizeof(ids));
@@ -147,7 +146,6 @@ int idSekv(int eos){
     strcpy(ids[0], TSTR);
 
     CHECK(getToken(&token));
-
     while (TTYPE!=DEFINITION && TTYPE!=ASSIGNMENT){
         CHECK_R(TTYPE==COMMA,EC_SYN)
         CHECK(getToken(&token));
@@ -162,6 +160,7 @@ int idSekv(int eos){
         strcpy(ids[idCount], TSTR);
         CHECK(getToken(&token));
     }
+
     delim = TTYPE;
 
     if (((tokenType)delim) == DEFINITION){
@@ -298,10 +297,12 @@ int idSekv(int eos){
                 assemble("POPS","dev null","","",instr);
                 continue;
             }
-            if (wasFunCalled) /// TODO excuse me? semERR 67
+            if (wasFunCalled) {
                 CHECK_R(tmp->type == (tokenType) expTypes[i], EC_SEM6)
-            else
+            }
+            else {
                 CHECK_R(tmp->type == (tokenType) expTypes[i], EC_SEM7)
+            }
         }
         else {
             if(!sprintf(theInt,"%d",varCounter))
@@ -606,6 +607,7 @@ int rdComm(){
     else if (TTYPE==KEYWORD && !(strcmp(TSTR,"if"))){
         retType = analyzePrecedence();
         CHECK_R(retType>=0,(returnCode)-retType)
+        CHECK_R(retType==BOOL,EC_SEM7)
         char *next = generate_label();
         char *end = generate_label();
         assemble("START_IF",next,"","",instr);
@@ -664,7 +666,6 @@ int rdComm(){
         assemble("LABEL",aktualizace,"","",instr);
         if (TTYPE!=LEFT_CURLY_BRACKET)
             CHECK(idSekv(LEFT_CURLY_BRACKET))
-
         assemble("FOR_FINISH",for_start,for_body,"",instr);
 
         CHECK_R(TTYPE==LEFT_CURLY_BRACKET,EC_SYN)
@@ -738,8 +739,8 @@ int rdComm(){
                     CHECK_R(retType >= 0, (returnCode) -retType)
                     CHECK_R((argTypes = realloc(argTypes, ++argTypCount * sizeof(int))), EC_INTERNAL)
                     argTypes[argTypCount - 1] = retType;
-                    CHECK_R((glob->args[argTypCount - 1] && argTypes[argTypCount - 1] == glob->args[argTypCount - 1]),
-                            EC_SEM6)
+                    CHECK_R(argTypCount==glob->countArgs,EC_SEM6)
+                    CHECK_R(argTypes[argTypCount - 1] == glob->args[argTypCount - 1],EC_SEM6)
                     CHECK(getToken(&token))
                     CHECK_R(TTYPE == COMMA || TTYPE == RIGHT_ROUND_BRACKET, EC_SYN)
                 }
