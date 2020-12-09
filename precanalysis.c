@@ -473,7 +473,8 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
         tekenGen = NULL;
 
         nameGen = concat("LF@", name);
-        valueGen1 = concat("LF@", value1);
+        if(value1)
+            valueGen1 = concat("LF@", value1);
 
         if(value2)
             valueGen2 = concat("LF@", value2);
@@ -545,31 +546,39 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                         break;
                     case 4:
                         assemble("LT", nameGen, valueGen2, valueGen1, instr);
+                        break;
                     case 5:
                         assemble("LT", nameGen, valueGen2, valueGen1, instr);
                         assemble("PUSHS", nameGen, "", "", instr);
                         assemble("EQ", nameGen, valueGen2, valueGen1, instr);
                         assemble("PUSHS", nameGen, "", "", instr);
                         assemble("ORS", nameGen, "", "", instr);
+                        break;
                     case 6:
                         assemble("GT", nameGen, valueGen2, valueGen1, instr);
+                        break;
                     case 7:
                         assemble("GT", nameGen, valueGen2, valueGen1, instr);
                         assemble("PUSHS", nameGen, "", "", instr);
                         assemble("EQ", nameGen, valueGen2, valueGen1, instr);
                         assemble("PUSHS", nameGen, "", "", instr);
                         assemble("ORS", nameGen, "", "", instr);
+                        break;
                     case 8:
                         assemble("EQ", nameGen, valueGen2, valueGen1, instr);
+                        break;
                     case 9:
                         assemble("EQ", nameGen, valueGen2, valueGen1, instr);
                         assemble("NOT", nameGen, "", "", instr);
+                        break;
                     case 17:
                         assemble("AND", nameGen, valueGen2, valueGen1, instr);
+                        break;
                     case 18:
                         assemble("PUSHS", valueGen2, "", "", instr);
                         assemble("PUSHS", valueGen1, "", "", instr);
                         assemble("ORS", nameGen, "", "", instr);
+                        break;
                 }
                 free(nameGen);
                 free(valueGen1);
@@ -624,7 +633,6 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             return i;
         }
         if(i == 11) {   // E -> (E)
-            //printf("ele1: %i\n", ele1->paType);
             int tmp = intStackPop(typeStack);
             intStackPush(typeStack, tmp);
             *lastFoundType = tmp;
