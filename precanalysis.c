@@ -24,6 +24,7 @@ extern trAK *instr;
 bool intStackInit(is_t *intStack) {
     intStack->top = STACK_TOP;
     intStack->size = STACK_SIZE;
+    intStack->iStack = NULL;
     intStack->iStack = malloc(STACK_SIZE * sizeof(int *));
     if(intStack == NULL) {
         fprintf(stderr, "Malloc failed to allocate memory");
@@ -76,7 +77,9 @@ bool intStackPush(is_t *intStack, int data) {
                 return false;
     }
     else {
-        int *tmp = malloc(sizeof(int));
+
+        int *tmp = NULL; 
+        tmp = malloc(sizeof(int));
         *tmp = data;
         intStack->top++;
         intStack->iStack[intStack->top] = tmp;
@@ -100,11 +103,22 @@ int intStackPop(is_t *intStack) {
 bool sInit (s_t* symStack) {
     symStack->top = STACK_TOP;
     symStack->size = STACK_SIZE;
+    symStack->stack = NULL;
+    //allocated pointers to structures
     symStack->stack = malloc(STACK_SIZE * sizeof(sElemType *));
+
     if (symStack->stack == NULL) {
         fprintf(stderr, "Malloc failed to allocate memory");
         return false;
     }
+    for (int i = 0; i < STACK_SIZE; i++){//kuli was here
+        //allocate structure itself
+        symStack->stack[i] = malloc(sizeof(sElemType));
+        symStack->stack[i]->name = NULL;
+        symStack->stack[i]->paToken = NULL;
+        
+    }//kuli was NOT here -- doesn't seem to do anything
+    
     return true;
 }
 
@@ -268,7 +282,7 @@ bool sPushPointer(s_t *symStack, sElemType *data) {
             return false;
     }
     else {
-        sElemType *newData;
+        sElemType *newData = NULL;
         if((newData = malloc(sizeof(sElemType))) == NULL)
             return false;
         newData->paType = data->paType;
@@ -443,8 +457,10 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
     int i = 0;
     bool found = false;
 
-    sElemType *tmp = malloc(sizeof(sElemType));
-    char *helpName = malloc(100);
+    sElemType *tmp = NULL;
+    tmp = malloc(sizeof(sElemType));
+    char *helpName = NULL;
+    helpName = malloc(100);
 
     //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
     
@@ -459,18 +475,18 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
     
     if(found) {
         //printf("CHECK 2, i = %i\n", i);
+        char *nameGen = NULL;
+        char *valueGen1 = NULL;
+        char *valueGen2 = NULL;
+        char *varrrGen = NULL;
+        char *tekenGen = NULL;
          
-        char *nameGen = malloc(100);
-        char *valueGen1 = malloc(100);
-        char *valueGen2 = malloc(100);
-        char *varrrGen = malloc(100);
-        char *tekenGen = malloc(100);
+        nameGen = malloc(100);
+        valueGen1 = malloc(100);
+        valueGen2 = malloc(100);
+        varrrGen = malloc(100);
+        tekenGen = malloc(100);
         
-        nameGen = NULL;
-        valueGen1 = NULL;
-        valueGen2 = NULL;
-        varrrGen = NULL;
-        tekenGen = NULL;
 
         nameGen = concat("LF@", name);
         if(value1)
@@ -686,7 +702,8 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
             
             assemble("DEFVAR", nameGen, "", "", instr);
             
-            tekenGen = concat("string@", teken->value);
+            tekenGen = concat("string@", teken->value); //debug teken->value gets printed here as [ <main_arena+96> "" ]
+
             assemble("MOVE", nameGen, tekenGen, "", instr);
 
             free(nameGen);
@@ -793,12 +810,14 @@ int analyzePrecedence() {
     int lastFoundType = 0;      // type of most recently analyzed symbol or expression
     
     Token t;                    // currently analyzed token
-    Token *paToken;             // helper Token
-    sElemType *analyzedSymbol;  // currently analyzed Token and its paType in symbol structure
+    Token *paToken = NULL;             // helper Token
+    sElemType *analyzedSymbol = NULL;  // currently analyzed Token and its paType in symbol structure
     
-    sElemType tmpSymbol = {NULL, 0};  // helper symbol struct
+    sElemType *tmpSymbol = NULL;  // helper symbol struct
+    tmpSymbol = malloc(sizeof(sElemType));
 
-    char *name = malloc(100 * sizeof(char));
+    char *name = NULL; 
+    name = malloc(100);
 
     int precedentTable[25][25];
     pTableInit(precedentTable);
@@ -815,19 +834,21 @@ int analyzePrecedence() {
     analyzedSymbol = malloc(sizeof(sElemType));
     analyzedSymbol->paToken = paToken;
     sElemInit(analyzedSymbol);
+    analyzedSymbol->name = NULL;
     analyzedSymbol->name = malloc(ID_SIZE);
     
     // main symbol stack init
-    s_t *mainStack;
+    s_t *mainStack = NULL;
     mainStack = malloc(sizeof(s_t));
     sInit(mainStack);
-    tmpSymbol.paType = OP_DOLLAR;
-    tmpSymbol.paToken = NULL;
-    tmpSymbol.name = malloc(ID_SIZE);
-    sPush(mainStack, &tmpSymbol);   // push $ onto stack
+    tmpSymbol->paType = OP_DOLLAR;
+    tmpSymbol->paToken = NULL;
+    tmpSymbol->name = NULL;
+    tmpSymbol->name = malloc(ID_SIZE); //DEBUG spot
+    sPush(mainStack, tmpSymbol);   // push $ onto stack
     
     // tmp symbol stack init
-    s_t *tmpStack;
+    s_t *tmpStack = NULL;
     tmpStack = malloc(sizeof(s_t));
     if(tmpStack == NULL) {
         fprintf(stderr, "Malloc failed to allocate memory");
@@ -836,7 +857,7 @@ int analyzePrecedence() {
     sInit(tmpStack);
    
     // integer stack for storage of types
-    is_t *typeStack;
+    is_t *typeStack = NULL;
     typeStack = malloc(sizeof(is_t));
     if(typeStack == NULL) {
         fprintf(stderr, "Malloc failed to allocate memory");
@@ -847,7 +868,7 @@ int analyzePrecedence() {
     getToken(&t);   // get the first token of expression
     //if(t.value != NULL)
         //printf("\n\n\n%s\n\n\n", t.value);
-
+    analyzedSymbol->paToken->value = NULL;
     analyzedSymbol->paToken->value = malloc(strlen(t.value) + 1);
 
     sElemGetData(&t, analyzedSymbol);
@@ -862,7 +883,7 @@ int analyzePrecedence() {
             case(PA_GREATER):
                 name = generate_identifier();
                 // determine rule on top of the stack
-                findRuleRet = sFindRule(mainStack, tmpStack, &tmpSymbol, typeStack, &lastFoundType, name);
+                findRuleRet = sFindRule(mainStack, tmpStack, tmpSymbol, typeStack, &lastFoundType, name);
                 // rule does not exist -> syntactic error
                 if(findRuleRet == -2) {
                     //printf("returning -2\n");
@@ -879,27 +900,27 @@ int analyzePrecedence() {
                 // pop the symbol on the top of the stack
                 sPopPointer(mainStack);
                  
-                tmpSymbol.paType = OP_EXPRESSION;
-                tmpSymbol.paToken = (tmpStack->stack[tmpStack->top])->paToken;
-                strcpy(tmpSymbol.name, name);
+                tmpSymbol->paType = OP_EXPRESSION;
+                tmpSymbol->paToken = (tmpStack->stack[tmpStack->top])->paToken;
+                strcpy(tmpSymbol->name, name);
                 
                 //printf("tmpSymbol name: %s\n", tmpSymbol.name);
                 // and replace it with Expression
-                sPushPointer(mainStack, &tmpSymbol);
+                sPushPointer(mainStack, tmpSymbol);
                 while (!sIsEmpty(tmpStack)) {
 		    sPopPointer(tmpStack);
                 }
                 break;
             case(PA_LESS):
                 // copy symbol on stack until the first terminal is found onto tmpStack
-                sCopyUntilTerminal(mainStack, tmpStack, &tmpSymbol);
+                sCopyUntilTerminal(mainStack, tmpStack, tmpSymbol);
                 //push '<' onto the stack
-                tmpSymbol.paToken = NULL;
-		tmpSymbol.paType = OP_LESS;
-                tmpSymbol.name = NULL;
-		sPush(mainStack, &tmpSymbol);
+                tmpSymbol->paToken = NULL;
+		tmpSymbol->paType = OP_LESS;
+                tmpSymbol->name = NULL;
+		sPush(mainStack, tmpSymbol);
                 // copy the symbols from tmpStack into mainStack /reversed order/
-                sCopyAll(tmpStack, mainStack, &tmpSymbol);
+                sCopyAll(tmpStack, mainStack, tmpSymbol);
                 // pushes the symbol just where it should be :3
                 sPush(mainStack, analyzedSymbol);
                 
@@ -922,7 +943,7 @@ int analyzePrecedence() {
         sElemGetData(&t, analyzedSymbol);
     }
     
-    char *tmpSymbolGenUniq = concat("LF@",tmpSymbol.name);//kuli was here
+    char *tmpSymbolGenUniq = concat("LF@",tmpSymbol->name);//kuli was here
     //                var
     assemble("PUSHS", tmpSymbolGenUniq, "", "", instr);//kuli was here
     ungetToken(&t);
