@@ -208,6 +208,7 @@ int idSekv(int eos){
                     break;
                 }
                 CHECK_R(TTYPE==IDENTIFIER || TTYPE==FLOAT || TTYPE==INTEGER || TTYPE==STRING || TTYPE==BOOL,EC_SYN)
+                dewit = 1;
                 retType = analyzePrecedence();
                 CHECK_R(retType >= 0, (returnCode) -retType)
                 CHECK_R((argTypes=realloc(argTypes,++argTypCount*sizeof(int))),EC_INTERNAL)
@@ -227,19 +228,22 @@ int idSekv(int eos){
             if (TTYPE==EOL_) {
                 CHECK_R(tempos->countRets == idCount+1, EC_SEM6)
                 expTypCount=tempos->countRets-1;
-                for (int i = 0; i < tempos->countRets;i++)
+                for (int i = 0; i < tempos->countRets;i++){
                     expTypes[i]=tempos->returns[i];
+                }
                 dewit = 1;
-                for (int i = 1; i<tknCount;i++)
+                for (int i = 1; i<tknCount;i++){
                     getToken(&token);
+                }
 
             }
             else if (TTYPE==COMMA) {
                 goto dere;
             }
             dewit = 1;
-            for (int i = 1; i<tknCount;i++)
+            for (int i = 1; i<tknCount;i++){
                 getToken(&token);
+            }
         }
         else{
             dewit = 1;
