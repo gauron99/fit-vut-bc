@@ -1,0 +1,1 @@
+/* som zvedava co urobis teraz /* */ */
