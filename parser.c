@@ -409,7 +409,7 @@ int rdDef(){
         name = strcat(name,"$");
         name = strcat(name,theInt);
         char *pls = malloc(strlen(name)+3);
-        strcpy(pls,"@LF");
+        strcpy(pls,"LF@");
         strcat(pls,name);
         assemble("DEFVAR",pls,"","",instr);
         assemble("POPS",pls,"","",instr);
