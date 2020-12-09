@@ -401,6 +401,7 @@ int getPaType(Token *token) {
                     tkns[oops] = tkns[oops-1];
                 }
                 tkns[0] = t1;
+                ungot++;
             }
             else {
                 ungetToken(&t1);
