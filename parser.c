@@ -87,6 +87,7 @@ int loadFuncti(){
             CHECK(fillTknArr(&token))
 
             CHECK_R(token.type==IDENTIFIER,EC_SYN)
+            CHECK_R(!symtableItemGetGlobal(token.value),EC_SEM3)
             CHECK(symtableItemInsertGlobal(token.value))
 
             actualFunc = symtableItemGetGlobal(token.value);
@@ -98,8 +99,10 @@ int loadFuncti(){
 
             CHECK(gettToken(&token));
             CHECK(fillTknArr(&token))
-            if (token.type!=RIGHT_ROUND_BRACKET)
-            CHECK(rdParams())
+            if (token.type!=RIGHT_ROUND_BRACKET) {
+                CHECK_R(strcmp(actualFunc->key,"main"),EC_SEM6)
+                CHECK(rdParams())
+            }
 
             CHECK(gettToken(&token));
             CHECK(fillTknArr(&token))
@@ -115,6 +118,7 @@ int loadFuncti(){
 
         CHECK(gettToken(&token))
     }
+    CHECK_R(symtableItemGetGlobal("main"),EC_SEM3)
 
     tknLoad[tknLoadCount++] = token;
 
@@ -163,7 +167,7 @@ int idSekv(int eos){
     if (((tokenType)delim) == DEFINITION){
         int checker = 0;
         for (int i = idCount; i >= 0; i--){
-            if(!symtableItemGet(actualFunc->key,ids[i])) {
+            if(!symtableItemGetAct(actualFunc->key,ids[i])) {
                 if (!strcmp(ids[i],"_"))
                     continue;
                 checker = 1;
@@ -209,7 +213,8 @@ int idSekv(int eos){
                 CHECK_R(retType >= 0, (returnCode) -retType)
                 CHECK_R((argTypes=realloc(argTypes,++argTypCount*sizeof(int))),EC_INTERNAL)
                 argTypes[argTypCount-1]=retType;
-                CHECK_R((tempos->args[argTypCount-1] && argTypes[argTypCount-1]==tempos->args[argTypCount-1]),EC_SEM6)
+                CHECK_R(tempos->countArgs>=argTypCount,EC_SEM6)
+                CHECK_R(argTypes[argTypCount-1]==tempos->args[argTypCount-1],EC_SEM6)
                 CHECK(getToken(&token))
                 ungetToken(&token);
                 CHECK_R(TTYPE==COMMA || TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
@@ -272,7 +277,9 @@ int idSekv(int eos){
         CHECK_R(expTypCount==idCount,EC_SEM6)
 
     if (idCount==0 && delim == (tokenType) DEFINITION)
-        CHECK_R(!symtableItemGet(actualFunc->key,ids[0]),EC_SEM3)
+        CHECK_R(!symtableItemGetAct(actualFunc->key,ids[0]),EC_SEM3)
+
+    CHECK_R(idCount==expTypCount,EC_SEM7)
 
     for (int i = idCount; i >= 0; i--){
         char *name = malloc(11+strlen(ids[i]));
@@ -291,10 +298,10 @@ int idSekv(int eos){
                 assemble("POPS","dev null","","",instr);
                 continue;
             }
-            if (wasFunCalled)
-                CHECK_R(tmp->type == ((tokenType) expTypes[i]), EC_SEM6)
+            if (wasFunCalled) /// TODO excuse me? semERR 67
+                CHECK_R(tmp->type == (tokenType) expTypes[i], EC_SEM6)
             else
-                CHECK_R(tmp->type == ((tokenType) expTypes[i]), EC_SEM7)
+                CHECK_R(tmp->type == (tokenType) expTypes[i], EC_SEM7)
         }
         else {
             if(!sprintf(theInt,"%d",varCounter))
@@ -491,9 +498,10 @@ int rdReturns(){
     CHECK(gettToken(&token))
     CHECK(fillTknArr(&token))
 
-    if (TTYPE!=RIGHT_ROUND_BRACKET) {
+    if (TTYPE!=RIGHT_ROUND_BRACKET){
+        CHECK_R(strcmp(actualFunc->key,"main"),EC_SEM6)
         CHECK(rdReturnsNamed())
-        CHECK(gettToken(&token));
+        CHECK(gettToken(&token))
         CHECK(fillTknArr(&token))
     }
     else {
@@ -903,8 +911,8 @@ int addInbuilt(){
     CHECK(pushRet("int2float",switchToType("float64")))
 
     CHECK(symtableItemInsertGlobal("float2int"))
-    CHECK(pushArg("int2float",switchToType("float64")))
-    CHECK(pushRet("int2float",switchToType("int")))
+    CHECK(pushArg("float2int",switchToType("float64")))
+    CHECK(pushRet("float2int",switchToType("int")))
 
     CHECK(symtableItemInsertGlobal("len"))
     CHECK(pushArg("len",switchToType("string")))
