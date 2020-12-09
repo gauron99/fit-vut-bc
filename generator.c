@@ -1,8 +1,8 @@
 /**
         ~~ IFJ-20 ~~
     @file   generator.c
-    @brief  take 3AC (or some form of it) and generate code in IJFcode20
-    @date   11/11/20
+    @brief  take 3AC (+ few special instructions) and generate code in IJFcode20
+    @date   09/12/20
     @author David Fridrich
 */
 #include <stdio.h>
