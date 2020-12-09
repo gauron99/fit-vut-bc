@@ -182,8 +182,4 @@ int isOctal(char c);
 */
 int isHexa(char c);
 
-/*frees up the memory*/
-//int cleanUp();
-
-
 #endif // !SCANNER_H
