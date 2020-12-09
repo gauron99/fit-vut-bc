@@ -837,7 +837,7 @@ int analyzePrecedence() {
     
     // implementation of precedence analysis automaton
     while(!(analyzedSymbol->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
-        printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
+        //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
         // detrmine action based on input, top stack terminal and PA table
         action = precedentTable[sFindFirstTerminal(mainStack)][analyzedSymbol->paType];
         //printf("%i\n", action);

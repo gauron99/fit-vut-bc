@@ -277,6 +277,8 @@ int idSekv(int eos){
     for (int i = idCount; i >= 0; i--){
         char *name = malloc(11+strlen(ids[i]));
         char *theInt = malloc(10);
+        char *pls = malloc(strlen(name)+3);
+        strcpy(pls,"LF@");
         if (symtableItemGet(actualFunc->key,ids[i])) {
             symtableItem *tmp = symtableItemGet(actualFunc->key, ids[i]);
             if(!sprintf(theInt,"%d",tmp->i))
@@ -284,6 +286,7 @@ int idSekv(int eos){
             strcpy(name,ids[i]);
             name = strcat(name,"$");
             name = strcat(name,theInt);
+            strcat(pls,name);
             if (!strcmp("_",ids[i])){
                 assemble("POPS","dev null","","",instr);
                 continue;
@@ -299,10 +302,11 @@ int idSekv(int eos){
             strcpy(name,ids[i]);
             name = strcat(name,"$");
             name = strcat(name,theInt);
-            assemble("DEFVAR",strcat("LF@",name),"","",instr);
+            strcat(pls,name);
+            assemble("DEFVAR",pls,"","",instr);
             symtableItemInsert(actualFunc->key, ids[i], (itemType) expTypes[i], varCounter++);
         }
-        assemble("POPS",strcat("LF@",name),"","",instr);
+        assemble("POPS",pls,"","",instr);
     }
 
     CHECK_R(TTYPE==((tokenType)eos),EC_SYN)
@@ -404,8 +408,11 @@ int rdDef(){
         name = args[i];
         name = strcat(name,"$");
         name = strcat(name,theInt);
-        assemble("DEFVAR",strcat("LF@",name),"","",instr);
-        assemble("POPS",strcat("LF@",name),"","",instr);
+        char *pls = malloc(strlen(name)+3);
+        strcpy(pls,"@LF");
+        strcat(pls,name);
+        assemble("DEFVAR",pls,"","",instr);
+        assemble("POPS",pls,"","",instr);
     }
     while (TTYPE!=LEFT_CURLY_BRACKET)
         getToken(&token);
