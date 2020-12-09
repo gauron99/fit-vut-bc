@@ -489,6 +489,10 @@ int gettToken(Token *token) {
                 }
 
                 char *stored = convertToString(content); 
+
+                if(stored == NULL) {
+                    return INTERNAL_ERROR;
+                }
                 
                 if(strcmp("true", stored) == 0) {
                     token->type = BOOL;
@@ -565,6 +569,10 @@ int gettToken(Token *token) {
             }
 
             char* stored = convertToString(content);
+            if(stored == NULL) {
+                return INTERNAL_ERROR;
+            }
+
             token->type = STRING;
             token->value = stored; 
 
@@ -736,6 +744,10 @@ int gettToken(Token *token) {
                 }   
                 char* stored = convertToString(content);
 
+                if(stored == NULL) {
+                    return INTERNAL_ERROR;
+                }
+
                 token->type = INTEGER;
                 token->value = stored;
 
@@ -768,7 +780,11 @@ int gettToken(Token *token) {
                 currentState = ST_OCTAL_BASE;
             } else if(c == 'x' || c == 'X') {
                 eraseDynamicString(content); 
-                char *stored = convertToString(content);
+                char *stored = convertToString(content); //?????
+                if(stored == NULL) {
+                    return INTERNAL_ERROR;
+                }
+
                 currentState = ST_HEXA_BASE;
             } else if(isdigit(c)) {
                 fprintf(stderr, "LEXICAL ERROR: Invalid literal - leading with zero on line %d \n", linesPassed);
@@ -779,7 +795,11 @@ int gettToken(Token *token) {
                 if(appendChar(content, '\0') == -1) {
                     return INTERNAL_ERROR;
                 } 
-                char* stored = convertToString(content);
+                char* stored = convertToString(content); 
+
+                if(stored == NULL) {
+                    return LEXICAL_ERROR;
+                }
 
                 token->type = INTEGER;
                 token->value = stored; 
@@ -826,6 +846,11 @@ int gettToken(Token *token) {
                     return INTERNAL_ERROR;
                 }
                 char* stored = convertToString(content);
+
+                if(stored == NULL) {
+                    return INTERNAL_ERROR;
+                }
+
                 token->type = FLOAT;
                 token->value = stored;
 
@@ -884,6 +909,11 @@ int gettToken(Token *token) {
                     return INTERNAL_ERROR;
                 }
                 char* stored = convertToString(content);
+
+                if(stored == NULL) {
+                    return INTERNAL_ERROR;
+                }
+
                 token->type = FLOAT;
                 token->value = stored;
 
@@ -1046,7 +1076,7 @@ int gettToken(Token *token) {
                 currentState = ST_HEXA_SEPARATOR;
             } else {
                 ungetc(c, input);
-                /*converting string conatining binary number to integer*/
+                /*converting string containing hexa number to integer*/
                 char *ptr;
                 int hexaValue = strtol(content->str, &ptr, 16);
 
