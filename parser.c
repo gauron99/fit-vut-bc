@@ -208,7 +208,6 @@ int idSekv(int eos){
                     break;
                 }
                 CHECK_R(TTYPE==IDENTIFIER || TTYPE==FLOAT || TTYPE==INTEGER || TTYPE==STRING || TTYPE==BOOL,EC_SYN)
-                dewit = 1;
                 retType = analyzePrecedence();
                 CHECK_R(retType >= 0, (returnCode) -retType)
                 CHECK_R((argTypes=realloc(argTypes,++argTypCount*sizeof(int))),EC_INTERNAL)
