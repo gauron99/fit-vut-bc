@@ -1,5 +1,5 @@
 //
-// Created by louda on 11/11/20.
+// Created by Ludek Burda on 11/11/20.
 //
 
 #ifndef IFJ20_PARSER_H
