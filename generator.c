@@ -462,7 +462,7 @@ int generate(trAK strInst){
 
     return SUCCESS;
 }
-
+//taken from our IFJ19 project last year
 int count_digits(unsigned long long int n)
 {
     int count = 0;
@@ -473,6 +473,7 @@ int count_digits(unsigned long long int n)
     return count;
 }
 
+//taken from our IFJ19 project last year
 char* generate_identifier()
 {
     static unsigned long long iterator;
@@ -487,6 +488,7 @@ char* generate_identifier()
     return identif;
 }
 
+//taken from our IFJ19 project last year
 char* generate_label()
 {
     static unsigned long long iterator;
@@ -512,12 +514,12 @@ char* concat(const char *s1, const char *s2)
 {
     const size_t len1 = strlen(s1);
     const size_t len2 = strlen(s2);
-    char *result = malloc(len1 + len2 + 1); // +1 for the null-terminator
+    char *result = malloc(len1 + len2 + 1);
     if(!result){
         fprintf(stderr,">>> malloc in concat() failed[generator.c]\n");
         return NULL;
     }
     memcpy(result, s1, len1);
-    memcpy(result + len1, s2, len2 + 1); // +1 to copy the null-terminator
+    memcpy(result + len1, s2, len2 + 1);
     return result;
 }
