@@ -300,7 +300,7 @@
      * @param Tekken Token of the first symbol of a rule, useful for IDENTIFIERS /to get its type/
      * @return paType of a specified Token
      */
-    int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *Tekken, char *name, char *value1, char *value2);
+    int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *Tekken, Token *Tekken2, char *name, char *value1, char *value2, bool expr1, bool expr2);
 
     /**
      * @brief tries to find a rule that shall be used

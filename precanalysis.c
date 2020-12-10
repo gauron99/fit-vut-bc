@@ -454,7 +454,7 @@ int getPaType(Token *token) {
     return SYMBOL_NOT_RECOGNIZED;
 }
 
-int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, char *name, char *value1, char *value2) {
+int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, Token *tekken2, char *name, char *value1, char *value2, bool expr1, bool expr2) {
     int i = 0;
     bool found = false;
 
@@ -473,6 +473,9 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
         }
         i++;
     }
+    
+    //printf("--------%i", i);
+    
     if(found) {
         char *nameGen = NULL;
         char *valueGen1 = NULL;
@@ -497,8 +500,10 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
 
             int type1 = intStackPop(typeStack);
             int type2 = intStackPop(typeStack);
+            
 
             if(type1 == type2) {    // datatypes match
+
                 if(i < 4 || i == 17 || i == 18) {   // +, -, *, /, &&, ||
                     intStackPush(typeStack, type1); // push operand datatype
                     *lastFoundType = type1;
@@ -512,10 +517,13 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                 assemble("DEFVAR",nameGen,"","",instr);
                 
                 char *theInt = malloc(10);
-
+                
+                printf("valueeeee %s", value1);
                 symtableItem *val1 = symtableItemGet(actualFunc->key,value1);
-                if(val1 == NULL)
+                if(val1 == NULL && tekken2->type == IDENTIFIER && !expr1) {
+                    //printf("ANBI");
                     return SEM_ERR;
+                }
 
                 if (val1){
                     char *varrr = malloc(11+strlen(value1));
@@ -529,8 +537,10 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                 }
 
                 symtableItem *val2 = symtableItemGet(actualFunc->key,value2);
-                if(val2 == NULL)
+                if(val2 == NULL && teken->type == IDENTIFIER && !expr2) {
+                    //printf("dfjbsdivhbojdsn");
                     return SEM_ERR;
+                }
                 if (val2){
                     char *varrr = malloc(11+strlen(value2));
                     if(!sprintf(theInt,"%d",val2->i))
@@ -542,6 +552,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                     strcpy(value2,varrr);
                 }
                 
+
                 switch(i) {
                     case 0: {
                         if(type1 == STRING) {
@@ -558,8 +569,11 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
                         assemble("SUB", nameGen, valueGen2, valueGen1, instr);
                         break;
                     case 2:
-                        if(type1 == STRING)
+                        if(type1 == STRING) {
+                            //printf("sahbfsduhbf\n");
                             return SEM_ERR_COMP_MINUS;
+                        }
+                        //printf("hejdpc\n");
                         assemble("MUL", nameGen, valueGen2, valueGen1, instr);
                         break;
                     case 3:
@@ -778,6 +792,11 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
     int usedRule;
     int ruleOnStack[3] = {0, 0, 0};
     bool isOp2Zero = false;
+    bool exprCheck1 = false;
+    bool exprCheck2 = false;
+
+    Token * pointer1;
+    Token * pointer2;
     
     char array[1]; 
     array[0] = '0';
@@ -792,12 +811,15 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
             return PA_ERR;
         
         if(i == 0) {
-            //printf("--------====heyo%i, %i, %i\n", mainStack->stack[mainStack->top]->paToken->value[0], mainStack->stack[mainStack->top]->paToken->value[1], mainStack->stack[mainStack->top]->paToken->value[2]);
+            pointer1 = tmpTerminal->paToken;
+                            //printf("--------====heyo%i, %i, %i\n", mainStack->stack[mainStack->top]->paToken->value[0], mainStack->stack[mainStack->top]->paToken->value[1], mainStack->stack[mainStack->top]->paToken->value[2]);
             if( mainStack->stack[mainStack->top]->paToken->value[0] == 0 ||  ((strcmp(mainStack->stack[mainStack->top]->paToken->value, "0.0")) == 0))
                 isOp2Zero = true;
  
-            if(mainStack->stack[mainStack->top]->paType == OP_EXPRESSION)
+            if(mainStack->stack[mainStack->top]->paType == OP_EXPRESSION) {
+                exprCheck1 = true;
                 values[0] = mainStack->stack[mainStack->top]->name;
+            }
             else if(mainStack->stack[mainStack->top]->paType != OP_RBRAC) {
                 values[0] = mainStack->stack[mainStack->top]->paToken->value;
             }
@@ -808,10 +830,12 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
         if(i == 1 && mainStack->stack[mainStack->top]->paType == OP_FUN) {
             override = mainStack->stack[mainStack->top]->paToken->value;
         }
-        if(i == 2) {            
+        if(i == 2) {
+            pointer2 = tmpTerminal->paToken;
             if(mainStack->stack[mainStack->top]->paType == OP_EXPRESSION)
             {
-               values[1] = mainStack->stack[mainStack->top]->name;
+                exprCheck2 = true;
+                values[1] = mainStack->stack[mainStack->top]->name;
             }
             else
                 values[1] = mainStack->stack[mainStack->top]->paToken->value;
@@ -831,12 +855,14 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
     for (int i = tmpStack->top; i > STACK_TOP; i--)    // save the content of stack until PA_LESS is read
         ruleOnStack[i] = (tmpStack->stack[i])->paType;
     
-    if(tmpStack->top == 0) {
-        usedRule = generateRule(ruleOnStack, typeStack, lastFoundType, tmpStack->stack[0]->paToken, name, values[0], NULL);
+    if(tmpStack->top == 0 || tmpStack->top == 1) {
+        usedRule = generateRule(ruleOnStack, typeStack, lastFoundType, tmpStack->stack[0]->paToken, NULL, name, values[0], NULL, exprCheck1, exprCheck2);
     }
-    else
-        usedRule = generateRule(ruleOnStack, typeStack, lastFoundType, tmpStack->stack[0]->paToken, name, values[0], values[1]);
-    
+    else if( tmpStack->top == 2)
+    {
+        usedRule = generateRule(ruleOnStack, typeStack, lastFoundType, tmpStack->stack[0]->paToken, pointer1, name, values[0], values[1], exprCheck1, exprCheck2);
+    }
+
     //printf("\nsuedrule: %i", i);
     if(usedRule == 3 && isOp2Zero) {
         printf("-9vypisujem\n");
