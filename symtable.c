@@ -345,7 +345,6 @@ pushArg(char *key, itemType type){
         return SUCCESS;
     }
     //didnt find element by key (function of name by key)
-    printf("loudo you basic bitch, neumíš ani psát stringy už jo, sem tě vychoval teda jinak, soustřed se vole\n");
     return 666; //return error
 }
 
@@ -390,7 +389,6 @@ pushRet(char *key,itemType type){
         return SUCCESS;
     }
     //didnt find element by key
-    printf("loudo you basic bitch, neumíš ani psát stringy už jo, sem tě vychoval teda jinak, soustřed se vole\n");
     return 666; //return error
 }
 
@@ -442,78 +440,3 @@ delScope(char *funcKey){
 
     return SUCCESS;
 }
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// int
-// main(void){
-//     //create global symtable
-//     symtableCreateGlobal(&symGlobal); //works
-
-//     //insert items into global symtable (functions)
-//     symtableItemInsertGlobal("main");
-//     symtableItemInsertGlobal("loudikBoi");
-//     symtableItemInsertGlobal("sabina_scenuje");
-//     symtableItemInsertGlobal("MAAAAAACEEEEEEE"); //works
-//     //add some arguments & retvals
-//     if(pushArg("main",TYPE_INT64))return 1;
-//     if(pushArg("main",TYPE_FLOAT64))return 1;
-//     if(pushArg("main",TYPE_STRING))return 1;
-
-//     if(pushArg("loudikBoi",TYPE_FLOAT64))return 1;
-//     if(pushArg("sabina_scenuje",TYPE_BOOL))return 1;
-//     if(pushArg("MAAAAAACEEEEEEE",TYPE_STRING))return 1; //works
-
-//     // -- DEBUG
-//     // symtableGlobalItem *item = symtableItemGetGlobal("main");
-//     // printf("func: %s; countArgs: %d; args:",item->key,item->countArgs);
-//     // for (int i = 0; i < item->countArgs; i++)
-//     // {
-//     //     if(i != (item->countArgs-1)){
-//     //         printf("%d,", item->args[i]);
-//     //     } else {
-//     //         printf("%d\n", item->args[i]);
-//     //     }
-//     // } //works
-
-//     if(pushRet("main",TYPE_BOOL))return 1;
-//     if(pushRet("main",TYPE_STRING))return 1;
-//     if(pushRet("main",TYPE_INT64))return 1;
-//     if(pushRet("loudikBoi",TYPE_INT64))return 1;
-//     if(pushRet("sabina_scenuje",TYPE_BOOL))return 1;
-//     if(pushRet("MAAAAAACEEEEEEE",TYPE_STRING))return 1; //works
-
-//     // -- DEBUG
-//     // printf("should be 5,2,3 >> ");
-//     // for (int i = 0; i < item->countRets; i++)
-//     // {
-//     //     printf(" %d,",item->returns[i]);
-//     // } //works
-
-//     // symtableGlobalItem *i = symtableItemGetGlobal("main");
-//     itemType type = TYPE_INT64;
-//     symtableItemInsert("main","variable",type,1);
-//     symtableItemInsert("main","variable2",type,1);
-//     symtableItemInsert("main","variable3",type,1);
-
-//     symtableItemInsert("loudikBoi","va1",type,1);
-//     symtableItemInsert("sabina_scenuje","ve1",type,1);
-//     symtableItemInsert("MAAAAAACEEEEEEE","aw2",type,1);
-
-//     // printSymtable("main");
-//     printAll();
-
-//     addScope("main");
-//     symtableItemInsert("main","lalala",type,1);
-//     // symtableItem *it;
-//     // it = symtableItemGet("main","lalala");
-//     // printf("%s; %d\n",it->key,it->type);
-//     printAll();
-
-//     delScope("main");
-//     printAll();
-
-//     symtableDestroyGlobal();
-
-//     // printf(">> %ld\n",sizeof(itemType));
-//     return 0;
-// }
