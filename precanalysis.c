@@ -463,7 +463,7 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, c
     char *helpName = NULL;
     helpName = malloc(100);
 
-    printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
+    //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
     
     // compare with the set of rules in prectableandrules.c
     while(i < 20) {
@@ -793,7 +793,7 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
         
         if(i == 0) {
             //printf("--------====heyo%i, %i, %i\n", mainStack->stack[mainStack->top]->paToken->value[0], mainStack->stack[mainStack->top]->paToken->value[1], mainStack->stack[mainStack->top]->paToken->value[2]);
-            if( ((strcmp(mainStack->stack[mainStack->top]->paToken->value, array)) == 0) ||  ((strcmp(mainStack->stack[mainStack->top]->paToken->value, "0.0")) == 0))
+            if( mainStack->stack[mainStack->top]->paToken->value[0] == 0 ||  ((strcmp(mainStack->stack[mainStack->top]->paToken->value, "0.0")) == 0))
                 isOp2Zero = true;
  
             if(mainStack->stack[mainStack->top]->paType == OP_EXPRESSION)
