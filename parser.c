@@ -27,12 +27,15 @@ int dewit = 1;
 
 int loudaFirstBoi = 1; //kuli was here
 
+
+/// funkce umoznujici nahlizeni na dalsi token ///
 int ungetToken(Token *tk) {
     tkns[ungot++] = *tk;
     if (!(tkns = realloc(tkns, sizeof(Token)*(ungot+1))))
         return INTERNAL_ERROR;
 }
 
+/// funkce alokujici misto pro strukturu jenz vyuziva predesla funkce ///
 int allocUnget(){
     if (!(tkns = malloc(sizeof(Token))))
         return INTERNAL_ERROR;
@@ -43,6 +46,7 @@ int allocUnget(){
     return EC_GOOD;
 }
 
+/// funkce nacitajici token bud z pole tokenu nacteneho pri prvnim pruchodu kodu, pripadne z pole tokenu jenz vyuziva funkce pro nahlizeni na dalsi tokeny ///
 int getToken(Token *tok){
     if(ungot && dewit) {
         *tok = tkns[0];
@@ -64,20 +68,15 @@ int getToken(Token *tok){
     }
 }
 
+/// funkce pro nacteni tokenu pri prvnim pruchodu ///
 int fillTknArr(Token *tok){
-    // for (int i = 0;i < strlen(tok->value); i++)
-    // {
-    //     if(tok->value[i] == '\005'){
-    //         printf("louda to zvladnul\n");
-    //         tok->value[i] = '\0';
-    //     }
-    // }
     tknLoad[tknLoadCount++] = *tok;
     if (!(tknLoad = realloc(tknLoad, sizeof(Token)*(tknLoadCount+1))))
         return INTERNAL_ERROR;
     return EC_GOOD;
 }
 
+/// funkce jenz nacte definice funkci a jejich argumenty a navratove typy pri prvnim pruchodu ///
 int loadFuncti(){
     CHECK(gettToken(&token))
     while (token.type!=EOF_){
@@ -125,6 +124,7 @@ int loadFuncti(){
     return EC_GOOD;
 }
 
+/// funkce jenz sesklada strukturu pro 3AK a odesle ji generatoru ///
 void assemble(char* name, char* boku, char* no, char* pico, trAK *instruct) {
     instruct->name = name;
     instruct->boku = boku;
@@ -134,7 +134,7 @@ void assemble(char* name, char* boku, char* no, char* pico, trAK *instruct) {
     return;
 }
 
-
+/// funkce nahrazujici rekurzivni sestup pro nacitani sekvence promennych ///
 int idSekv(int eos){
     int delim;
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
@@ -262,8 +262,10 @@ int idSekv(int eos){
     }
     else {
         dere:
+
         retType = analyzePrecedence();
         CHECK_R(retType >= 0, (returnCode) -retType)
+
         expTypes[0] = retType;
         CHECK(getToken(&token));
 
@@ -334,13 +336,13 @@ int idSekv(int eos){
     CHECK_R(TTYPE==((tokenType)eos),EC_SYN)
     return EC_GOOD;
 }
-
+/// funkce jenz zkontroluje zda je string jednim z datovych typu ifj20 ///
 int isType(char* string){
     if (!strcmp(string,"int") || !strcmp(string,"float64") || !strcmp(string,"string") || !strcmp(string,"bool"))
         return 1;
     return 0;
 }
-
+/// funkce jenz prevede datovy typ ve formatu stringu na lokalni enum ///
 int switchToType(char* type){
     if (!strcmp(type,"string"))
         return TYPE_STRING;
@@ -351,7 +353,7 @@ int switchToType(char* type){
     else if (!strcmp(type,"bool"))
         return TYPE_BOOL;
 }
-
+/// zakladni funkce jenz ridi chod celeho programu ///
 int prolog(){
     if(loudaFirstBoi){ //kuli was here
         instr = malloc(sizeof(trAK));
@@ -378,7 +380,7 @@ int prolog(){
         return EC_SYN;
     return EC_GOOD;
 }
-
+/// funkce rekurzivniho sestupu kontrolujici telo funkce ///
 int rdBody(){
     CHECK(getToken(&token));
     if (TTYPE==EOF_) {
@@ -395,7 +397,7 @@ int rdBody(){
     }
     return EC_GOOD;
 }
-
+/// funkce rekurzivniho sestupu pri definici funkce ///
 int rdDef(){
     char** args = malloc(sizeof(char*));
     int* rets = malloc(sizeof(int));
@@ -448,7 +450,7 @@ int rdDef(){
     assemble("FUNC_DEF_END",actualFunc->key,"","",instr);
     return EC_GOOD;
 }
-
+/// funkce rekurzivniho sestupu pri nacitani parametru funkce ///
 int rdParams(){
     char* varName = malloc(sizeof(TSTR));
     CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
@@ -475,6 +477,7 @@ int rdParams(){
     return EC_GOOD;
 }
 
+/// funkce rekurzivniho sestupu rozvijejici predchozi funkci ///
 int rdParamsN(){
     char* varName;
     if (TTYPE==EOL_) {
@@ -508,6 +511,7 @@ int rdParamsN(){
     return EC_GOOD;
 }
 
+/// funkce rekurzivniho sestupu nacitajici definovane navratove hodnoty funkce ///
 int rdReturns(){
     CHECK_R(TTYPE==LEFT_ROUND_BRACKET,EC_SYN)
     CHECK(gettToken(&token))
@@ -529,6 +533,7 @@ int rdReturns(){
     return EC_GOOD;
 }
 
+/// funkce rekurzivniho sestupu rozvijejici predchozi funkci ///
 int rdReturnsNamed(){
     char* varName;
     if (TTYPE==IDENTIFIER){
@@ -561,6 +566,7 @@ int rdReturnsNamed(){
     return EC_GOOD;
 }
 
+/// funkce rekurzivniho sestupu rozvijejici predchozi funkci ///
 int rdReturnsNamedN(){
     char* varName;
     CHECK(gettToken(&token));
@@ -591,6 +597,7 @@ int rdReturnsNamedN(){
     return EC_GOOD;
 }
 
+/// funkce rekurzivniho sestupu rozvijejici funkci pro nacitani navratovych hodnot ///
 int rdReturnsN(){
     CHECK(gettToken(&token));
     CHECK(fillTknArr(&token))
@@ -612,6 +619,7 @@ int rdReturnsN(){
     return EC_GOOD;
 }
 
+/// funkce rekurzivniho sestupu pro kontrolu prikazu ifj20 ///
 int rdComm(){
     int retType = 0;
     if (TTYPE==EOL_){
@@ -782,6 +790,7 @@ int rdComm(){
     return EC_GOOD;
 }
 
+/// funkce rekurzivniho sestupu pro kontrolu else navesti ///
 int rdElseOrNot(char *end){
     int retType = 0;
     char *next = generate_label();
@@ -826,83 +835,7 @@ int rdElseOrNot(char *end){
     return EC_GOOD;
 }
 
-int rdExprsOrCall(){
-    int retType = 0;
-    if (TTYPE==IDENTIFIER){
-        Token tmpToken;
-        tmpToken = token;
-        CHECK(getToken(&token));
-        if (TTYPE!=LEFT_ROUND_BRACKET){
-            ungetToken(&tmpToken);
-            ungetToken(&token);
-            retType = analyzePrecedence();
-            CHECK_R(retType>=0,(returnCode)-retType)
-            CHECK(getToken(&token));
-            if (TTYPE==COMMA)
-            CHECK(rdExprSekv())
-        }
-        else {
-            CHECK(getToken(&token));
-            if (TTYPE!=RIGHT_ROUND_BRACKET) {
-                CHECK(rdInParams())
-                CHECK_R(TTYPE==RIGHT_ROUND_BRACKET,EC_SYN)
-            }
-            CHECK(getToken(&token));
-        }
-    }
-    else {
-        ungetToken(&token);
-        retType = analyzePrecedence();
-        CHECK_R(retType>=0,(returnCode)-retType)
-        CHECK(getToken(&token));
-        if (TTYPE==COMMA)
-        CHECK(rdExprSekv())
-    }
-
-    return EC_GOOD;
-}
-
-int rdIdsekv(){
-    CHECK_R(TTYPE==IDENTIFIER,EC_SYN)
-    CHECK(getToken(&token));
-    if (TTYPE==COMMA) {
-        CHECK(getToken(&token));
-        CHECK(rdIdsekv())
-    }
-
-    return EC_GOOD;
-}
-
-int rdExprSekv(){
-    int retType = 0;
-    retType = analyzePrecedence();
-    CHECK_R(retType>=0,(returnCode)-retType)
-    CHECK(getToken(&token));
-    if(TTYPE==COMMA)
-    CHECK(rdExprSekv());
-
-    return EC_GOOD;
-}
-
-int rdInParams(){
-    CHECK_R(TTYPE==IDENTIFIER || TTYPE==STRING || TTYPE==FLOAT || TTYPE==INTEGER,EC_SYN)
-    CHECK(getToken(&token));
-    if (TTYPE==COMMA)
-    CHECK(rdInParamsN())
-
-    return EC_GOOD;
-}
-
-int rdInParamsN(){
-    CHECK(getToken(&token));
-    CHECK_R(TTYPE==IDENTIFIER || TTYPE==STRING || TTYPE==FLOAT || TTYPE==INTEGER,EC_SYN)
-    CHECK(getToken(&token));
-    if (TTYPE==COMMA)
-    CHECK(rdInParamsN())
-
-    return EC_GOOD;
-}
-
+/// funkce jenz ulozi do tabulky symbolu informace o vestavenych funkcich ifj20 ///
 int addInbuilt(){
     CHECK(symtableItemInsertGlobal("inputs"))
     CHECK(pushRet("inputs",switchToType("string")))
