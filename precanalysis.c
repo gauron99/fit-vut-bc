@@ -393,7 +393,6 @@ int getPaType(Token *token) {
             else {
                 ungetToken(&t1);
             }
-            //printf("RETURNING OP_ID in getPaType");
             return OP_ID;   // else OP_ID
         }
         case INTEGER:{ 
@@ -463,8 +462,6 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, T
     char *helpName = NULL;
     helpName = malloc(100);
 
-    //printf("\nRule found: %i %i %i\n", rule[0], rule[1],rule[2]);
-    
     // compare with the set of rules in prectableandrules.c
     while(i < 20) {
         if(rule[0] == rules[i][0] && rule[1] == rules[i][1] && rule[2] == rules[i][2]) {
@@ -473,8 +470,6 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, T
         }
         i++;
     }
-    
-    //printf("--------%i", i);
     
     if(found) {
         char *nameGen = NULL;
@@ -518,10 +513,8 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, T
                 
                 char *theInt = malloc(10);
                 
-                printf("valueeeee %s", value1);
                 symtableItem *val1 = symtableItemGet(actualFunc->key,value1);
                 if(val1 == NULL && tekken2->type == IDENTIFIER && !expr1) {
-                    //printf("ANBI");
                     return SEM_ERR;
                 }
 
@@ -538,7 +531,6 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, T
 
                 symtableItem *val2 = symtableItemGet(actualFunc->key,value2);
                 if(val2 == NULL && teken->type == IDENTIFIER && !expr2) {
-                    //printf("dfjbsdivhbojdsn");
                     return SEM_ERR;
                 }
                 if (val2){
@@ -570,10 +562,8 @@ int generateRule(int *rule, is_t *typeStack, int *lastFoundType, Token *teken, T
                         break;
                     case 2:
                         if(type1 == STRING) {
-                            //printf("sahbfsduhbf\n");
                             return SEM_ERR_COMP_MINUS;
                         }
-                        //printf("hejdpc\n");
                         assemble("MUL", nameGen, valueGen2, valueGen1, instr);
                         break;
                     case 3:
@@ -812,10 +802,9 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
         
         if(i == 0) {
             pointer1 = tmpTerminal->paToken;
-                            //printf("--------====heyo%i, %i, %i\n", mainStack->stack[mainStack->top]->paToken->value[0], mainStack->stack[mainStack->top]->paToken->value[1], mainStack->stack[mainStack->top]->paToken->value[2]);
-            if( mainStack->stack[mainStack->top]->paToken->value[0] == 0 ||  ((strcmp(mainStack->stack[mainStack->top]->paToken->value, "0.0")) == 0))
+            if( mainStack->stack[mainStack->top]->paToken->value[0] == '0' ||  ((strcmp(mainStack->stack[mainStack->top]->paToken->value, "0.0")) == 0)) {
                 isOp2Zero = true;
- 
+            } 
             if(mainStack->stack[mainStack->top]->paType == OP_EXPRESSION) {
                 exprCheck1 = true;
                 values[0] = mainStack->stack[mainStack->top]->name;
@@ -863,16 +852,13 @@ int sFindRule(s_t *mainStack, s_t *tmpStack, sElemType *tmpTerminal, is_t *typeS
         usedRule = generateRule(ruleOnStack, typeStack, lastFoundType, tmpStack->stack[0]->paToken, pointer1, name, values[0], values[1], exprCheck1, exprCheck2);
     }
 
-    //printf("\nsuedrule: %i", i);
     if(usedRule == 3 && isOp2Zero) {
-        printf("-9vypisujem\n");
         return -9;
     }
     return usedRule;
 }
 
 int analyzePrecedence() {
-    //printf("\nINA ZAVOLANA FUNKCIA\n");
  
     int action = 0;             // action determined by prectable
     int findRuleRet = 0;
@@ -942,15 +928,15 @@ int analyzePrecedence() {
     
     // implementation of precedence analysis automaton
     while(!(analyzedSymbol->paType == OP_DOLLAR && sFindFirstTerminal(mainStack) == OP_DOLLAR)) {
-        //printf("\ntop stack: %i, mainterm: %i\n", sFindFirstTerminal(mainStack), analyzedSymbol->paType);
         // detrmine action based on input, top stack terminal and PA table
         action = precedentTable[sFindFirstTerminal(mainStack)][analyzedSymbol->paType];
-        //printf("%i\n", action);
         switch(action) {
             case(PA_GREATER):
                 name = generate_identifier();
                 // determine rule on top of the stack
                 findRuleRet = sFindRule(mainStack, tmpStack, tmpSymbol, typeStack, &lastFoundType, name);
+                if(findRuleRet == -9)
+                    return -9;
                 // rule does not exist -> syntactic error
                 if(findRuleRet == SYNTAX_ERR)
                     return SYNTAX_ERR;
