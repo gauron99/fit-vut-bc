@@ -127,6 +127,7 @@ int
 symtableCreateGlobal(symtableGI *tab);
 /**
  * @brief insert global item into the global symtable
+ * @param key name of global item to be inserted
  * @return success or error
  */
 int
