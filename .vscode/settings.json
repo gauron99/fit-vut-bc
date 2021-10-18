@@ -1,6 +1,12 @@
 {
   "files.associations": {
     "string": "cpp",
-    "iostream": "cpp"
-  }
+    "iostream": "cpp",
+    "cstddef": "cpp",
+    "netdb.h": "c",
+    "unistd.h": "c",
+    "in_systm.h": "c",
+    "stdio.h": "c"
+  },
+  "C_Cpp.errorSquiggles": "Disabled"
 }

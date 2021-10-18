@@ -15,6 +15,7 @@ File has to be encrypted before transfer (so its not in text form during it)
 
 # implementation info
 pokud je dan volitelny parametr '-l', ignoruji se vsechny ostatni parametry
+program musi byt spousten s "root privileges" (ex: sudo) kvuli pouziti SOCK_RAW
 
 
 ## files needed
@@ -37,7 +38,17 @@ pokud je dan volitelny parametr '-l', ignoruji se vsechny ostatni parametry
   ## popis zajimavejsich pasazi implementace
   five
   ## pouziti vytvorenych programu a literatura
+  six
 
 Segfault nelze.
 
 body: x/20 (15 impl, 5 docu)
+
+### sidenotes
+  - catch all packets, filter after
+  OR
+  - catch specifically what I want
+
+  https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
+  list of the IP protocol numbers found in the field Protocol of the IPv4 header
+  and the Next Header field of the IPv6 header

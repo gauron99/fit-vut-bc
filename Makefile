@@ -4,12 +4,19 @@
 MAIN=secret.cpp
 OUT_BIN=secret
 
-all: simple-one-unit-big-boss
+all: cl build-in-c
 	
+build-in-c: $(MAIN_C)
+	gcc -std=c99 $(MAIN_C).c -o $(MAIN_C) -g
+
+rs:
+	sudo ./secret -l
+
+r:
+	sudo ./secret -s adminboi
+
+cl:
+	rm -f secret *.o
 
 
-simple-one-unit-big-boss: secret.cpp secret.h
-	g++ $(MAIN) -o $(OUT_BIN)
 
-run:
-	./secret
