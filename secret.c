@@ -4,6 +4,7 @@
  *                                  						*
  * ISA project 2021 - secret ICMP file transfer *
  * Author: David Fridrich           						*
+ * last mod: 19.10.2021													*
  *                                  						*
 *************************************************
 */
@@ -23,6 +24,8 @@
  * common in g++ or using -std=gnuXX but not in gcc -std=cXX, therefore
  */
 #define _XOPEN_SOURCE 700 
+
+#define PACKET_MAX_SIZE 1500
 
 #include <stdio.h>
 #include <stdlib.h> //exit
@@ -50,65 +53,47 @@ enum who_is {
 	IS_CLIENT,
 };
 
-typedef struct App{
-    //specifikace souboru
-		char *r_opt; 
-		// ip adresa/hostname kam se ma soubor poslat
-		char *s_opt; 
-		unsigned int seq_no;
-}App;
-
-#define PORT 6666 //for server
 char *encryptionKey = "xfridr08";
-
-
-// ------------- function declarations ------------- //
-void printErr(char *s);
-void printHelp();
-void server(App app);
-void client(App app);
-int parser(App *app, int argc, char **argv);
-// ------------- function declarations ------------- //
-
 
 void printErr(char *s){
 	fprintf(stderr,"Error: %s\n",s);
 	exit(1);
 }
 
-
 // help function prints out help message
 void printHelp(){
-	printf("This is a help message for secret");
-	printf("Send & receive ICMP messages echo-request/reply");
-	printf("----- ----- ----- ----- -----");
-	printf("USAGE"); 
-	printf("	./secret [parameters]");
-	printf("PARAMETERS");
-	printf("I) for server");
-	printf("	[-l]  start a server and listen for ICMP messages");
-	printf("		-- is exclusive(if -l is given, ignore everything else)");
-	printf("II) for client");
-	printf("	[-s]  <ip|hostname> of server (where to send)" );
-	printf("	[-r]  <file> to send" );
+	printf("This is a help message for secret\n");
+	printf("job - Send/recieve a crypted file through ICMP traffic\n");
+	printf("----- ----- ----- ----- -----\n");
+	printf("USAGE\n"); 
+	printf("	./secret [parameters]\n");
+	printf("PARAMETERS\n");
+	printf("I) for server\n");
+	printf("	[-l]  start a server and listen for ICMP messages\n");
+	printf("		-- is exclusive(if -l is given, nothing else can be given)\n");
+	printf("II) for client\n");
+	printf("	[-s]  <ip|hostname> of server (where to send)\n");
+	printf("	[-r]  <file> to send\n");
 	exit(0);
 }
- 
 
 // ------------------------------- PARSER ------------------------------- //
 
-int parser(App *app,int argc, char **argv){
+int
+parser(int argc, char **argv, char **file,char **host){
   int param_s=0;
   int param_r=0;
   int param_l=0;
+
+	if(argc == 1){
+		printHelp();
+	}
 
 	/*
    * parameter -l is exclusive.
 	 *  if -l option is given, no other parameters can be given.
 	*/
-
-  for (int i = 1; i < argc; i++)
-  {
+  for (int i = 1; i < argc; i++){
     if(!strcmp(argv[i],"-h")){
       printHelp();
     }
@@ -117,8 +102,8 @@ int parser(App *app,int argc, char **argv){
     }
     else if(!strcmp(argv[i],"-s")){ //ip/hostname         
       if(argv[i+1] != NULL){
-        app->s_opt = malloc(sizeof(strlen(argv[i+1])));
-        app->s_opt = argv[++i];
+        *host = malloc(sizeof(strlen(argv[i+1])));
+        *host = argv[++i];
         param_s=1;
       } else {
         printErr("Parameter for -s was not provided");
@@ -126,8 +111,8 @@ int parser(App *app,int argc, char **argv){
     }
     else if(!strcmp(argv[i],"-r")){ //soubor
       if(argv[i+1] != NULL){
-        app->r_opt = malloc(sizeof(strlen(argv[i+1])));
-        app->r_opt = argv[++i];
+        *file = malloc(sizeof(strlen(argv[i+1])));
+        *file = argv[++i];
         param_r=1;
       } else {
         printErr("Parameter for -r was not provided");
@@ -148,7 +133,7 @@ int parser(App *app,int argc, char **argv){
 
 // ------------------ SERVER STUFF ------------------ //
 
-void server(App app) {
+void server() {
 
 	// create a socket
 	//superuser for SOCK_RAW use
@@ -165,7 +150,7 @@ void server(App app) {
 	//fill with zeroes
 	memset(&serv_addr,0,sizeof(serv_addr));
 
-	serv_addr.sin_port = htons(PORT);
+	// serv_addr.sin_port = htons(PORT);
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY; //current host IP
 
@@ -218,10 +203,10 @@ void server(App app) {
 
 // ------------------ CLIENT STUFF ------------------ //
 
-void client(App app){
-	if(app.r_opt == "" || app.s_opt == ""){
-		printf("-r: %s\n",app.r_opt);
-		printf("-s: %s\n",app.s_opt);
+void client(char *file, char *host){
+	if(file == "" || host == ""){
+		printf("-r: %s\n",file);
+		printf("-s: %s\n",host);
 		// printErr("Not all necessary parameters were given."); //uncomment later
 		printf("warning, not all parameters set\n"); //DEBUG
 	}
@@ -230,7 +215,6 @@ void client(App app){
 
 	struct hostent *source;
 	struct sockaddr_in target_addr, source_addr;
-	struct ip *ip; //ip header
 	struct icmp *icmp; //icmp part of packet
 
 	char source_name[256]; // for client machine name (you)
@@ -245,77 +229,74 @@ void client(App app){
 	}
 	printf("me: %s\n",source_name);
 
-	// gethostbyname is obsolete, use -> getaddrinfo()
-	//  void freeaddrinfo(struct addrinfo *res) use at the end to unallocate? TODO
-
-	// if((source = gethostbyname(source_name)) == NULL){
-		// printErr("Gethostname() failed for source[client]");
-	// }
-	// printf("s:%s;sname:%s;slen:%s;sali:%s;stype:%s;sadd:%s\n",source,source->h_name,source->h_length,source->h_aliases,source->h_addrtype,source->h_addr_list[0]);
-	
-
-	// ip->ip_src = (*(struct in_addr*)source->h_addr_list);
+// gethostbyname is obsolete, use -> getaddrinfo()
 
 // get target(destination) ip adress
 	memset(&hints,0,sizeof(hints));
-	hints.ai_family = AF_UNSPEC; //AF_INET //AF_INET6 //AF_UNSPEC
-	hints.ai_socktype = SOCK_RAW;
-	hints.ai_protocol = IPPROTO_ICMP;
-	hints.ai_flags = 0;
-	hints.ai_next = NULL;
 
-	printf("app.sopt=%s\n",app.s_opt);
+	hints.ai_family = AF_UNSPEC; //IPv4 or IPv6
+	hints.ai_socktype = SOCK_RAW;
+	hints.ai_flags = 0;
+
 	int tmpRet;
-	if(tmpRet = (getaddrinfo(app.s_opt,NULL,&hints,&tmp)) != 0){
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(tmpRet));	
+	if(tmpRet = (getaddrinfo(host,NULL,&hints,&tmp)) != 0){
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(tmpRet));
 	}
 
-	// getaddrinfo returns in 'pai' (last argument) a list of address structures
-	// try to connect to atleast one.
-
+	//resolve protocol by given ip adress (as host arg)
 
 	// snippet taken from https://man7.org/linux/man-pages/man3/getaddrinfo.3.html
-	printf("Creating a socket...");
+	// getaddrinfo returns in 'pai' (last argument) a list of address structures
+	// try to connect to atleast one.
+	int protocol;
 	for(target=tmp; target != NULL;target=target->ai_next){
-		fd = socket(AF_INET,SOCK_RAW,IPPROTO_ICMP);
+		protocol = target->ai_family == AF_INET ? IPPROTO_ICMP : IPPROTO_ICMPV6;
+		fd = socket(target->ai_family,target->ai_socktype,protocol);
 		if (fd < 0){
 			continue;
 		}
-
-		if (connect(fd,target->ai_addr,target->ai_addrlen) != -1){
-			printf("done");
-			break; // successfully connected!
-		}
-
-		close(fd); //close socket
+		//if socket is successfully created, break with valid struct in 'target'
+		break;
 	}
 	freeaddrinfo(tmp);
 
 	if(target == NULL){
-		printErr("Couldn't connect to any address\n");
+		printErr("No socket was created successfully\n");
 	}
 
+	//init packet -- largest possible packet size is set to 1500B
+	char packet[PACKET_MAX_SIZE];
+	memset(&packet,0,PACKET_MAX_SIZE);
 
+	/** TODO TODO TODO
+	 * structure of the packet itself:
+	 * first 2 bytes (16 bit) - [0],[1] == seq. number of packet... max val 65,536
+	 * this means 1498 bytes per packet of data can be sent. (1.498kB)
+	 */
 
-
+	//resolve ICMP header
+	struct icmphdr *icmpHdr = (struct icmphdr*)packet;
+	icmpHdr->type = ICMP_ECHO;
+	icmpHdr->checksum = 0; //do this for max cover & legitimity of the packet ;)
 
 }	 
 
 
-
-
 // --------------------------------- MAIN --------------------------------- //
 int main(int argc, char **argv){
-	printf("------code start-------");
-	App app;
 
-	// parse cmdl arguments
-	if(parser(&app,argc,argv) == IS_SERVER){
-		printf("Is server\n");
-		server(app);
+	//initialize some values
+	char *file = NULL; // r option
+	char *host = NULL; // s option
+
+
+	// parse cmli arguments & decide if startup client or server
+	if(parser(argc,argv, &file, &host) == IS_SERVER){
+		printf("server it is\n");
+		server();
 	} else{ //IS_CLIENT
-		printf("Is client\n");
-		client(app);
+		printf("client it is\n");
+		client(file,host);
 	}
 
 	return 0;

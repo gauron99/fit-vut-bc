@@ -1,13 +1,12 @@
 
-.PHONY: all simple-one-unit-big-boss
+.PHONY: all rs r cl build-in-c
 
-MAIN=secret.cpp
-OUT_BIN=secret
+MAIN=secret
 
 all: cl build-in-c
 	
-build-in-c: $(MAIN_C)
-	gcc -std=c99 $(MAIN_C).c -o $(MAIN_C) -g
+build-in-c: $(MAIN).c $(MAIN).h
+	gcc -std=c99 $(MAIN).c -o $(MAIN) -g
 
 rs:
 	sudo ./secret -l
@@ -17,6 +16,4 @@ r:
 
 cl:
 	rm -f secret *.o
-
-
 
