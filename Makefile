@@ -6,7 +6,7 @@ MAIN=secret
 all: cl build-in-c
 	
 build-in-c: $(MAIN).c $(MAIN).h
-	gcc -std=c99 $(MAIN).c -o $(MAIN) -g
+	gcc -std=gnu99 $(MAIN).c -o $(MAIN) -g -lpcap
 
 rs:
 	sudo ./secret -l

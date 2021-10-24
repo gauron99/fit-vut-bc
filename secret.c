@@ -23,29 +23,36 @@
  * it is defined under a condition a XOPEN2K POSIX is defined, which is fairly
  * common in g++ or using -std=gnuXX but not in gcc -std=cXX, therefore
  */
-#define _XOPEN_SOURCE 700 
+// #define _XOPEN_SOURCE 700 
 
 #define PACKET_MAX_SIZE 1500
 
+// #define __FAVOR_BSD          // important for tcphdr structure
+
 #include <stdio.h>
-#include <stdlib.h> //exit
-#include <string.h>
+#include <stdlib.h> 					// exit()
+#include <string.h>						// memset, memcpy
 
 #include <netdb.h> //1
+#include <unistd.h> 					// close()
 
-#include <unistd.h>
 
-#include <sys/stat.h>
-#include <sys/socket.h> //2
-#include <sys/types.h> // 3 -- aready in netdb.h
+#include <netinet/ip.h> 			// struct iphdr (+server)
+#include <netinet/ip_icmp.h>	//icmphdr, ICMP_ECHO
 
-// #include <netinet/in_systm.h> // ?
-// #include <netinet/in.h>
 
-#include <netinet/ip.h> //struct iphdr
-#include <netinet/ip_icmp.h>
+//pcap server
+// #include <sys/types.h>
 
-#include <arpa/inet.h> //inet_addr()
+#include <pcap/pcap.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h> 
+#include <arpa/inet.h>
+
+#include <openssl/aes.h> 			// encryption
+
+
 
 
 enum who_is {
@@ -130,120 +137,106 @@ parser(int argc, char **argv, char **file,char **host){
 	return param_l ? IS_SERVER : IS_CLIENT;
 }
 
+// ------------------ CHECKSUM STUFF ------------------ //
+
+// unsigned short checksum(void *b, int len)
+// {	unsigned short *buf = b;
+// 	unsigned int sum=0;
+// 	unsigned short result;
+
+// 	for ( sum = 0; len > 1; len -= 2 )
+// 		sum += *buf++;
+// 	if ( len == 1 )
+// 		sum += *(unsigned char*)buf;
+// 	sum = (sum >> 16) + (sum & 0xFFFF);
+// 	sum += (sum >> 16);
+// 	result = ~sum;
+// 	return result;
+// }
+
+
+//http://www.faqs.org/rfcs/rfc1071.html
+unsigned short checksum(void *b,int l){
+  unsigned short *addr = b;
+  unsigned int sum = 0;
+
+  //inner loop
+  for (; l > 1; l-=2){
+    sum += *addr++;
+  }
+
+	//if there is one byte left over (odd count)
+	if(l==1){
+		sum+= *addr;
+	}
+
+  //fold 32-bit sum to 16 bits
+  while(sum>>16){
+    sum = (sum & 0xffff) + (sum >> 16);
+  }
+  return (~sum);
+}
 
 // ------------------ SERVER STUFF ------------------ //
 
-void server() {
-
-	// create a socket
-	//superuser for SOCK_RAW use
-	printf("> creating a socket...");
-	int fd=socket(AF_INET,SOCK_RAW,IPPROTO_ICMP); 
-	if(fd == -1){
-		printErr("Error occured during socket setup [server]");
-		close(fd);
-	}
-	printf("done\n");
-
-	struct sockaddr_in serv_addr;
-
-	//fill with zeroes
-	memset(&serv_addr,0,sizeof(serv_addr));
-
-	// serv_addr.sin_port = htons(PORT);
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY; //current host IP
-
-	printf("> binding the socket to address & port...\n");
-	// bind the socket to PORT
-	if( bind(fd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) == -1) {
-		printErr("Bind unsuccessful.");
-	} 
-	printf("done\n");
-
-	// printf("> setting socket to passive mode with listen...";
-	// if( listen(fd,3) < 0){
-	// 	printErr("Listen unsuccessful");
-	// }
-	// printf("done");
-
-	printf("starting server...Press CTRL-C to stop me\n");
-	struct sockaddr_in cl_addr;
-	socklen_t sock_size_cl = sizeof(cl_addr);
-	int cl_fd;
-	char *buf[2048];
-	memset(&buf,0,sizeof(buf));
-
-	/*
-	 * when receiving a packet, its gonna be a whole IP packet
-	 * and ICMP info must be extracted from it.
-	 * 
-	 * Copy of each ICMP reply is got, must be filtered.
-	*/
-
-	while(1){
-		cl_fd = recvfrom(fd,buf,2048,0,(struct sockaddr*)&cl_addr,&sock_size_cl);
-
-		// cout<< app.seq_no++ <<": " << "read " << cl_fd << " bytes");
-
-		// IP info
-		struct iphdr *ip_h = (struct iphdr*)buf;
-		// printf("IP header is %d bytes.\n", ip_h->ihl*4); // this is in <ip.h> apparently
-		// ICMP info 	
-		struct icmphdr *icmp_h = (struct icmphdr *)((char *)ip_h + (4*(ip_h->ihl) ));
-		// if(icmp_h->type == ICMP_ECHO){
-			// printf("ICMP msgtype=%d, code=%d", icmp_h->type, icmp_h->code);
-		// }
-
-	}
-	exit(0); //dont return control -> when server stops running, exit.
+void p(char *s){
+	printf("%s\n",s);
 }
 
+void server() {
+	char errbuf[PCAP_ERRBUF_SIZE];  // constant defined in pcap.h
+  pcap_t *handle;                 // packet capture handle 
+  pcap_if_t *alldev, *dev ;       // a list of all input devices
+  char *devname;                  // a name of the device
+  struct in_addr a,b;
+  bpf_u_int32 netaddr;            // network address configured at the input device
+  bpf_u_int32 mask;               // network mask of the input device
+  struct bpf_program fp;          // the compiled filter
 
+
+	// open the input devices (interfaces) to sniff data
+  if (pcap_findalldevs(&alldev, errbuf))
+    printErr("Can't open input device(s)");
+
+  // list the available input devices
+  printf("Available input devices are: ");
+  for (dev = alldev; dev != NULL; dev = dev->next){
+    printf("%s ",dev->name);
+  }
+  printf("\n");
+
+  devname = alldev->name;  // select the name of first interface (default) for sniffing 
+  
+
+}
 
 // ------------------ CLIENT STUFF ------------------ //
 
 void client(char *file, char *host){
-	if(file == "" || host == ""){
-		printf("-r: %s\n",file);
-		printf("-s: %s\n",host);
-		// printErr("Not all necessary parameters were given."); //uncomment later
-		printf("warning, not all parameters set\n"); //DEBUG
+	if(file == "" || host == "" || file == NULL || host == NULL){
+		printf("-r(file): %s\n",file);
+		printf("-s(host): %s\n",host);
+		// printErr("Not all necessary parameters were given."); //TODO uncomment later
 	}
 
-	printf("------- Client info -------\n\n");
-
-	struct hostent *source;
-	struct sockaddr_in target_addr, source_addr;
-	struct icmp *icmp; //icmp part of packet
-
-	char source_name[256]; // for client machine name (you)
-
-	int fd;
-
+	int fd; //file descriptor for socket
 	struct addrinfo *target,*tmp,hints;
 
-// get source ip adress
-	if(	gethostname(source_name,sizeof(source_name)) < 0){
-		printErr("Couldn't resolve hostname[client]");
-	}
-	printf("me: %s\n",source_name);
-
-// gethostbyname is obsolete, use -> getaddrinfo()
-
-// get target(destination) ip adress
 	memset(&hints,0,sizeof(hints));
 
 	hints.ai_family = AF_UNSPEC; //IPv4 or IPv6
 	hints.ai_socktype = SOCK_RAW;
 	hints.ai_flags = 0;
 
-	int tmpRet;
-	if(tmpRet = (getaddrinfo(host,NULL,&hints,&tmp)) != 0){
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(tmpRet));
-	}
+	p("hostis:");
+	printf("%s\n",host);
 
-	//resolve protocol by given ip adress (as host arg)
+// gethostbyname is obsolete, use -> getaddrinfo()
+	int tmpRet = getaddrinfo(host,NULL,&hints,&tmp);
+	if(tmpRet != 0){
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(tmpRet));
+		exit(1);
+	}
 
 	// snippet taken from https://man7.org/linux/man-pages/man3/getaddrinfo.3.html
 	// getaddrinfo returns in 'pai' (last argument) a list of address structures
@@ -251,8 +244,16 @@ void client(char *file, char *host){
 	int protocol;
 	for(target=tmp; target != NULL;target=target->ai_next){
 		protocol = target->ai_family == AF_INET ? IPPROTO_ICMP : IPPROTO_ICMPV6;
+
+		printf("---\n");
+		printf("addr:%d\n",target->ai_addr->sa_family);
+		printf("family:%d\n",target->ai_family);
+		printf("sock:%d\n",target->ai_socktype);
+		
 		fd = socket(target->ai_family,target->ai_socktype,protocol);
+		printf("fd:%d\n",fd);
 		if (fd < 0){
+			printf("chyba?\n");
 			continue;
 		}
 		//if socket is successfully created, break with valid struct in 'target'
@@ -261,25 +262,50 @@ void client(char *file, char *host){
 	freeaddrinfo(tmp);
 
 	if(target == NULL){
-		printErr("No socket was created successfully\n");
+		printErr("No socket was created successfully, maybe you forgot sudo?\n");
 	}
 
 	//init packet -- largest possible packet size is set to 1500B
 	char packet[PACKET_MAX_SIZE];
 	memset(&packet,0,PACKET_MAX_SIZE);
 
-	/** TODO TODO TODO
-	 * structure of the packet itself:
-	 * first 2 bytes (16 bit) - [0],[1] == seq. number of packet... max val 65,536
-	 * this means 1498 bytes per packet of data can be sent. (1.498kB)
-	 */
+	char data[] = "yello boy how you been\n";
 
-	//resolve ICMP header
-	struct icmphdr *icmpHdr = (struct icmphdr*)packet;
-	icmpHdr->type = ICMP_ECHO;
-	icmpHdr->checksum = 0; //do this for max cover & legitimity of the packet ;)
 
-}	 
+	/**
+	 * PACKET
+	 * [0-7] -- icmp header
+	 * [8-1500] -- data
+	 * 
+	 * 
+	*/
+
+	// ICMP header length is 8 bytes
+	struct icmphdr *icmpH = (struct icmphdr*)packet;
+	icmpH->type = ICMP_ECHO;
+	icmpH->checksum = 0;
+
+	//copy the data to packet after icmp header
+	memcpy(packet+sizeof(struct icmphdr),data,sizeof(data));
+
+	//calculate checksum
+	icmpH->checksum = checksum(packet,sizeof(struct icmphdr)+sizeof(data));
+	
+	//current possible data len. Maybe if some special info is sent in the first
+	//packet of total len of file being send or something
+	unsigned int maxDataLen = PACKET_MAX_SIZE-sizeof(icmpH); 
+
+	// https://man7.org/linux/man-pages/man3/sendto.3p.html
+	if (sendto(fd,packet,sizeof(struct icmphdr)+sizeof(data),0,(struct sockaddr*)target->ai_addr,target->ai_addrlen) < 0){
+		printErr("Function sendto failed, exiting.\n");
+	}
+
+	//encryption
+
+
+}
+
+
 
 
 // --------------------------------- MAIN --------------------------------- //
