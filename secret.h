@@ -10,6 +10,8 @@
 // guards
 #ifndef ISA_SECRET_H
 #define ISA_SECRET_H
+
+#include <stdio.h>
 /**
  * function prints given error string and exits with errcode 1.
  * @param s string given message to be printed out to stderr
@@ -40,6 +42,29 @@ server();
  */
 void
 client(char *file, char *host);
+
+
+
+/**
+ * function checks if a file {@code file} provided as a path of this file exists.
+ * If it does, function executes normally and returns nothing, if file doesn't
+ * exist, function prints out an error and exits immediately.
+ * @param file pointer to a "string" containing a path to a file
+*/
+void
+fileExists(char *file);
+
+
+/**
+ * function is called on already existing file (no existing check is done here)
+ * it opens the file, reads its contents as bytes and returns the file pointer.
+ * @param in path to the existing file
+ * @param len length of this file in bytes
+ * @returns array of bytes with file content (+ length in bytes via parameter {@code len})
+*/
+char
+*fileOpenReadBytes(char *in, int *len);
+
 
 /**
  * function checks & processes cli parameters. returns if client or server is 
