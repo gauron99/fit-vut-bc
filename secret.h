@@ -4,7 +4,7 @@
 //  Used for ISA project @BUT_FIT (cz:FIT VUT)                                //
 //  author: David Fridrich                                                    //
 //  file: secret.h - declaration of functions used by secret.c                //
-//  last updated: 18.10.2021                                                  //
+//  last updated: 03.11.2021                                                  //
 ////////////////////////////////////////////////////////////////////////////////
 
 // guards
@@ -12,6 +12,20 @@
 #define ISA_SECRET_H
 
 #include <stdio.h>
+
+typedef struct settings{
+  int verbose_printing;
+  char *file_name;
+
+  int is_server;
+}settings;
+
+settings *ptr;
+
+void init_settings();
+
+void clean_settings();
+
 /**
  * function prints given error string and exits with errcode 1.
  * @param s string given message to be printed out to stderr
@@ -59,11 +73,12 @@ fileExists(char *file);
  * function is called on already existing file (no existing check is done here)
  * it opens the file, reads its contents as bytes and returns the file pointer.
  * @param in path to the existing file
- * @param len length of this file in bytes
- * @returns array of bytes with file content (+ length in bytes via parameter {@code len})
+ * @param len (pointer to) length of this file in bytes
+ * @param filename name of the file being sent(taken from provided path)
+ * @returns malloced array of bytes with file content (+ length in bytes via parameter {@code len})
 */
 char
-*fileOpenReadBytes(char *in, int *len);
+*fileOpenReadBytes(char *in, unsigned long int *len, char **filename);
 
 
 /**
@@ -81,4 +96,11 @@ char
 int
 parser(int argc, char **argv, char **file,char **host);
 
-#endif
+unsigned short
+checksum(void *b,int l,int p);
+
+void
+packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
+
+
+#endif //ISA_SECRET_H

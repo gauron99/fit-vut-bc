@@ -20,5 +20,5 @@ r:
 	sudo ./secret -s adminboi
 
 cl:
-	rm -f secret *.o
+	rm -f secret *.o vgcore*
 
