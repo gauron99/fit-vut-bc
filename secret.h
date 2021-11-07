@@ -4,23 +4,49 @@
 //  Used for ISA project @BUT_FIT (cz:FIT VUT)                                //
 //  author: David Fridrich                                                    //
 //  file: secret.h - declaration of functions used by secret.c                //
-//  last updated: 03.11.2021                                                  //
+//  last updated: 05.11.2021                                                  //
 ////////////////////////////////////////////////////////////////////////////////
 
 // guards
 #ifndef ISA_SECRET_H
-#define ISA_SECRET_H
+#define ISA_SECRET_H 1
+
 
 #include <stdio.h>
+
+#include <stdint.h>
+#include <stdlib.h> 					// exit()
+#include <string.h>						// memset, memcpy
+
+#include <netdb.h>
+#include <unistd.h> 					// close()
+
+#include <sys/stat.h> //file
+#include <sys/types.h>
+
+#include <netinet/ip_icmp.h>	//icmphdr, ICMP_ECHO
+
+
+//define some constants (packet max size, max file len in bytes, max file len)
+#define PACKET_MAX_SIZE 1500
+#define FILE_LEN_BYTES 5 //(0 to 1,099,511,627,775 ~ 1TB)
+#define MAX_FILE_LEN 1099511627775
+
+
+////////////// for server 
+// size of Linux Cooked Capture
+#define SIZE_LCC 16
+////////////// for server 
+
 
 typedef struct settings{
   int verbose_printing;
   char *file_name;
-
+  FILE *file;
   int is_server;
 }settings;
 
-settings *ptr;
+extern settings *ptr;
 
 void init_settings();
 
@@ -61,24 +87,23 @@ client(char *file, char *host);
 
 /**
  * function checks if a file {@code file} provided as a path of this file exists.
- * If it does, function executes normally and returns nothing, if file doesn't
- * exist, function prints out an error and exits immediately.
+ * If it does, function returns 1 (true), otherwise 0 (false).
  * @param file pointer to a "string" containing a path to a file
+ * @return returns 1(true) on success(=file exists), otherwise 0 (false)
 */
-void
+int
 fileExists(char *file);
 
 
 /**
- * function is called on already existing file (no existing check is done here)
+ * function is called on already existing file 
  * it opens the file, reads its contents as bytes and returns the file pointer.
  * @param in path to the existing file
  * @param len (pointer to) length of this file in bytes
- * @param filename name of the file being sent(taken from provided path)
  * @returns malloced array of bytes with file content (+ length in bytes via parameter {@code len})
 */
 char
-*fileOpenReadBytes(char *in, unsigned long int *len, char **filename);
+*fileOpenReadBytes(char *in, unsigned long int *len);
 
 
 /**
@@ -101,6 +126,12 @@ checksum(void *b,int l,int p);
 
 void
 packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
+
+char *getFilenameFromPacket(const u_char *p);
+
+unsigned int getSeqNumFromPacket(const u_char *p);
+
+unsigned int getFileLenFromPacket(const u_char *p);
 
 
 #endif //ISA_SECRET_H

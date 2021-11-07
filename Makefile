@@ -1,24 +1,33 @@
 
-.PHONY: all rs r cl build-in-c
+
+
+.PHONY: secret all cl build l local
 
 CC=gcc
+CFLAGS= -std=gnu99 -g -Wall -lpcap
+
 MAIN=secret
 
-all: cl build
-	
-build: $(MAIN).c $(MAIN).h
-	$(CC) -std=gnu99 $(MAIN).c -o $(MAIN) -g -lpcap
+all: clean $(MAIN)
 
-build-easy: $(MAIN).c $(MAIN).h
-	$(CC) $(MAIN).c -o $(MAIN) -g -lpcap
+$(MAIN): $(MAIN).o server.o client.o
+	$(CC) $(CFLAGS) -o $(MAIN) $(MAIN).o server.o client.o
+
+$(MAIN).o: $(MAIN).c $(MAIN).h
+	$(CC) $(CFLAGS) -c $<
+
+server.o: server.c $(MAIN).h
+	$(CC) $(CFLAGS) -c $<
+
+client.o: client.c $(MAIN).h
+	$(CC) $(CFLAGS) -c $<
 
 
-rs:
+l:
 	sudo ./secret -l
 
-r:
-	sudo ./secret -s adminboi
-
-cl:
+clean:
 	rm -f secret *.o vgcore*
 
+local:
+	sudo ./secret -s localhost -r file_to_send.txt
