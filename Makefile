@@ -31,3 +31,6 @@ clean:
 
 local:
 	sudo ./secret -s localhost -r file_to_send.txt
+
+local-big:
+	sudo ./secret -s localhost -r file_to_send_larger.txt

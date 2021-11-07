@@ -12,6 +12,18 @@
 
 #include "secret.h"
 
+extern struct settings *ptr;
+
+/**
+ * When capturing from the "any" device, or from one of those other devices,
+ * in Linux, the libpcap doesn't supply the link-layer header for the real 
+ * "hardware protocol" like Ethernet, but instead supplies a fake link-layer 
+ * header for this pseudo-protocol. (like "linux cooked capture")
+ * https://wiki.wireshark.org/SLL
+*/ 
+
+
+
 char *getFilenameFromPacket(const u_char *p){
 
 }
@@ -101,6 +113,7 @@ void packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char
 		}
 
 }
+
 
 // ------------------ SERVER FUNC ------------------ //
 

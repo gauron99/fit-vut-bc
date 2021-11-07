@@ -28,22 +28,18 @@
 
 
 //define some constants (packet max size, max file len in bytes, max file len)
-#define PACKET_MAX_SIZE 1500
-#define FILE_LEN_BYTES 5 //(0 to 1,099,511,627,775 ~ 1TB)
-#define MAX_FILE_LEN 1099511627775
-
-
-////////////// for server 
-// size of Linux Cooked Capture
-#define SIZE_LCC 16
-////////////// for server 
+#define PACKET_MAX_SIZE 1480
+#define MAX_FILE_LEN 1099511627775 // 1 TiB
+#define FILE_LEN_BYTES 13 //(strlen(1099511627775) = 13 positions = 1TiB as int)
+#define MAX_FILE_NAME_LEN 3 //number of bytes needed to write file name (max 999)
+#define SIZE_LCC 16 // size of Linux Cooked Capture (when listening on "any")
 
 
 typedef struct settings{
-  int verbose_printing;
   char *file_name;
-  FILE *file;
-  int is_server;
+  char *filebuff;
+
+  int verbose_printing;
 }settings;
 
 extern settings *ptr;
@@ -83,6 +79,11 @@ server();
 void
 client(char *file, char *host);
 
+int
+getMaxDataAvailable(int used,int sent, int fl);
+
+int
+createFirstPacket(char (*p)[PACKET_MAX_SIZE], int used, unsigned int l);
 
 
 /**
@@ -105,7 +106,8 @@ fileExists(char *file);
 char
 *fileOpenReadBytes(char *in, unsigned long int *len);
 
-
+char
+*getFilename(char *file);
 /**
  * function checks & processes cli parameters. returns if client or server is 
  * desired by user(ex: if -l param is given -> server) and if client parameters
@@ -127,11 +129,14 @@ checksum(void *b,int l,int p);
 void
 packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
 
-char *getFilenameFromPacket(const u_char *p);
+char
+*getFilenameFromPacket(const u_char *p);
 
-unsigned int getSeqNumFromPacket(const u_char *p);
+unsigned int
+getSeqNumFromPacket(const u_char *p);
 
-unsigned int getFileLenFromPacket(const u_char *p);
+unsigned int
+getFileLenFromPacket(const u_char *p);
 
 
 #endif //ISA_SECRET_H

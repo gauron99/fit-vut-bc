@@ -2,8 +2,8 @@
 
 /*
 ~~~~~~~~~ TODO TODO TODO TODO ~~~~~~~~~
-
---- resolve multiple file sending
+--- add possibility of having -r argument with -l to specify file name
+--- resolve multiple file sending (server)
 - resolve client IPV6 --> cant ping ::1
 ---- encrypt a file
 
@@ -46,13 +46,6 @@
 
 
 
-/**
- * When capturing from the "any" device, or from one of those other devices,
- * in Linux, the libpcap doesn't supply the link-layer header for the real 
- * "hardware protocol" like Ethernet, but instead supplies a fake link-layer 
- * header for this pseudo-protocol. (like "linux cooked capture")
- * https://wiki.wireshark.org/SLL
-*/ 
 
 struct settings *ptr;
 
@@ -89,9 +82,8 @@ void init_settings(){
 		printErr("Malloc failed @init_settings()");
 	}
 	ptr->verbose_printing = 0;
-	ptr->is_server 				= 0;
 	ptr->file_name 				= NULL;
-	ptr->file							= NULL;
+	ptr->filebuff					= NULL;
 }
 
 void printErr(char *s){
@@ -145,42 +137,40 @@ int fileExists(char *file){
 
 char *getFilename(char *path){
 
-// find backslashes
+// find last backslash
 	int backslashPos = -1;
-	for (int i = strlen(path)-1; i >= 0; --i){
+	const int l = strlen(path);
+	for (int i = l-1; i >= 0; --i){
 		if (path[i] == '/'){
 			backslashPos = i;
 			break;
 		}
 	}
 	if(backslashPos < 0){
-		return (path);
-	}
-	
-	char *f = malloc(strlen(path)-backslashPos);
-	memcpy(f,path+backslashPos+1,strlen(path)-backslashPos);
-	f[strlen(f)] == '\0';
+		return path;
 
-	return f;
+	} else {
+
+	char *p = malloc(l-backslashPos);
+	memcpy(p,path+backslashPos+1,l-backslashPos);
+		return p;
+	}
 }
 
 char *fileOpenReadBytes(char *in, long unsigned int *len){
 	char* ret;
 
-	ptr->file_name = getFilename(in);
-	printf("here, a file: %s\n",ptr->file_name); //DEBUG PRINT
-	
 	// code snippet to open file in binary mode
 	//https://stackoverflow.com/a/22059317
 	FILE *f = fopen(in,"rb"); //open in binary mode
 	fseek(f,0,SEEK_END);
-	// *len = ftell(f);
+
 	long long unsigned int tmp = ftell(f);
 	if(sizeof(*len) == 8){ //64bit OS
 		if(tmp > MAX_FILE_LEN){
 			free(in);
 			fclose(f);
-			printErr("Size of file exceeds MAX_FILE_LEN (~1 Tb) - what are you trying to send, NASA TOP SECRET DOCUMENTS?");
+			printErr("Size of file exceeds MAX_FILE_LEN (1 TiB) - what are you trying to send, NASA TOP SECRET DOCUMENTS?");
 		}
 	} else { //32bit OS
 		if (tmp > UINT32_MAX){
@@ -198,9 +188,11 @@ char *fileOpenReadBytes(char *in, long unsigned int *len){
 		free(in);
 		printErr("malloc failed");
 	}
-	fread(ret,*len,1,f);
+	// read {1} chunk of data with length {*len} bytes
+	if( (fread(ret,*len,1,f)) != 1){
+		printErr("fread() failed[secret.c -> char *fileOpenReadBytes()]");
+	}
 	fclose(f);
-
 	return ret;
 }
 
@@ -212,6 +204,8 @@ parser(int argc, char **argv, char **file,char **host){
 		printHelp();
 	}
 
+	int is_server = 0;	
+
 	/*
    * parameter -l is exclusive.
 	 *  if -l option is given, no other parameters can be given(except verbose).
@@ -221,7 +215,7 @@ parser(int argc, char **argv, char **file,char **host){
       printHelp();
     }
     else if(!strcmp(argv[i],"-l")){ //is server
-      ptr->is_server = 1;
+      is_server = 1;
     }
     else if(!strcmp(argv[i],"-s")){ //host
       if(argv[++i] != NULL){
@@ -254,11 +248,11 @@ parser(int argc, char **argv, char **file,char **host){
 
   // check parameters
 
-  if(ptr->is_server && (*file != NULL || *host != NULL)){
+  if(is_server && (*file != NULL || *host != NULL)){
     printErr("Parameter -l is exclusive. It can't be mixed with parameters -r & -s");
   }
 
-	return ptr->is_server ? IS_SERVER : IS_CLIENT;
+	return is_server ? IS_SERVER : IS_CLIENT;
 }
 
 // ------------------ CHECKSUM FUNC ------------------ //
@@ -299,10 +293,10 @@ void createFile(){
 	 * "isa_*" is the backup file (so the original file is not overwriten but the 
 	 * backup file))
 	*/ 
-	ptr->file = fopen(ptr->file_name,"wb");
-	if(ptr->file == NULL){
-		printErr("File couldn't be opened(failed 'wb' mode)[server-side]");
-	}
+	// ptr->file = fopen(ptr->file_name,"wb");
+	// if(ptr->file == NULL){
+		// printErr("File couldn't be opened(failed 'wb' mode)[server-side]");
+	// }
 }
 
 // --------------------------------- MAIN --------------------------------- //

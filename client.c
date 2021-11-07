@@ -2,6 +2,44 @@
 #include "secret.h"
 
 
+extern struct settings *ptr;
+
+
+int getMaxDataAvailable(int used,int sent,int fl){
+  return (fl-sent) < (PACKET_MAX_SIZE-used) ? (fl-sent) : (PACKET_MAX_SIZE-used);
+}
+
+int createFirstPacket(char (*p)[PACKET_MAX_SIZE], int used, unsigned int l){
+  
+  unsigned int fnsi = strlen(ptr->file_name);
+  if(fnsi>999){
+    printErr("Length of file name is larger than allowed (999)");
+  } else {
+    char fns[MAX_FILE_NAME_LEN] = {0};
+    if(sprintf(fns,"%u",fnsi) < 0){
+      printErr("Sprintf() failed @createFirstPacket");
+    }
+    memcpy(*p + used,fns,MAX_FILE_NAME_LEN);
+    used += MAX_FILE_NAME_LEN;
+  }
+
+  // copy file name
+	memcpy(*p + used,ptr->file_name,fnsi);
+	used += fnsi;
+
+	// max value is a number that fits in 13 bytes
+	char filelen_char[FILE_LEN_BYTES] = {0};
+	sprintf(filelen_char,"%u",l);
+
+	// copy file length info to packet
+	memcpy(*p + used,filelen_char,FILE_LEN_BYTES);
+	used += FILE_LEN_BYTES;
+
+  printf("file_name: %s\n" ,ptr->file_name);//DEBUG
+	printf("filelen num (%u)\n",l); //DEBUG
+
+  return used;
+}
 
 // ------------------ CLIENT FUNC ------------------ //
 
@@ -21,14 +59,16 @@ void client(char *file, char *host){
 	 * max value is ~18kkkkkk bytes (18,446,744,073,709,551,615b - UINT64_MAX)
 	*/
 	long unsigned int filelen;
-	char *filebuff = fileOpenReadBytes(file,&filelen);
+	ptr->filebuff = fileOpenReadBytes(file,&filelen);
 
+	ptr->file_name = getFilename(file);
+	printf("here, a file: %s\n",ptr->file_name); //DEBUG PRINT
+	
 	if (filelen == 0){
 		free(ptr->file_name); // TODO resolve this bad boy
-		free(filebuff);
 		free(host);
 		free(file);
-		printErr("Given file is empty, stopping");
+		printErr("Given file is empty");
 	}
 
 	// free(filename); //DEBUG
@@ -56,7 +96,6 @@ void client(char *file, char *host){
 		exit(1);
 	}
 
-
 	// snippet taken from https://man7.org/linux/man-pages/man3/getaddrfilelen_char.3.html
 	// getaddrfilelen_char returns in 'pai' (last argument) a list of address structures
 	// try to connect to atleast one.
@@ -65,10 +104,10 @@ void client(char *file, char *host){
 		protocol = target->ai_family == AF_INET ? IPPROTO_ICMP : IPPROTO_ICMPV6;
 
 		printf("---\n");
-		printf("addr:%s\n",target->ai_addr->sa_family==2?"ipv4":"ipv6 or other");
-		printf("family:%s\n",target->ai_family==2?"ipv4":"icmp6 or other");
+		printf("addr:%s\n",target->ai_addr->sa_family==2?"ipv4":"ipv6 or other");//DEBUG
+		printf("family:%s\n",target->ai_family==2?"ipv4":"icmp6 or other");//DEBUG
 		if(protocol != 1){
-			printf("protocol:%s(val: %d)\n", "ICMP6 maybe?",protocol);
+			printf("protocol:%s(val: %d)\n", "ICMP6 maybe?",protocol);//DEBUG
 		}
 		
 		fd = socket(target->ai_family,target->ai_socktype,protocol); 
@@ -80,8 +119,6 @@ void client(char *file, char *host){
 		break;
 	}
 
-
-
 	struct sockaddr servinfo = *(struct sockaddr*)target->ai_addr;
 	socklen_t servlen = target->ai_addrlen;
 	
@@ -92,68 +129,68 @@ void client(char *file, char *host){
 	}
 
 	/**
-	 * PACKET
-	 * [0-7] -- icmp header
-	 * [8-9]32bit / [8-11]64bit -- sequence number
-	 * 
-	 * first packet: 
-	 * 	    [12-16] -- file name length
-	 * 			[12-16] -- total length of file to be transfered (char filelen_char[])
-	 * 			+ data
-	 * 
-	 * not first packet:
-	 * 			+ data
-	 * 			
+	 * PACKET -- is of size 1480 (1500-20 for IP header -is asigned automatically thanks to SOCK_RAW or some)
+   * 
+   * first packet:
+	 * [0-7]      -- icmp header
+	 * [8-10]     -- file_name length = X
+   * [11-(11+X)]-- file_name
+	 * [X-(X+13)] -- file length (MAX_FILE_LEN in secret.h)
+   * 
 	*/
 
 	//how many bytes are used in packet already
 	int used = 0;
 
-	//init packet -- largest possible packet size is set to 1500B
+	//init packet -- largest possible packet size is set to 1480B (MTU - IPheader(20bytes))
 	char packet[PACKET_MAX_SIZE];
 	memset(&packet,0,PACKET_MAX_SIZE);
 
-	// ICMP header length is 8 bytes
+	// ICMP header setup default values
 	struct icmphdr *icmpH = (struct icmphdr*)packet;
 	int icmpHlen = sizeof(struct icmphdr);
 	icmpH->type = ICMP_ECHO;
+  icmpH->un.frag.mtu=1500;
+  icmpH->un.echo.sequence = 0x0100;   //TODO
 
-	// max value is a number that fits in 5 bytes
-	char filelen_char[FILE_LEN_BYTES];
-	sprintf(filelen_char,"%ld",filelen); //done DEBUG
+  icmpH->un.echo.id = 0x6666; //default  
 
-	printf("filelen num (%ld)\n",filelen); //DEBUG
-	printf("strlen(filelen_char) alloc'd (%ld)\n",strlen(filelen_char)); //DEBUG
+  used += icmpHlen;
 
-	//copy icmp header to the start of the packet -- this is always the same
-	memcpy(packet,icmpH,icmpHlen);
-	used += icmpHlen;
-
-	unsigned int seqNum = 1;
-	char seqNum_char[sizeof(unsigned int)] = {0};
-	sprintf(seqNum_char,"%d",seqNum);
+	// unsigned int seqNum = 1;
+	// char seqNum_char[sizeof(unsigned int)] = {0};
+	// sprintf(seqNum_char,"%d",seqNum);
 
 	// copy sequence number to packet
-	memcpy(packet+used,seqNum_char,sizeof(seqNum_char));
-	used += sizeof(seqNum_char);
-
-	// ***** for the first packet only ***** //
-	// copy file name
-	memcpy(packet+used,ptr->file_name,strlen(ptr->file_name));
-	used += strlen(ptr->file_name);
-
-	// copy file length info to packet
-	memcpy(packet+used,filelen_char,FILE_LEN_BYTES);
-	used += FILE_LEN_BYTES;
-	// ***** for the first packet only ***** //
+	// memcpy(packet+used,seqNum_char,sizeof(seqNum_char));
+	// used += sizeof(seqNum_char);
 
 	unsigned int totalBytesSent = 0;
 	unsigned int datasize = 0;
 
-	char* moving_file_ptr = filebuff;
+	char* moving_file_ptr = ptr->filebuff;
+
+  used += createFirstPacket(&packet,used,filelen);
+
+  datasize = getMaxDataAvailable(used,totalBytesSent,filelen);
+
+
+  memcpy(packet+used,ptr->filebuff,datasize);
+  // encryptData()
+
+  icmpH->checksum = checksum(packet,used+datasize,protocol);
+
+  //send first packet with additional information
+  if(sendto(fd,packet,used+datasize,0,&servinfo,servlen) < 0){
+    printErr("sendto() failed for the first packet");
+  } else {  
+    icmpH->un.echo.sequence += 0x0100;
+  }
+
+  totalBytesSent = datasize;
 
 	//send packets until whole file is sent
-	do {
+	while(totalBytesSent<filelen) {
 
 		datasize = filelen-totalBytesSent < PACKET_MAX_SIZE-used ? filelen-totalBytesSent : PACKET_MAX_SIZE-used;
 		
@@ -166,23 +203,24 @@ void client(char *file, char *host){
 		icmpH->checksum = 0;
 		icmpH->checksum = checksum(packet,used+datasize,protocol);
 		
+
 		// https://man7.org/linux/man-pages/man3/sendto.3p.html
 		if (sendto(fd,packet,used+datasize,0,&servinfo,servlen) < 0){
 			//cleaning process TODO
-			printErr("Function sendto failed, exiting.\n");
+			printErr("Function sendto() failed");
 		}
 		
 		totalBytesSent+=datasize;
-		moving_file_ptr = &filebuff[totalBytesSent];
-		seqNum++;
+		moving_file_ptr = &ptr->filebuff[totalBytesSent];
+		// seqNum++;
 
-		sprintf(seqNum_char,"%d",seqNum);
-		used = icmpHlen+sizeof(seqNum_char); //standard size of headers
+		// sprintf(seqNum_char,"%d",seqNum);
+		// used = icmpHlen+sizeof(seqNum_char); //standard size of headers
 		
 		// copy sequence number to packet
-		memcpy(packet+icmpHlen,seqNum_char,sizeof(seqNum_char));
+		// memcpy(packet+icmpHlen,seqNum_char,sizeof(seqNum_char));
 
-	} while(totalBytesSent<filelen);
+	}
 
 	printf("done!\n");
 
