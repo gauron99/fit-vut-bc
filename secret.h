@@ -26,6 +26,9 @@
 
 #include <netinet/ip_icmp.h>	//icmphdr, ICMP_ECHO
 
+#include <openssl/aes.h>// encryption
+
+
 
 //define some constants (packet max size, max file len in bytes, max file len)
 #define PACKET_MAX_SIZE 1480
@@ -34,19 +37,20 @@
 #define MAX_FILE_NAME_LEN 3 //number of bytes needed to write file name (max 999)
 #define SIZE_LCC 16 // size of Linux Cooked Capture (when listening on "any")
 
+extern const unsigned char *encryptionKey;
 
 typedef struct settings{
   char *file_name;
-  char *filebuff;
+  unsigned char *filebuff;
 
   int verbose_printing;
 }settings;
 
 extern settings *ptr;
 
-void init_settings();
+void init();
 
-void clean_settings();
+void clean();
 
 /**
  * function prints given error string and exits with errcode 1.
@@ -79,6 +83,9 @@ server();
 void
 client(char *file, char *host);
 
+unsigned char
+*encryptData(char *p,unsigned char *b,int u,int d);
+
 int
 getMaxDataAvailable(int used,int sent, int fl);
 
@@ -103,7 +110,7 @@ fileExists(char *file);
  * @param len (pointer to) length of this file in bytes
  * @returns malloced array of bytes with file content (+ length in bytes via parameter {@code len})
 */
-char
+unsigned char
 *fileOpenReadBytes(char *in, unsigned long int *len);
 
 char

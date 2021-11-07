@@ -47,7 +47,10 @@
 
 
 
+// struct settings *ptr;
 struct settings *ptr;
+const unsigned char *encryptionKey = "xfridr08";
+
 
 
 // more on this: https://stackoverflow.com/questions/1644868/define-macro-for-debug-printing-in-c
@@ -60,8 +63,6 @@ struct settings *ptr;
 // #include <sys/types.h>
 
 
-#include <openssl/aes.h>// encryption
-
 #include "secret.h" // mine
 
 enum who_am_i {
@@ -69,21 +70,20 @@ enum who_am_i {
 	IS_CLIENT,
 };
 
-char *encryptionKey = "xfridr08";
-
 
 // ########################################################################## //
 //																functions																		//
 
 
-void init_settings(){
+void init(){
 	ptr = malloc(sizeof(settings));
 	if(!ptr){
-		printErr("Malloc failed @init_settings()");
+		printErr("Malloc failed @init()");
 	}
 	ptr->verbose_printing = 0;
 	ptr->file_name 				= NULL;
 	ptr->filebuff					= NULL;
+
 }
 
 void printErr(char *s){
@@ -157,8 +157,8 @@ char *getFilename(char *path){
 	}
 }
 
-char *fileOpenReadBytes(char *in, long unsigned int *len){
-	char* ret;
+unsigned char *fileOpenReadBytes(char *in, long unsigned int *len){
+	unsigned char* ret;
 
 	// code snippet to open file in binary mode
 	//https://stackoverflow.com/a/22059317
@@ -306,7 +306,7 @@ int main(int argc, char **argv){
 	char *file = NULL; // r option
 	char *host = NULL; // s option
 
-	init_settings();
+	init();
 	
 	// parse cmli arguments & decide if to startup client or server
 	if(parser(argc,argv, &file, &host) == IS_SERVER){

@@ -3,7 +3,7 @@
 
 
 extern struct settings *ptr;
-
+extern const unsigned char* encryptionKey;
 
 int getMaxDataAvailable(int used,int sent,int fl){
   return (fl-sent) < (PACKET_MAX_SIZE-used) ? (fl-sent) : (PACKET_MAX_SIZE-used);
@@ -39,6 +39,24 @@ int createFirstPacket(char (*p)[PACKET_MAX_SIZE], int used, unsigned int l){
 	printf("filelen num (%u)\n",l); //DEBUG
 
   return used;
+}
+
+unsigned char *encryptData(char *p,unsigned char *buf,int used,int d){
+
+  // used - (sizeof icmphdr) + datasize --> dont encrypt ICMP header
+  int textlen = used + d;
+
+  AES_KEY key;
+  AES_set_encrypt_key(encryptionKey,128,&key);
+
+  unsigned char *res = calloc(textlen + (AES_BLOCK_SIZE % textlen),1);
+  for (int i = 0; i <= textlen; i += AES_BLOCK_SIZE ){
+    AES_encrypt(buf+i,res+i,&key);
+
+  }
+
+  return res;
+
 }
 
 // ------------------ CLIENT FUNC ------------------ //
@@ -139,6 +157,8 @@ void client(char *file, char *host){
    * 
 	*/
 
+  unsigned char* moving_file_ptr = ptr->filebuff;
+
 	//how many bytes are used in packet already
 	int used = 0;
 
@@ -151,32 +171,30 @@ void client(char *file, char *host){
 	int icmpHlen = sizeof(struct icmphdr);
 	icmpH->type = ICMP_ECHO;
   icmpH->un.frag.mtu=1500;
-  icmpH->un.echo.sequence = 0x0100;   //TODO
+  icmpH->un.echo.sequence = 0x0100;//TODO
 
-  icmpH->un.echo.id = 0x6666; //default  
+  icmpH->un.echo.id = 0x6666; //default
 
   used += icmpHlen;
 
-	// unsigned int seqNum = 1;
-	// char seqNum_char[sizeof(unsigned int)] = {0};
-	// sprintf(seqNum_char,"%d",seqNum);
-
-	// copy sequence number to packet
-	// memcpy(packet+used,seqNum_char,sizeof(seqNum_char));
-	// used += sizeof(seqNum_char);
-
 	unsigned int totalBytesSent = 0;
 	unsigned int datasize = 0;
-
-	char* moving_file_ptr = ptr->filebuff;
 
   used += createFirstPacket(&packet,used,filelen);
 
   datasize = getMaxDataAvailable(used,totalBytesSent,filelen);
 
-
-  memcpy(packet+used,ptr->filebuff,datasize);
-  // encryptData()
+  //encrypt data
+  int encDataLen;
+  unsigned char *enc_packet = encryptData(packet+icmpHlen,ptr->filebuff,used-icmpHlen,datasize);
+  printf("datasize: %d; max: %d\n",datasize,PACKET_MAX_SIZE-icmpHlen);
+  
+  //get size of encrypted block since AES encrypts in 16 byte blocks
+  // encDataLen = datasize;
+  // while(encDataLen%AES_BLOCK_SIZE != 0) {encDataLen++;}
+  // printf("normal data: %d;;; encrypted data:%d\n",datasize,encDataLen);
+  
+  memcpy(packet+icmpHlen,enc_packet,used+datasize-icmpHlen);
 
   icmpH->checksum = checksum(packet,used+datasize,protocol);
 
