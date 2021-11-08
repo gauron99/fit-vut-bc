@@ -32,10 +32,11 @@
 
 //define some constants (packet max size, max file len in bytes, max file len)
 #define PACKET_MAX_SIZE 1480
-#define MAX_FILE_LEN 1099511627775 // 1 TiB
-#define FILE_LEN_BYTES 13 //(strlen(1099511627775) = 13 positions = 1TiB as int)
-#define MAX_FILE_NAME_LEN 3 //number of bytes needed to write file name (max 999)
-#define SIZE_LCC 16 // size of Linux Cooked Capture (when listening on "any")
+#define MAX_FILE_LEN 1099511627775  // 1 TiB
+#define FILE_LEN_BYTES 13           //(strlen(1099511627775) = 13 positions = 1TiB as int)
+#define MAX_FILE_NAME_LEN 3         //number of bytes needed to write file name (max 999 string)
+#define SIZE_LCC 16                 // size of Linux Cooked Capture (when listening on "any")
+#define PACKET_ID 9578              // ID of every packet sent by this program
 
 extern const unsigned char *encryptionKey;
 
@@ -74,6 +75,10 @@ printHelp();
 void
 server();
 
+void
+handleFirstPacket(const u_char* data,struct icmphdr *icmpH,unsigned int sn);
+
+
 /**
  * function creates a client, who connects to given server {@code host} 
  * and sends ICMP packets with encrypted {@code file}.
@@ -84,7 +89,10 @@ void
 client(char *file, char *host);
 
 unsigned char
-*encryptData(char *p,unsigned char *b,int u,int d);
+*encryptData(char *in,int *len);
+
+unsigned char
+*decryptData(const unsigned char *d);
 
 int
 getMaxDataAvailable(int used,int sent, int fl);
@@ -138,9 +146,6 @@ packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char *pac
 
 char
 *getFilenameFromPacket(const u_char *p);
-
-unsigned int
-getSeqNumFromPacket(const u_char *p);
 
 unsigned int
 getFileLenFromPacket(const u_char *p);

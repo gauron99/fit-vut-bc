@@ -36,14 +36,65 @@ unsigned int getFileLenFromPacket(const u_char *p){
 
 }
 
-int saveDataToFile(const u_char* data, unsigned int sn){
-	static unsigned int fileLen = 0;
-	static unsigned int seqNum = 0;
+void handleFirstPacket(const u_char* data,struct icmphdr *icmpH,unsigned int sn){
+	int used = sizeof(icmpH);
 	
+	// decrypt data
+	// decryptPacketData(data);
+
+
+}
+
+unsigned char* decryptData(const unsigned char* d){
+	extern const unsigned char* encryptionKey;
+	AES_KEY dec_key;
+	AES_set_decrypt_key(encryptionKey,128,&dec_key);
+	unsigned char *ret = calloc(PACKET_MAX_SIZE-8,1);
+
+	for (int i = 0; i < PACKET_MAX_SIZE-8; i+=AES_BLOCK_SIZE){
+		// AES_cbc_encrypt(d+i,ret+i,PACKET_MAX_SIZE-8,&dec_key,);
+		AES_decrypt(d+i,ret+i,&dec_key);
+		
+	}
+	
+	printf("[server]rounds?:%d\n",dec_key.rounds);
+	printf("[server]rd_key?:%ls\n",dec_key.rd_key);
+	return ret;
+}	
+
+int handleData(const u_char* data, unsigned int sn){
+	static unsigned int fileLen = 0;
+	static unsigned int transfered = 0;
+
+	struct icmphdr *icmpH = (struct icmphdr*)data;
+	unsigned int sn_packet = ntohs(icmpH->un.echo.sequence);
+	
+	//packet validation
+	if((ntohs(icmpH->un.echo.id) != PACKET_ID) || (sn != sn_packet) ){
+		return -1; //wrong packet, do nothing
+	}
+
+	printf("--- ICMP struktura ---\n");//DEBUG
+	printf("checksum:%d, id:%d, sn: %d\n",icmpH->checksum,ntohs(icmpH->un.echo.id),sn_packet);//DEBUG
+
+	//first packet
 	if(sn == 1){
+		printf("AM FIRST BOI\n");
+		unsigned char* dec_data = decryptData(data+sizeof(icmpH)); //save file data to ptr->filebuff
+		printf("------------\n");
+		for (int i = 0; i < strlen(dec_data); i++)
+		{
+			printf("%c,",dec_data[i]);
+		}
+		printf("\n");
+
+		exit(0);//DEBUG
+
 		ptr->file_name = getFilenameFromPacket(data);
-		seqNum = getSeqNumFromPacket(data);
-		fileLen = getFileLenFromPacket(data);
+		fileLen = getFileLenFromPacket(dec_data);
+
+		ptr->filebuff = dec_data + (strlen(dec_data)-fileLen);
+
 
 		//file exists & has read permission & is empty & has write permission
 		if(fileExists(ptr->file_name) && fileIsEmpty(ptr->file_name) && (!access(ptr->file_name,W_OK))){
@@ -60,13 +111,14 @@ int saveDataToFile(const u_char* data, unsigned int sn){
 
 			createFile();
 		}
+
+		//NOT first packet (every other one)
+	} else {
+
 	}
-	//skip icmp header
-	data += sizeof(struct icmphdr);
 	
-	//decryption
 
-
+		handleFirstPacket(data,icmpH,sn);
 }
 
 /**
@@ -101,7 +153,7 @@ void packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char
 		case 1:
 			if(icmph->type == ICMP_ECHO){
 				// printf("%d: another one! - IPv4[code:%d]\n",++seq_num,icmph->type);
-				saveDataToFile(packet+iphLen,++seq_num);
+				handleData(packet+iphLen,++seq_num);
 			}
 			break;
 		case 58: // IPv6-ICMP

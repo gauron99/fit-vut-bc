@@ -3,7 +3,7 @@
 
 
 extern struct settings *ptr;
-extern const unsigned char* encryptionKey;
+// extern const unsigned char* encryptionKey;
 
 int getMaxDataAvailable(int used,int sent,int fl){
   return (fl-sent) < (PACKET_MAX_SIZE-used) ? (fl-sent) : (PACKET_MAX_SIZE-used);
@@ -11,27 +11,28 @@ int getMaxDataAvailable(int used,int sent,int fl){
 
 int createFirstPacket(char (*p)[PACKET_MAX_SIZE], int used, unsigned int l){
   
-  unsigned int fnsi = strlen(ptr->file_name);
+  unsigned int fnsi = strlen(ptr->file_name)+1;//for '/0'
   if(fnsi>999){
-    printErr("Length of file name is larger than allowed (999)");
+    printErr("Length of file name is larger than allowed (max=999 chars)");
   } else {
     char fns[MAX_FILE_NAME_LEN] = {0};
     if(sprintf(fns,"%u",fnsi) < 0){
-      printErr("Sprintf() failed @createFirstPacket");
+      printErr("Sprintf() failed @createFirstPacket()");
     }
+		//copy length of name to packet
     memcpy(*p + used,fns,MAX_FILE_NAME_LEN);
     used += MAX_FILE_NAME_LEN;
   }
 
-  // copy file name
-	memcpy(*p + used,ptr->file_name,fnsi);
+  // copy file name to packet
+	memcpy(*p + used,ptr->file_name,fnsi+1); //+1 for '/0'
 	used += fnsi;
 
 	// max value is a number that fits in 13 bytes
 	char filelen_char[FILE_LEN_BYTES] = {0};
 	sprintf(filelen_char,"%u",l);
 
-	// copy file length info to packet
+	// copy file length to packet
 	memcpy(*p + used,filelen_char,FILE_LEN_BYTES);
 	used += FILE_LEN_BYTES;
 
@@ -41,20 +42,26 @@ int createFirstPacket(char (*p)[PACKET_MAX_SIZE], int used, unsigned int l){
   return used;
 }
 
-unsigned char *encryptData(char *p,unsigned char *buf,int used,int d){
+unsigned char *encryptData(char *in,int *l){
+	extern const unsigned char* encryptionKey;
 
-  // used - (sizeof icmphdr) + datasize --> dont encrypt ICMP header
-  int textlen = used + d;
+  // (used - sizeof(icmphdr)) + datasize --> dont encrypt ICMP header
+  int textlen = *l;
+
+	while((*l%AES_BLOCK_SIZE)!=0){(*l)++;}
+	printf("finalLen after enc:%d\n",*l);
 
   AES_KEY key;
   AES_set_encrypt_key(encryptionKey,128,&key);
 
   unsigned char *res = calloc(textlen + (AES_BLOCK_SIZE % textlen),1);
   for (int i = 0; i <= textlen; i += AES_BLOCK_SIZE ){
-    AES_encrypt(buf+i,res+i,&key);
-
+    AES_encrypt((unsigned char*)in+i,res+i,&key);
+		printf("i=%d;",i);
   }
+	printf("\n");
 
+	printf("[client]rounds?:%d\n",key.rounds);//DEBUG
   return res;
 
 }
@@ -170,10 +177,10 @@ void client(char *file, char *host){
 	struct icmphdr *icmpH = (struct icmphdr*)packet;
 	int icmpHlen = sizeof(struct icmphdr);
 	icmpH->type = ICMP_ECHO;
-  icmpH->un.frag.mtu=1500;
-  icmpH->un.echo.sequence = 0x0100;//TODO
+  icmpH->un.frag.mtu = 1500;
+  icmpH->un.echo.sequence = htons(1);
 
-  icmpH->un.echo.id = 0x6666; //default
+  icmpH->un.echo.id = htons(PACKET_ID);
 
   used += icmpHlen;
 
@@ -181,31 +188,43 @@ void client(char *file, char *host){
 	unsigned int datasize = 0;
 
   used += createFirstPacket(&packet,used,filelen);
+	printf("used after creation,fp: %d\n",used);//DEBUG
 
   datasize = getMaxDataAvailable(used,totalBytesSent,filelen);
+	printf("datasizebef:%d\n",datasize);
+
+	//packet holds all info to be sent
+	memcpy(packet+used,ptr->filebuff,datasize);
+	ptr->filebuff+=datasize;
+  totalBytesSent = datasize; //save how much data was read from buffer already
+
+	char* xx = packet+icmpHlen;
+	printf("BEFORE ENC:\n----------\n\n");
+	for (int i = 0; i < datasize+used-8; i++){
+		printf("%c,",xx[i]);
+	}
+	printf("\n------------\n");
 
   //encrypt data
-  int encDataLen;
-  unsigned char *enc_packet = encryptData(packet+icmpHlen,ptr->filebuff,used-icmpHlen,datasize);
+	datasize += used - icmpHlen;
+  unsigned char *enc_packet = encryptData(packet+icmpHlen,&datasize);
   printf("datasize: %d; max: %d\n",datasize,PACKET_MAX_SIZE-icmpHlen);
   
-  //get size of encrypted block since AES encrypts in 16 byte blocks
-  // encDataLen = datasize;
-  // while(encDataLen%AES_BLOCK_SIZE != 0) {encDataLen++;}
-  // printf("normal data: %d;;; encrypted data:%d\n",datasize,encDataLen);
-  
-  memcpy(packet+icmpHlen,enc_packet,used+datasize-icmpHlen);
-
+	//zero out packet after header
+	memset(packet+icmpHlen,0,PACKET_MAX_SIZE-icmpHlen);
+	
+	//copy encrypted info into packet
+	memcpy(packet+icmpHlen,enc_packet,datasize);
+   
   icmpH->checksum = checksum(packet,used+datasize,protocol);
 
   //send first packet with additional information
   if(sendto(fd,packet,used+datasize,0,&servinfo,servlen) < 0){
     printErr("sendto() failed for the first packet");
   } else {  
-    icmpH->un.echo.sequence += 0x0100;
+    icmpH->un.echo.sequence += htons(1);
   }
 
-  totalBytesSent = datasize;
 
 	//send packets until whole file is sent
 	while(totalBytesSent<filelen) {
