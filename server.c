@@ -23,44 +23,79 @@ extern struct settings *ptr;
 */ 
 
 
+/** 0-3b 				-- filename len = X
+ * 	4-Xb 				-- filename
+ * 	(X-(X+13))b	-- file data len = Y
+ * 	((X+13)-Y)b	-- data
+ * 	-- if data is smaller than PACKET_MAX_LEN (dont read)
+*/
 
-char *getFilenameFromPacket(const u_char *p){
 
-}
 
-unsigned int getSeqNumFromPacket(const u_char *p){
+char *getFilenameFromPacket(char *p, unsigned int *r){
+// 	0-2b 				-- filename len = X
+// 	3-Xb 				-- filename
 
-}
+	// get length of filename
+	char fnl_buff[MAX_FILE_NAME_LEN];
+	memcpy(fnl_buff,p,MAX_FILE_NAME_LEN);
+	*r += MAX_FILE_NAME_LEN;
 
-unsigned int getFileLenFromPacket(const u_char *p){
-
-}
-
-void handleFirstPacket(const u_char* data,struct icmphdr *icmpH,unsigned int sn){
-	int used = sizeof(icmpH);
+	char *endptr = NULL;
+	int fnl = (int)strtol(fnl_buff,&endptr,10);
+	if(*endptr != '\0' || fnl_buff == endptr){
+		printErr("strtol() failed @getFilenameFromPacket()");
+	}
 	
-	// decrypt data
-	// decryptPacketData(data);
+	// get name of file
+	char *fname = calloc(fnl,1); // +1 for '\0' included in fnl
+	if(fname == NULL){
+		printErr("Calloc() failed @getFilenameFromPacket()");
+	}
 
-
+	memcpy(fname,p+(*r),fnl);
+	(*r) += fnl;
+	
+	return fname;
 }
+
+unsigned int getFileLenFromPacket(char *p, unsigned int *r){
+// 	(X-(X+13))b	-- file data len = Y
+	char tmp[FILE_LEN_BYTES];
+	memcpy(tmp,p+*r,FILE_LEN_BYTES);
+	*r += FILE_LEN_BYTES;
+
+	char *endptr = NULL;
+	unsigned int fl = strtoul(tmp,&endptr,10);
+	if(fl == 0 || *endptr != '\0' || endptr == tmp){
+		printf("fl: %d",fl);
+		printErr("strtoul() failed @getFileLenFromPacket()");
+	}
+	return fl;
+}
+
+// void handleFirstPacket(const u_char* data,struct icmphdr *icmpH,unsigned int sn){
+// 	int used = sizeof(icmpH);
+// 	// decrypt data
+// 	// decryptPacketData(data);
+// }
 
 unsigned char* decryptData(const unsigned char* d){
 	extern const unsigned char* encryptionKey;
+
 	AES_KEY dec_key;
 	AES_set_decrypt_key(encryptionKey,128,&dec_key);
 	unsigned char *ret = calloc(PACKET_MAX_SIZE-8,1);
 
-	for (int i = 0; i < PACKET_MAX_SIZE-8; i+=AES_BLOCK_SIZE){
-		// AES_cbc_encrypt(d+i,ret+i,PACKET_MAX_SIZE-8,&dec_key,);
+	// decrypt everything except icmp header
+	for (int i = 0; i < PACKET_MAX_SIZE-sizeof(struct icmphdr); i+=AES_BLOCK_SIZE){
+		// printf("i:%d,",i);//DEBUG
 		AES_decrypt(d+i,ret+i,&dec_key);
 		
 	}
-	
-	printf("[server]rounds?:%d\n",dec_key.rounds);
-	printf("[server]rd_key?:%ls\n",dec_key.rd_key);
+	// printf("\n----------\n");//DEBUG
 	return ret;
-}	
+}
 
 int handleData(const u_char* data, unsigned int sn){
 	static unsigned int fileLen = 0;
@@ -77,39 +112,57 @@ int handleData(const u_char* data, unsigned int sn){
 	printf("--- ICMP struktura ---\n");//DEBUG
 	printf("checksum:%d, id:%d, sn: %d\n",icmpH->checksum,ntohs(icmpH->un.echo.id),sn_packet);//DEBUG
 
+	//says how many bytes have been read from packet so far(useful for skiping 
+	//bytes before file data)
+	unsigned int read = 0;
+
 	//first packet
 	if(sn == 1){
 		printf("AM FIRST BOI\n");
-		unsigned char* dec_data = decryptData(data+sizeof(icmpH)); //save file data to ptr->filebuff
-		printf("------------\n");
-		for (int i = 0; i < strlen(dec_data); i++)
-		{
-			printf("%c,",dec_data[i]);
-		}
-		printf("\n");
+		char* decr_data = (char*)decryptData(data+sizeof(icmpH)); //save file data to ptr->filebuff
+		// printf("------------\n");
+		// for (int i = 0; i < 33; i++)
+		// {
+		// 	printf("%c,",decr_data[i]);
+		// }
+		// printf("\n");
+		// exit(0);//DEBUG
 
-		exit(0);//DEBUG
+		ptr->file_name = getFilenameFromPacket(decr_data,&read);
+		printf("filename: %s\n",ptr->file_name);//DEBUG
 
-		ptr->file_name = getFilenameFromPacket(data);
-		fileLen = getFileLenFromPacket(dec_data);
+		fileLen = getFileLenFromPacket(decr_data,&read);
+		printf("fileLen: %d\n",fileLen);//DEBUG
 
-		ptr->filebuff = dec_data + (strlen(dec_data)-fileLen);
+		//init filebuff
+		ptr->filebuff = calloc(fileLen,1);
 
+		// printf("decrypted DATA:\n");
+		// for (size_t i = 0; i < fileLen; i++)
+		// {
+		// 	printf("%c,",decr_data[read+i]);
+		// }
+		// printf("\n");
 
-		//file exists & has read permission & is empty & has write permission
-		if(fileExists(ptr->file_name) && fileIsEmpty(ptr->file_name) && (!access(ptr->file_name,W_OK))){
-			createFile();
+		//add icmp header to "read" bytes (before file data)
+		read += sizeof(icmpH);
 
+		// copy data to buffer
+		int dip = getMaxDataAvailable(read,transfered,fileLen);
+		memcpy(ptr->filebuff+transfered,decr_data+read,dip);
+		transfered += dip;
+
+		//file doesnt exist OR (file exists & has read permission && is empty && has write permission)
+		if(!fileExists(ptr->file_name) || (fileExists(ptr->file_name) && fileIsEmpty(ptr->file_name) && (!access(ptr->file_name,W_OK)))){
+			//do nothing
 		} else {
 			//create new file (one backup)
-			int fLen = strlen(ptr->file_name);
+			int fLen = strlen(ptr->file_name); //TODO realloc?
 			char *tmpt = malloc(fLen+5);
 			memcpy(tmpt,"isa_",4);
 			memcpy(tmpt+4,ptr->file_name,strlen(ptr->file_name)+1);
 			memcpy(ptr->file_name,tmpt,strlen(tmpt)+1);
 			free(tmpt);
-
-			createFile();
 		}
 
 		//NOT first packet (every other one)
@@ -117,8 +170,20 @@ int handleData(const u_char* data, unsigned int sn){
 
 	}
 	
+	//all data has been transfered
+	if(transfered == fileLen){
 
-		handleFirstPacket(data,icmpH,sn);
+		printf(">%s<\n",ptr->filebuff);
+
+
+		FILE *f = fopen(ptr->file_name,"wb+");
+		if(f == NULL){
+			printErr("File couldn't be opened(failed 'wb' mode)[server-side]");
+		}
+		fwrite(ptr->filebuff,fileLen,1,f);
+		fclose(f);
+	}
+	return 0;
 }
 
 /**

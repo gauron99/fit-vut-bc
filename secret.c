@@ -135,7 +135,7 @@ int fileExists(char *file){
 	return 1;
 }
 
-char *getFilename(char *path){
+char *getFilenameFromPath(char *path){
 
 // find last backslash
 	int backslashPos = -1;
@@ -284,19 +284,6 @@ unsigned short checksum(void *b,int l,int p){
 
 	}
 	return 0;
-}
-
-void createFile(){
-	/** file is created under these conditions:
-	 * file exists & is empty OR file doesnt exists OR file beginning with "isa_"
-	 * exists and that file will be overwriten (its one-max backup system where 
-	 * "isa_*" is the backup file (so the original file is not overwriten but the 
-	 * backup file))
-	*/ 
-	// ptr->file = fopen(ptr->file_name,"wb");
-	// if(ptr->file == NULL){
-		// printErr("File couldn't be opened(failed 'wb' mode)[server-side]");
-	// }
 }
 
 // --------------------------------- MAIN --------------------------------- //

@@ -89,13 +89,13 @@ void
 client(char *file, char *host);
 
 unsigned char
-*encryptData(char *in,int *len);
+*encryptData(char *in,unsigned int *len);
 
 unsigned char
 *decryptData(const unsigned char *d);
 
 int
-getMaxDataAvailable(int used,int sent, int fl);
+getMaxDataAvailable(int used,int done, int fl);
 
 int
 createFirstPacket(char (*p)[PACKET_MAX_SIZE], int used, unsigned int l);
@@ -121,8 +121,8 @@ fileExists(char *file);
 unsigned char
 *fileOpenReadBytes(char *in, unsigned long int *len);
 
-char
-*getFilename(char *file);
+char //done
+*getFilenameFromPath(char *file);
 /**
  * function checks & processes cli parameters. returns if client or server is 
  * desired by user(ex: if -l param is given -> server) and if client parameters
@@ -136,19 +136,18 @@ char
  * @return returns enum value that dictates if CLIENT or SERVER is to be created
  */
 int
-parser(int argc, char **argv, char **file,char **host);
+parser(int argc, char **argv, char **file,char **host); //done
 
-unsigned short
+unsigned short //done
 checksum(void *b,int l,int p);
 
-void
+void //done
 packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
 
 char
-*getFilenameFromPacket(const u_char *p);
+*getFilenameFromPacket(char *p, unsigned int *r); //done
 
 unsigned int
-getFileLenFromPacket(const u_char *p);
-
+getFileLenFromPacket(char *p, unsigned int *r); //done
 
 #endif //ISA_SECRET_H

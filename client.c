@@ -5,8 +5,8 @@
 extern struct settings *ptr;
 // extern const unsigned char* encryptionKey;
 
-int getMaxDataAvailable(int used,int sent,int fl){
-  return (fl-sent) < (PACKET_MAX_SIZE-used) ? (fl-sent) : (PACKET_MAX_SIZE-used);
+int getMaxDataAvailable(int used,int done,int fl){
+  return (fl-done) < (PACKET_MAX_SIZE-used) ? (fl-done) : (PACKET_MAX_SIZE-used);
 }
 
 int createFirstPacket(char (*p)[PACKET_MAX_SIZE], int used, unsigned int l){
@@ -42,11 +42,11 @@ int createFirstPacket(char (*p)[PACKET_MAX_SIZE], int used, unsigned int l){
   return used;
 }
 
-unsigned char *encryptData(char *in,int *l){
+unsigned char *encryptData(char *in,unsigned int *l){
 	extern const unsigned char* encryptionKey;
 
   // (used - sizeof(icmphdr)) + datasize --> dont encrypt ICMP header
-  int textlen = *l;
+  unsigned int textlen = *l;
 
 	while((*l%AES_BLOCK_SIZE)!=0){(*l)++;}
 	printf("finalLen after enc:%d\n",*l);
@@ -86,7 +86,7 @@ void client(char *file, char *host){
 	long unsigned int filelen;
 	ptr->filebuff = fileOpenReadBytes(file,&filelen);
 
-	ptr->file_name = getFilename(file);
+	ptr->file_name = getFilenameFromPath(file);
 	printf("here, a file: %s\n",ptr->file_name); //DEBUG PRINT
 	
 	if (filelen == 0){
@@ -209,7 +209,7 @@ void client(char *file, char *host){
 	datasize += used - icmpHlen;
   unsigned char *enc_packet = encryptData(packet+icmpHlen,&datasize);
   printf("datasize: %d; max: %d\n",datasize,PACKET_MAX_SIZE-icmpHlen);
-  
+
 	//zero out packet after header
 	memset(packet+icmpHlen,0,PACKET_MAX_SIZE-icmpHlen);
 	
@@ -225,6 +225,10 @@ void client(char *file, char *host){
     icmpH->un.echo.sequence += htons(1);
   }
 
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
 
 	//send packets until whole file is sent
 	while(totalBytesSent<filelen) {
