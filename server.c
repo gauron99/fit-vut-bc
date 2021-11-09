@@ -68,36 +68,72 @@ unsigned int getFileLenFromPacket(char *p, unsigned int *r){
 }
 
 unsigned char* decryptData(const unsigned char* d){
-	extern const unsigned char* encryptionKey;
+	extern const char* encryptionKey;
+	
+	int exclude = sizeof(struct icmphdr);
 
 	AES_KEY dec_key;
-	AES_set_decrypt_key(encryptionKey,128,&dec_key);
-	unsigned char *ret = calloc(PACKET_MAX_SIZE-8,1);
+	int TEST = AES_set_decrypt_key((unsigned char*)encryptionKey,128,&dec_key);
+
+	unsigned char *ret = calloc(PACKET_MAX_SIZE-exclude,1);
 
 	// decrypt everything except icmp header
-	for (int i = 0; i < PACKET_MAX_SIZE-sizeof(struct icmphdr); i+=AES_BLOCK_SIZE){
-		// printf("i:%d,",i);//DEBUG
+	int i;
+	for (i = 0; i < (PACKET_MAX_SIZE-exclude); i+=AES_BLOCK_SIZE){
 		AES_decrypt(d+i,ret+i,&dec_key);
-		
 	}
-	// printf("\n----------\n");//DEBUG
+
+	// printf("INBOI[i:%d;calloced:%d]\n\n",i,PACKET_MAX_SIZE-exclude);
+	// for (size_t i = 0; i < (PACKET_MAX_SIZE-exclude); i++){
+	// 	printf("%c",ret[i]);
+	// }
+	// printf("\n");
 	return ret;
 }
 
-int handleData(const u_char* data, unsigned int sn){
+void prepOutputFile(){
+	printf("OUTPUTFILE:%s\n",ptr->file_name);
+	//file doesnt exist OR (file exists & has read permission && is empty && has write permission)
+		if(!fileExists(ptr->file_name) || (fileExists(ptr->file_name) && fileIsEmpty(ptr->file_name) && (!access(ptr->file_name,W_OK)))){
+			//do nothing
+		} else {
+			//create new file (one backup)
+			int fLen = strlen(ptr->file_name);
+
+			char* tmp1 = malloc(fLen);
+			memcpy(tmp1,ptr->file_name,fLen);
+
+			ptr->file_name = realloc(ptr->file_name,fLen+5);
+			memset(ptr->file_name,0,fLen);
+
+			memcpy(ptr->file_name,"isa_",4);
+			memcpy(ptr->file_name+4,tmp1,fLen);
+			free(tmp1);
+			printf("AFTER MEMORY MOVE: |%s|\n",ptr->file_name);
+		}
+
+	// open file for writing
+	ptr->f = fopen(ptr->file_name,"ab");
+	if(ptr->f == NULL){
+		printErr("File couldn't be opened(failed w/ 'ab' mode)[server-side]");
+	}
+}
+
+int handleData(unsigned char* data, unsigned int sn){
 	static unsigned int fileLen = 0;
 	static unsigned int transfered = 0;
+	int dip = 0;
 
 	struct icmphdr *icmpH = (struct icmphdr*)data;
+	int icmpHlen = sizeof(struct icmphdr);
 	unsigned int sn_packet = ntohs(icmpH->un.echo.sequence);
 	
 	//packet validation
 	if((ntohs(icmpH->un.echo.id) != PACKET_ID) || (sn != sn_packet) ){
 		return -1; //wrong packet, do nothing
 	}
-
-	// printf("--- ICMP struktura ---\n");//DEBUG
-	// printf("checksum:%d, id:%d, sn: %d\n------------\n",icmpH->checksum,ntohs(icmpH->un.echo.id),sn_packet);//DEBUG
+	printf("--- ICMP struktura ---\n");//DEBUG
+	printf("checksum:%d, id:%d, sn: %d\n------------\n",icmpH->checksum,ntohs(icmpH->un.echo.id),sn_packet);//DEBUG
 
 	//says how many bytes have been read from packet so far(useful for skiping 
 	//bytes before file data)
@@ -105,116 +141,84 @@ int handleData(const u_char* data, unsigned int sn){
 
 	//first packet
 	if(sn == 1){
-		char* decr_data = (char*)decryptData(data+sizeof(icmpH)); //save file data to ptr->filebuff
 		
-		// printf("------------\n");
-		// for (int i = 0; i < PACKET_MAX_SIZE; i++)
+		// int k,l;
+		// for (k = 0; k < 1472; k+=AES_BLOCK_SIZE)
 		// {
-		// 	printf("%c,",decr_data[i]);
+		// 	for (l = 0; l < AES_BLOCK_SIZE; l++)
+		// 	{
+		// 		printf("%X ",data[8+k+l]);
+		// 	}
+		// 	printf("\n--\n");
 		// }
-		// printf("\n");
-		// exit(0);//DEBUG
+		// printf("i:%d\n",k);
 
-		printf("transfered:%d,read:%d,fl:%d\n",transfered,read,fileLen);
+		char *decr_data = (char*)decryptData(data+icmpHlen); //save file data to ptr->filebuff
+		
 		ptr->file_name = getFilenameFromPacket(decr_data,&read);
-		printf("filename: %s\n",ptr->file_name);//DEBUG
-		printf("transfered:%d,read:%d,fl:%d\n",transfered,read,fileLen);
 
-		// printf("------------\n");
-		// for (int i = 0; i < PACKET_MAX_SIZE; i++)
-		// {
-		// 	printf("%c,",decr_data[read+i]);
-		// }
-		// printf("\n");
-		// exit(0);//DEBUG
-
+		prepOutputFile();
 
 		fileLen = getFileLenFromPacket(decr_data,&read);
 		printf("fileLen: %d\n",fileLen);//DEBUG
 		printf("transfered:%d,read:%d,fl:%d\n",transfered,read,fileLen);
 
+		dip = getMaxDataAvailable(read+icmpHlen,transfered,fileLen);
+		printf("dip:%d\n",dip);
+
+		//init filebuff
+		ptr->filebuff = calloc(dip,1);
+		
+		// printf("dip:%d\n",dip);
 		// printf("------------\n");
-		// for (int i = 0; i < PACKET_MAX_SIZE; i++)
-		// {
+		// for (int i = 0; i < dip; i++){
 		// 	printf("%c,",decr_data[read+i]);
 		// }
 		// printf("\n");
 		// exit(0);
 
-		//init filebuff
-		ptr->filebuff = calloc(fileLen,1);
-
-		// read += sizeof(icmpH);
-
-		// copy data to buffer
-		printf("transfered:%d,read:%d,fl:%d\n",transfered,read,fileLen);
-
-		int dip = getMaxDataAvailable(read+sizeof(icmpH),transfered,fileLen)-sizeof(icmpH);
-
-		memcpy(ptr->filebuff+transfered,decr_data+read,dip);
+		memcpy(ptr->filebuff,decr_data+read,dip);
 		transfered += dip;
-
-
-		printf("decrypted DATA:[dip:%d][read:%d](d+r:%d)\n",dip,read,dip+read+8);
-		int j=0;
-		for (size_t i = 0; i < dip; i++){
-			printf("%c,",decr_data[read+i]);
-			j++;
-		}
-
-
-		//file doesnt exist OR (file exists & has read permission && is empty && has write permission)
-		if(!fileExists(ptr->file_name) || (fileExists(ptr->file_name) && fileIsEmpty(ptr->file_name) && (!access(ptr->file_name,W_OK)))){
-			//do nothing
-		} else {
-			//create new file (one backup)
-			int fLen = strlen(ptr->file_name); //TODO realloc?
-			char *tmpt = malloc(fLen+5);
-			memcpy(tmpt,"isa_",4);
-			memcpy(tmpt+4,ptr->file_name,strlen(ptr->file_name)+1);
-			memcpy(ptr->file_name,tmpt,strlen(tmpt)+1);
-			free(tmpt);
-		}
-
-		//NOT first packet (every other one)
-	} else {
-		read = sizeof(icmpH);
-
-		// TODO? unsigned
-		unsigned char* decr_data = decryptData(data+sizeof(icmpH));
 		
-		int dip = getMaxDataAvailable(read,transfered,fileLen);
+	} else { //NOT first packet (every other one)
+		read = icmpHlen;
 
-		printf("decrypted DATA:\n");
-		for (size_t i = 0; i < dip; i++)
-		{
-			printf("%c,",decr_data[read+i]);
-		}
-		printf("\n");
+		unsigned char* decr_data = decryptData(data+icmpHlen);
+		
+		dip = getMaxDataAvailable(read,transfered,fileLen);
 
-		memcpy(ptr->filebuff+transfered,decr_data,dip);
+		// printf("decrypted DATA:\n");
+		// for (size_t i = 0; i < dip; i++)
+		// {
+		// 	printf("%c,",decr_data[read+i]);
+		// }
+		// printf("\n");
+
+		memcpy(ptr->filebuff,decr_data,dip);
 
 		transfered += dip;
 
 	}
 	
+	printf("write to file here!\n");
+	// append to file
+	if (fwrite(ptr->filebuff,dip,1,ptr->f) != 1){
+		printErr("Fwrite returned unexpected value");
+	}
+
 	//all data has been transfered
 	if(transfered == fileLen){
 
 		printf(">>%s<<\n",ptr->filebuff);
 
-
-		FILE *f = fopen(ptr->file_name,"wb+");
-		if(f == NULL){
-			printErr("File couldn't be opened(failed 'wb+' mode)[server-side]");
-		}
-		fwrite(ptr->filebuff,fileLen,1,f);
-		fclose(f);
-
 		printf("~~ File transfer done! ~~\n");
+		printf("Wrote to file: %s\n",ptr->file_name);
 		transfered = 0;
 		fileLen = 0;
+
+		fclose(ptr->f);
 		free(ptr->filebuff);
+		free(ptr->file_name);
 		return 1;
 	}
 	return 0;
@@ -238,23 +242,21 @@ void packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char
 
 	static unsigned int seq_num = 0;
 
-		// skip linux cooked layer
-		packet += SIZE_LCC;
-
 		//ip header
-		iph = (struct ip*) packet;
-    iphLen = iph->ip_hl*4;
+		iph = (struct ip*) (packet + SIZE_LCC);
+    iphLen = iph->ip_hl*4; // == 20
 
 		//icmp header
-		struct icmphdr *icmph = (struct icmphdr*)(packet + iphLen);
+		struct icmphdr *icmph = (struct icmphdr*)(packet + SIZE_LCC + iphLen);
 
     switch (iph->ip_p){
 		case 1:
 			if(icmph->type == ICMP_ECHO){
-				if(handleData(packet+iphLen,++seq_num)){
-					//if one is returned, file transfer done!
+				if(handleData((unsigned char*)(packet + SIZE_LCC + iphLen),++seq_num)){
+					//if one is returned, whole file transfer done!
 					seq_num = 0;
 				}
+				//send ack packet back ?
 			}
 			break;
 		case 58: // IPv6-ICMP
@@ -264,7 +266,6 @@ void packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char
 			return;
   
 		}
-
 }
 
 

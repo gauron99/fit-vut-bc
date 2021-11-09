@@ -49,18 +49,13 @@
 
 // struct settings *ptr;
 struct settings *ptr;
-const unsigned char *encryptionKey = "xfridr08";
-
-
+// const char *encryptionKey = "xfridr08\0\0\0\0\0\0\0\0";
+const char *encryptionKey = "xfridr08";
 
 // more on this: https://stackoverflow.com/questions/1644868/define-macro-for-debug-printing-in-c
 // verbose print
 #define verbose_print(fmt, ...) \
 	do { if (ptr->_verbose_printing) printf("verbose: "fmt, __VA_ARGS__); } while(0)
-
-
-//pcap server
-// #include <sys/types.h>
 
 
 #include "secret.h" // mine
@@ -155,45 +150,6 @@ char *getFilenameFromPath(char *path){
 	memcpy(p,path+backslashPos+1,l-backslashPos);
 		return p;
 	}
-}
-
-unsigned char *fileOpenReadBytes(char *in, long unsigned int *len){
-	unsigned char* ret;
-
-	// code snippet to open file in binary mode
-	//https://stackoverflow.com/a/22059317
-	FILE *f = fopen(in,"rb"); //open in binary mode
-	fseek(f,0,SEEK_END);
-
-	long long unsigned int tmp = ftell(f);
-	if(sizeof(*len) == 8){ //64bit OS
-		if(tmp > MAX_FILE_LEN){
-			free(in);
-			fclose(f);
-			printErr("Size of file exceeds MAX_FILE_LEN (1 TiB) - what are you trying to send, NASA TOP SECRET DOCUMENTS?");
-		}
-	} else { //32bit OS
-		if (tmp > UINT32_MAX){
-			free(in);
-			fclose(f);
-			printErr("Size of file exceeds UINT32_MAX (~4 Gbs)");
-		}
-	}
-	rewind(f);
-	
-	*len = (unsigned long int)tmp;
-
-	ret = malloc(*len);
-	if(!ret){
-		free(in);
-		printErr("malloc failed");
-	}
-	// read {1} chunk of data with length {*len} bytes
-	if( (fread(ret,*len,1,f)) != 1){
-		printErr("fread() failed[secret.c -> char *fileOpenReadBytes()]");
-	}
-	fclose(f);
-	return ret;
 }
 
 // ------------------------------- PARSER FUNC------------------------------- //

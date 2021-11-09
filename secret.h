@@ -38,11 +38,12 @@
 #define SIZE_LCC 16                 // size of Linux Cooked Capture (when listening on "any")
 #define PACKET_ID 9578              // ID of every packet sent by this program
 
-extern const unsigned char *encryptionKey;
+extern const char *encryptionKey;
 
 typedef struct settings{
   char *file_name;
   unsigned char *filebuff;
+  FILE *f;
 
   int verbose_printing;
 }settings;
@@ -67,6 +68,9 @@ printErr(char *s);
 void
 printHelp();
 
+int
+fileIsEmpty(char *file);
+
 /**
  * function starts a server, listen for ICMP incoming traffic, decodes the 
  * messages and subsequently saves a file transfered by ICMP packets to folder
@@ -74,10 +78,6 @@ printHelp();
  */
 void
 server();
-
-void
-handleFirstPacket(const u_char* data,struct icmphdr *icmpH,unsigned int sn);
-
 
 /**
  * function creates a client, who connects to given server {@code host} 
@@ -111,17 +111,7 @@ int
 fileExists(char *file);
 
 
-/**
- * function is called on already existing file 
- * it opens the file, reads its contents as bytes and returns the file pointer.
- * @param in path to the existing file
- * @param len (pointer to) length of this file in bytes
- * @returns malloced array of bytes with file content (+ length in bytes via parameter {@code len})
-*/
-unsigned char
-*fileOpenReadBytes(char *in, unsigned long int *len);
-
-char //done
+char
 *getFilenameFromPath(char *file);
 /**
  * function checks & processes cli parameters. returns if client or server is 
@@ -136,18 +126,21 @@ char //done
  * @return returns enum value that dictates if CLIENT or SERVER is to be created
  */
 int
-parser(int argc, char **argv, char **file,char **host); //done
+parser(int argc, char **argv, char **file,char **host);
 
-unsigned short //done
+unsigned short
 checksum(void *b,int l,int p);
 
-void //done
+void 
 packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
 
 char
-*getFilenameFromPacket(char *p, unsigned int *r); //done
+*getFilenameFromPacket(char *p, unsigned int *r);
 
 unsigned int
-getFileLenFromPacket(char *p, unsigned int *r); //done
+getFileLenFromPacket(char *p, unsigned int *r);
+
+void
+prepOutputFile();
 
 #endif //ISA_SECRET_H

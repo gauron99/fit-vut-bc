@@ -3,7 +3,6 @@
 
 
 extern struct settings *ptr;
-// extern const unsigned char* encryptionKey;
 
 int getMaxDataAvailable(int used,int done,int fl){
   return (fl-done) < (PACKET_MAX_SIZE-used) ? (fl-done) : (PACKET_MAX_SIZE-used);
@@ -41,21 +40,67 @@ int createFirstPacket(char (*p)[PACKET_MAX_SIZE], int used, unsigned int l){
 
 unsigned char *encryptData(char *in,unsigned int *l){
 	
-	extern const unsigned char* encryptionKey;
+	extern const char* encryptionKey;
   unsigned int textlen = *l;
 
+	printf("finalLen bef enc:%d\n",*l);
 	while((*l%AES_BLOCK_SIZE)!=0){(*l)++;}
 	printf("finalLen after enc:%d\n",*l);
 
   AES_KEY key;
-  AES_set_encrypt_key(encryptionKey,128,&key);
+  int TEST = AES_set_encrypt_key((unsigned char*)encryptionKey,128,&key);
+	printf("TESTENC:%d\n",TEST);
 
   unsigned char *res = calloc(textlen + (AES_BLOCK_SIZE % textlen),1);
-  for (int i = 0; i <= textlen; i += AES_BLOCK_SIZE ){
+  for (int i = 0; i < textlen; i += AES_BLOCK_SIZE ){
     AES_encrypt((unsigned char*)in+i,res+i,&key);
   }
 
   return res;
+}
+
+
+FILE *fileOpenReady(char *in, long unsigned int *len){
+
+	// code snippet to open file in binary mode
+	//https://stackoverflow.com/a/22059317
+	FILE *f = fopen(in,"rb"); //open in binary mode
+	fseek(f,0,SEEK_END);
+
+	long long unsigned int tmp = ftell(f);
+	if(sizeof(*len) == 8){ //64bit OS
+		if(tmp > MAX_FILE_LEN){
+			free(in);
+			fclose(f);
+			printErr("Size of file exceeds MAX_FILE_LEN (1 TiB) - what are you trying to send, NASA TOP SECRET DOCUMENTS?");
+		}
+	} else { //32bit OS
+		if (tmp > UINT32_MAX){
+			free(in);
+			fclose(f);
+			printErr("Size of file exceeds UINT32_MAX (~4 Gbs)");
+		}
+	}
+	rewind(f);
+	
+	*len = (unsigned long int)tmp;
+	ptr->filebuff = malloc(1); //ready for realloc
+	return f;
+}
+
+void readFileBytes(unsigned int l){
+
+	ptr->filebuff = realloc(ptr->filebuff,l);
+	if(!ptr->filebuff){
+		printErr("realloc failed @readFileBytes()");
+	}
+
+	// read {1} chunk of data with length {*len} bytes	
+	if( fread(ptr->filebuff,l,1,ptr->f) != 1){
+		printErr("fread() failed[secret.c -> char *readFileBytes()]");
+	}
+
+	return;
 }
 
 // ------------------ CLIENT FUNC ------------------ //
@@ -76,7 +121,8 @@ void client(char *file, char *host){
 	 * max value is ~18kkkkkk bytes (18,446,744,073,709,551,615b - UINT64_MAX)
 	*/
 	long unsigned int filelen;
-	ptr->filebuff = fileOpenReadBytes(file,&filelen);
+
+	ptr->f = fileOpenReady(file,&filelen);
 
 	ptr->file_name = getFilenameFromPath(file);
 	printf("here, a file: %s\n",ptr->file_name); //DEBUG PRINT
@@ -180,30 +226,23 @@ void client(char *file, char *host){
   used = createFirstPacket(&packet,used,filelen);
 
   datasize = getMaxDataAvailable(used,totalBytesSent,filelen);
+	printf("flen:%d;datasize:%d",filelen,datasize);
+
+	readFileBytes(datasize);
 
 	//packet holds all info to be sent
 	memcpy(packet+used,ptr->filebuff,datasize);
-	ptr->filebuff+=datasize;
+	printf("datasize after memcpy:%d\n",datasize);
   totalBytesSent = datasize; //save how much data was read from buffer already
 
-
-	char* xx = packet+icmpHlen;
-	int A = datasize;
 	datasize += used - icmpHlen;
 
-	printf("BEFORE ENC:\n----------\n\n");
-	int	aa=0;
-	for (int i = 0; i < datasize; i++){
-		printf("%c,",xx[i]);
-		aa++;
-	}
-
   // encrypt data
-	printf("|used:%d;%d;dip:%d	|\n------------\n",used - icmpHlen,A,datasize);//DEBUG
+	printf("|\nused:%d;dip:%d	|\n------------\n",used - icmpHlen,datasize);//DEBUG
   unsigned char *enc_packet = encryptData(packet+icmpHlen,&datasize);
 
 	//zero out packet after header
-	memset(packet+icmpHlen,0,PACKET_MAX_SIZE-icmpHlen);
+	memset(packet+icmpHlen,0,datasize);
 	
 	//copy encrypted info into packet
 	memcpy(packet+icmpHlen,enc_packet,datasize);
@@ -219,12 +258,13 @@ void client(char *file, char *host){
 
 	used = icmpHlen;
 
-
 	//send packets until whole file is sent
 	while(totalBytesSent<filelen) {
 	
 		datasize = getMaxDataAvailable(used,totalBytesSent,filelen);
 		
+
+		readFileBytes(datasize);
 		memcpy(packet+used,ptr->filebuff,datasize);
 
 		// encrypt data
@@ -248,7 +288,6 @@ void client(char *file, char *host){
 		}
 		
 		totalBytesSent+=datasize;
-		ptr->filebuff += totalBytesSent;
 	}
 
 	printf("file transfer done!\n");
