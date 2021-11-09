@@ -9,7 +9,7 @@ LDFLAGS= -lcrypto -lssl
 
 MAIN=secret
 
-all: clean $(MAIN)
+all: clean $(MAIN) clear-o
 
 $(MAIN): $(MAIN).o server.o client.o
 	$(CC) $(CFLAGS) -o $(MAIN) $(MAIN).o server.o client.o $(LDFLAGS)
@@ -29,6 +29,9 @@ l:
 
 clean:
 	rm -f secret *.o vgcore*
+
+clear-o:
+	rm *.o
 
 local:
 	sudo ./secret -s localhost -r file_to_send.txt

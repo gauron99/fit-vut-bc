@@ -22,16 +22,6 @@ extern struct settings *ptr;
  * https://wiki.wireshark.org/SLL
 */ 
 
-
-/** 0-3b 				-- filename len = X
- * 	4-Xb 				-- filename
- * 	(X-(X+13))b	-- file data len = Y
- * 	((X+13)-Y)b	-- data
- * 	-- if data is smaller than PACKET_MAX_LEN (dont read)
-*/
-
-
-
 char *getFilenameFromPacket(char *p, unsigned int *r){
 // 	0-2b 				-- filename len = X
 // 	3-Xb 				-- filename
@@ -41,9 +31,11 @@ char *getFilenameFromPacket(char *p, unsigned int *r){
 	memcpy(fnl_buff,p,MAX_FILE_NAME_LEN);
 	*r += MAX_FILE_NAME_LEN;
 
+	printf("r:%d|fnl:%s\n",*r,fnl_buff);
+
 	char *endptr = NULL;
 	int fnl = (int)strtol(fnl_buff,&endptr,10);
-	if(*endptr != '\0' || fnl_buff == endptr){
+	if(*endptr != '\0'){
 		printErr("strtol() failed @getFilenameFromPacket()");
 	}
 	
@@ -53,14 +45,15 @@ char *getFilenameFromPacket(char *p, unsigned int *r){
 		printErr("Calloc() failed @getFilenameFromPacket()");
 	}
 
-	memcpy(fname,p+(*r),fnl);
-	(*r) += fnl;
+	memcpy(fname,p+MAX_FILE_NAME_LEN,fnl);
+	*r += fnl;
 	
 	return fname;
 }
 
 unsigned int getFileLenFromPacket(char *p, unsigned int *r){
 // 	(X-(X+13))b	-- file data len = Y
+
 	char tmp[FILE_LEN_BYTES];
 	memcpy(tmp,p+*r,FILE_LEN_BYTES);
 	*r += FILE_LEN_BYTES;
@@ -73,12 +66,6 @@ unsigned int getFileLenFromPacket(char *p, unsigned int *r){
 	}
 	return fl;
 }
-
-// void handleFirstPacket(const u_char* data,struct icmphdr *icmpH,unsigned int sn){
-// 	int used = sizeof(icmpH);
-// 	// decrypt data
-// 	// decryptPacketData(data);
-// }
 
 unsigned char* decryptData(const unsigned char* d){
 	extern const unsigned char* encryptionKey;
@@ -109,8 +96,8 @@ int handleData(const u_char* data, unsigned int sn){
 		return -1; //wrong packet, do nothing
 	}
 
-	printf("--- ICMP struktura ---\n");//DEBUG
-	printf("checksum:%d, id:%d, sn: %d\n",icmpH->checksum,ntohs(icmpH->un.echo.id),sn_packet);//DEBUG
+	// printf("--- ICMP struktura ---\n");//DEBUG
+	// printf("checksum:%d, id:%d, sn: %d\n------------\n",icmpH->checksum,ntohs(icmpH->un.echo.id),sn_packet);//DEBUG
 
 	//says how many bytes have been read from packet so far(useful for skiping 
 	//bytes before file data)
@@ -118,39 +105,63 @@ int handleData(const u_char* data, unsigned int sn){
 
 	//first packet
 	if(sn == 1){
-		printf("AM FIRST BOI\n");
 		char* decr_data = (char*)decryptData(data+sizeof(icmpH)); //save file data to ptr->filebuff
+		
 		// printf("------------\n");
-		// for (int i = 0; i < 33; i++)
+		// for (int i = 0; i < PACKET_MAX_SIZE; i++)
 		// {
 		// 	printf("%c,",decr_data[i]);
 		// }
 		// printf("\n");
 		// exit(0);//DEBUG
 
+		printf("transfered:%d,read:%d,fl:%d\n",transfered,read,fileLen);
 		ptr->file_name = getFilenameFromPacket(decr_data,&read);
 		printf("filename: %s\n",ptr->file_name);//DEBUG
+		printf("transfered:%d,read:%d,fl:%d\n",transfered,read,fileLen);
 
-		fileLen = getFileLenFromPacket(decr_data,&read);
-		printf("fileLen: %d\n",fileLen);//DEBUG
-
-		//init filebuff
-		ptr->filebuff = calloc(fileLen,1);
-
-		// printf("decrypted DATA:\n");
-		// for (size_t i = 0; i < fileLen; i++)
+		// printf("------------\n");
+		// for (int i = 0; i < PACKET_MAX_SIZE; i++)
 		// {
 		// 	printf("%c,",decr_data[read+i]);
 		// }
 		// printf("\n");
+		// exit(0);//DEBUG
 
-		//add icmp header to "read" bytes (before file data)
-		read += sizeof(icmpH);
+
+		fileLen = getFileLenFromPacket(decr_data,&read);
+		printf("fileLen: %d\n",fileLen);//DEBUG
+		printf("transfered:%d,read:%d,fl:%d\n",transfered,read,fileLen);
+
+		// printf("------------\n");
+		// for (int i = 0; i < PACKET_MAX_SIZE; i++)
+		// {
+		// 	printf("%c,",decr_data[read+i]);
+		// }
+		// printf("\n");
+		// exit(0);
+
+		//init filebuff
+		ptr->filebuff = calloc(fileLen,1);
+
+		// read += sizeof(icmpH);
 
 		// copy data to buffer
-		int dip = getMaxDataAvailable(read,transfered,fileLen);
+		printf("transfered:%d,read:%d,fl:%d\n",transfered,read,fileLen);
+
+		int dip = getMaxDataAvailable(read+sizeof(icmpH),transfered,fileLen)-sizeof(icmpH);
+
 		memcpy(ptr->filebuff+transfered,decr_data+read,dip);
 		transfered += dip;
+
+
+		printf("decrypted DATA:[dip:%d][read:%d](d+r:%d)\n",dip,read,dip+read+8);
+		int j=0;
+		for (size_t i = 0; i < dip; i++){
+			printf("%c,",decr_data[read+i]);
+			j++;
+		}
+
 
 		//file doesnt exist OR (file exists & has read permission && is empty && has write permission)
 		if(!fileExists(ptr->file_name) || (fileExists(ptr->file_name) && fileIsEmpty(ptr->file_name) && (!access(ptr->file_name,W_OK)))){
@@ -167,21 +178,44 @@ int handleData(const u_char* data, unsigned int sn){
 
 		//NOT first packet (every other one)
 	} else {
+		read = sizeof(icmpH);
+
+		// TODO? unsigned
+		unsigned char* decr_data = decryptData(data+sizeof(icmpH));
+		
+		int dip = getMaxDataAvailable(read,transfered,fileLen);
+
+		printf("decrypted DATA:\n");
+		for (size_t i = 0; i < dip; i++)
+		{
+			printf("%c,",decr_data[read+i]);
+		}
+		printf("\n");
+
+		memcpy(ptr->filebuff+transfered,decr_data,dip);
+
+		transfered += dip;
 
 	}
 	
 	//all data has been transfered
 	if(transfered == fileLen){
 
-		printf(">%s<\n",ptr->filebuff);
+		printf(">>%s<<\n",ptr->filebuff);
 
 
 		FILE *f = fopen(ptr->file_name,"wb+");
 		if(f == NULL){
-			printErr("File couldn't be opened(failed 'wb' mode)[server-side]");
+			printErr("File couldn't be opened(failed 'wb+' mode)[server-side]");
 		}
 		fwrite(ptr->filebuff,fileLen,1,f);
 		fclose(f);
+
+		printf("~~ File transfer done! ~~\n");
+		transfered = 0;
+		fileLen = 0;
+		free(ptr->filebuff);
+		return 1;
 	}
 	return 0;
 }
@@ -204,7 +238,7 @@ void packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char
 
 	static unsigned int seq_num = 0;
 
-		// skip ethernet layer
+		// skip linux cooked layer
 		packet += SIZE_LCC;
 
 		//ip header
@@ -217,8 +251,10 @@ void packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char
     switch (iph->ip_p){
 		case 1:
 			if(icmph->type == ICMP_ECHO){
-				// printf("%d: another one! - IPv4[code:%d]\n",++seq_num,icmph->type);
-				handleData(packet+iphLen,++seq_num);
+				if(handleData(packet+iphLen,++seq_num)){
+					//if one is returned, file transfer done!
+					seq_num = 0;
+				}
 			}
 			break;
 		case 58: // IPv6-ICMP
