@@ -31,7 +31,7 @@ char *getFilenameFromPacket(char *p, unsigned int *r){
 	memcpy(fnl_buff,p,MAX_FILE_NAME_LEN);
 	*r += MAX_FILE_NAME_LEN;
 
-	printf("r:%d|fnl:%s\n",*r,fnl_buff);
+	// printf("r:%d|fnl:%s\n",*r,fnl_buff);
 
 	char *endptr = NULL;
 	int fnl = (int)strtol(fnl_buff,&endptr,10);
@@ -73,7 +73,7 @@ unsigned char* decryptData(const unsigned char* d){
 	int exclude = sizeof(struct icmphdr);
 
 	AES_KEY dec_key;
-	int TEST = AES_set_decrypt_key((unsigned char*)encryptionKey,128,&dec_key);
+	AES_set_decrypt_key((unsigned char*)encryptionKey,128,&dec_key);
 
 	unsigned char *ret = calloc(PACKET_MAX_SIZE-exclude,1);
 
@@ -92,7 +92,6 @@ unsigned char* decryptData(const unsigned char* d){
 }
 
 void prepOutputFile(){
-	printf("OUTPUTFILE:%s\n",ptr->file_name);
 	//file doesnt exist OR (file exists & has read permission && is empty && has write permission)
 		if(!fileExists(ptr->file_name) || (fileExists(ptr->file_name) && fileIsEmpty(ptr->file_name) && (!access(ptr->file_name,W_OK)))){
 			//do nothing
@@ -109,7 +108,6 @@ void prepOutputFile(){
 			memcpy(ptr->file_name,"isa_",4);
 			memcpy(ptr->file_name+4,tmp1,fLen);
 			free(tmp1);
-			printf("AFTER MEMORY MOVE: |%s|\n",ptr->file_name);
 		}
 
 	// open file for writing
@@ -132,8 +130,8 @@ int handleData(unsigned char* data, unsigned int sn){
 	if((ntohs(icmpH->un.echo.id) != PACKET_ID) || (sn != sn_packet) ){
 		return -1; //wrong packet, do nothing
 	}
-	printf("--- ICMP struktura ---\n");//DEBUG
-	printf("checksum:%d, id:%d, sn: %d\n------------\n",icmpH->checksum,ntohs(icmpH->un.echo.id),sn_packet);//DEBUG
+	// printf("--- ICMP struktura ---\n");//DEBUG
+	// printf("checksum:%d, id:%d, sn: %d\n------------\n",icmpH->checksum,ntohs(icmpH->un.echo.id),sn_packet);//DEBUG
 
 	//says how many bytes have been read from packet so far(useful for skiping 
 	//bytes before file data)
@@ -164,12 +162,11 @@ int handleData(unsigned char* data, unsigned int sn){
 		printf("transfered:%d,read:%d,fl:%d\n",transfered,read,fileLen);
 
 		dip = getMaxDataAvailable(read+icmpHlen,transfered,fileLen);
-		printf("dip:%d\n",dip);
+		// printf("dip:%d\n",dip);
 
 		//init filebuff
 		ptr->filebuff = calloc(dip,1);
 		
-		// printf("dip:%d\n",dip);
 		// printf("------------\n");
 		// for (int i = 0; i < dip; i++){
 		// 	printf("%c,",decr_data[read+i]);
@@ -200,7 +197,6 @@ int handleData(unsigned char* data, unsigned int sn){
 
 	}
 	
-	printf("write to file here!\n");
 	// append to file
 	if (fwrite(ptr->filebuff,dip,1,ptr->f) != 1){
 		printErr("Fwrite returned unexpected value");
@@ -209,10 +205,10 @@ int handleData(unsigned char* data, unsigned int sn){
 	//all data has been transfered
 	if(transfered == fileLen){
 
-		printf(">>%s<<\n",ptr->filebuff);
+		// printf(">>%s<<\n",ptr->filebuff);
 
-		printf("~~ File transfer done! ~~\n");
-		printf("Wrote to file: %s\n",ptr->file_name);
+		// printf("~~ File transfer done! ~~\n");
+		printf("DONE! Wrote to file: %s\n",ptr->file_name);
 		transfered = 0;
 		fileLen = 0;
 
@@ -262,7 +258,7 @@ void packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char
 		case 58: // IPv6-ICMP
 			printf("%d: another one! - IPv6 \n",++seq_num);
 		default:
-			printf("protocol unknown: %d\n",iph->ip_p);
+			// printf("protocol unknown: %d\n",iph->ip_p);
 			return;
   
 		}
@@ -309,13 +305,6 @@ void server() {
 	// get IP address and mask of the sniffing interface
   if (pcap_lookupnet(devname,&netaddr,&mask,errbuf) == -1)
     printErr("Can't get IP & mask of chosen interface");
-
-
-/* TODO
-possibly dont even ahve to use devname, therefore  looking for interfaces, just
-use NULL or "any" right here for all devices to be sniffed, because it is
-unknown what devices are the packets coming from
-*/
 
 	memset(errbuf,0,PCAP_ERRBUF_SIZE);
 

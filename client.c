@@ -48,8 +48,7 @@ unsigned char *encryptData(char *in,unsigned int *l){
 	printf("finalLen after enc:%d\n",*l);
 
   AES_KEY key;
-  int TEST = AES_set_encrypt_key((unsigned char*)encryptionKey,128,&key);
-	printf("TESTENC:%d\n",TEST);
+	AES_set_encrypt_key((unsigned char*)encryptionKey,128,&key);
 
   unsigned char *res = calloc(textlen + (AES_BLOCK_SIZE % textlen),1);
   for (int i = 0; i < textlen; i += AES_BLOCK_SIZE ){
@@ -226,19 +225,16 @@ void client(char *file, char *host){
   used = createFirstPacket(&packet,used,filelen);
 
   datasize = getMaxDataAvailable(used,totalBytesSent,filelen);
-	printf("flen:%d;datasize:%d",filelen,datasize);
 
 	readFileBytes(datasize);
 
 	//packet holds all info to be sent
 	memcpy(packet+used,ptr->filebuff,datasize);
-	printf("datasize after memcpy:%d\n",datasize);
   totalBytesSent = datasize; //save how much data was read from buffer already
 
 	datasize += used - icmpHlen;
 
   // encrypt data
-	printf("|\nused:%d;dip:%d	|\n------------\n",used - icmpHlen,datasize);//DEBUG
   unsigned char *enc_packet = encryptData(packet+icmpHlen,&datasize);
 
 	//zero out packet after header
@@ -269,7 +265,6 @@ void client(char *file, char *host){
 
 		// encrypt data
   	enc_packet = encryptData(packet+icmpHlen,&datasize);
-		printf("datasize after encr: %d,",datasize);
 
 		//zero out packet after header
 		memset(packet+icmpHlen,0,PACKET_MAX_SIZE-icmpHlen);
