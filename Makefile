@@ -4,8 +4,8 @@
 .PHONY: secret all cl build l local
 
 CC=gcc
-CFLAGS= -std=gnu99 -g -Wall -lpcap
-LDFLAGS= -lcrypto -lssl
+CFLAGS= -std=gnu99 -g -Wall 
+LDFLAGS= -lcrypto -lssl -lpcap
 
 MAIN=secret
 

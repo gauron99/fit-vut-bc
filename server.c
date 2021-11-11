@@ -72,22 +72,17 @@ unsigned char* decryptData(const unsigned char* d){
 	
 	int exclude = sizeof(struct icmphdr);
 
-	AES_KEY dec_key;
-	AES_set_decrypt_key((unsigned char*)encryptionKey,128,&dec_key);
+	AES_KEY key;
+	AES_set_decrypt_key((unsigned char*)encryptionKey,128,&key);
 
 	unsigned char *ret = calloc(PACKET_MAX_SIZE-exclude,1);
 
 	// decrypt everything except icmp header
 	int i;
-	for (i = 0; i < (PACKET_MAX_SIZE-exclude); i+=AES_BLOCK_SIZE){
-		AES_decrypt(d+i,ret+i,&dec_key);
+	for (i= 0; i < (PACKET_MAX_SIZE-exclude); i+=AES_BLOCK_SIZE){
+		AES_decrypt(d+i,ret+i,&key);
 	}
 
-	// printf("INBOI[i:%d;calloced:%d]\n\n",i,PACKET_MAX_SIZE-exclude);
-	// for (size_t i = 0; i < (PACKET_MAX_SIZE-exclude); i++){
-	// 	printf("%c",ret[i]);
-	// }
-	// printf("\n");
 	return ret;
 }
 
@@ -108,10 +103,11 @@ void prepOutputFile(){
 			memcpy(ptr->file_name,"isa_",4);
 			memcpy(ptr->file_name+4,tmp1,fLen);
 			free(tmp1);
+
 		}
 
 	// open file for writing
-	ptr->f = fopen(ptr->file_name,"ab");
+	ptr->f = fopen(ptr->file_name,"wb");
 	if(ptr->f == NULL){
 		printErr("File couldn't be opened(failed w/ 'ab' mode)[server-side]");
 	}
@@ -124,14 +120,15 @@ int handleData(unsigned char* data, unsigned int sn){
 
 	struct icmphdr *icmpH = (struct icmphdr*)data;
 	int icmpHlen = sizeof(struct icmphdr);
+
+
 	unsigned int sn_packet = ntohs(icmpH->un.echo.sequence);
+	printf("%d caught!\n",sn_packet);
 	
 	//packet validation
 	if((ntohs(icmpH->un.echo.id) != PACKET_ID) || (sn != sn_packet) ){
 		return -1; //wrong packet, do nothing
 	}
-	// printf("--- ICMP struktura ---\n");//DEBUG
-	// printf("checksum:%d, id:%d, sn: %d\n------------\n",icmpH->checksum,ntohs(icmpH->un.echo.id),sn_packet);//DEBUG
 
 	//says how many bytes have been read from packet so far(useful for skiping 
 	//bytes before file data)
@@ -140,16 +137,7 @@ int handleData(unsigned char* data, unsigned int sn){
 	//first packet
 	if(sn == 1){
 		
-		// int k,l;
-		// for (k = 0; k < 1472; k+=AES_BLOCK_SIZE)
-		// {
-		// 	for (l = 0; l < AES_BLOCK_SIZE; l++)
-		// 	{
-		// 		printf("%X ",data[8+k+l]);
-		// 	}
-		// 	printf("\n--\n");
-		// }
-		// printf("i:%d\n",k);
+
 
 		char *decr_data = (char*)decryptData(data+icmpHlen); //save file data to ptr->filebuff
 		
@@ -158,23 +146,14 @@ int handleData(unsigned char* data, unsigned int sn){
 		prepOutputFile();
 
 		fileLen = getFileLenFromPacket(decr_data,&read);
-		printf("fileLen: %d\n",fileLen);//DEBUG
-		printf("transfered:%d,read:%d,fl:%d\n",transfered,read,fileLen);
 
 		dip = getMaxDataAvailable(read+icmpHlen,transfered,fileLen);
-		// printf("dip:%d\n",dip);
 
 		//init filebuff
 		ptr->filebuff = calloc(dip,1);
-		
-		// printf("------------\n");
-		// for (int i = 0; i < dip; i++){
-		// 	printf("%c,",decr_data[read+i]);
-		// }
-		// printf("\n");
-		// exit(0);
 
 		memcpy(ptr->filebuff,decr_data+read,dip);
+
 		transfered += dip;
 		
 	} else { //NOT first packet (every other one)
@@ -187,10 +166,11 @@ int handleData(unsigned char* data, unsigned int sn){
 		// printf("decrypted DATA:\n");
 		// for (size_t i = 0; i < dip; i++)
 		// {
-		// 	printf("%c,",decr_data[read+i]);
+		// 	printf("%c",decr_data[read+i]);
 		// }
 		// printf("\n");
 
+		ptr->filebuff = calloc(dip,1);
 		memcpy(ptr->filebuff,decr_data,dip);
 
 		transfered += dip;
@@ -200,6 +180,8 @@ int handleData(unsigned char* data, unsigned int sn){
 	// append to file
 	if (fwrite(ptr->filebuff,dip,1,ptr->f) != 1){
 		printErr("Fwrite returned unexpected value");
+	} else {
+		free(ptr->filebuff);
 	}
 
 	//all data has been transfered
@@ -213,8 +195,8 @@ int handleData(unsigned char* data, unsigned int sn){
 		fileLen = 0;
 
 		fclose(ptr->f);
-		free(ptr->filebuff);
 		free(ptr->file_name);
+
 		return 1;
 	}
 	return 0;
@@ -258,9 +240,7 @@ void packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char
 		case 58: // IPv6-ICMP
 			printf("%d: another one! - IPv6 \n",++seq_num);
 		default:
-			// printf("protocol unknown: %d\n",iph->ip_p);
-			return;
-  
+			break;
 		}
 }
 
@@ -285,10 +265,13 @@ void server() {
 
 
 	// open the input devices (interfaces) to choose from
-  if (pcap_findalldevs(&alldev, errbuf))
-    printErr("Can't open input device(s)");
+  if (pcap_findalldevs(&alldev, errbuf)){
 
-  // list the available input devices
+    // printErr("Can't open input device(s)");
+		fprintf(stderr,"Error: pcap_findalldevs(): %s\n",errbuf);
+		exit(1);
+	}
+
   for (dev = alldev; dev != NULL; dev = dev->next){
 		if(!strcmp(dev->name,"any")){
 		  devname = dev->name;
@@ -301,12 +284,13 @@ void server() {
 	// devname = alldev->name;
 
 	printf("devname:%s\n",devname);
-  
-	// get IP address and mask of the sniffing interface
-  if (pcap_lookupnet(devname,&netaddr,&mask,errbuf) == -1)
-    printErr("Can't get IP & mask of chosen interface");
 
-	memset(errbuf,0,PCAP_ERRBUF_SIZE);
+	// get IP address and mask of the sniffing interface
+  if (pcap_lookupnet(devname,&netaddr,&mask,errbuf) == -1){
+    // printErr("Can't get IP & mask of chosen interface");
+		fprintf(stderr,"Error: pcap_lookupnet(): %s\n",errbuf);
+		exit(1);
+	}
 
 	//open the interface
 	if((handler = pcap_open_live(devname,PACKET_MAX_SIZE,1,1000,errbuf)) == NULL){
@@ -327,8 +311,6 @@ void server() {
 	if(pcap_setfilter(handler,&filter) == -1){
 		printErr("Can't set filter for chosen device");
 	}
-
-
 
 	printf("Starting server, press CTRL-C to stop me!\n");
 

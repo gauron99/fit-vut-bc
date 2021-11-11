@@ -5,12 +5,12 @@
 extern struct settings *ptr;
 
 int getMaxDataAvailable(int used,int done,int fl){
-  return (fl-done) < (PACKET_MAX_SIZE-used) ? (fl-done) : (PACKET_MAX_SIZE-used);
+  return (fl-done) < (PACKET_MAX_SIZE-32-used) ? (fl-done) : (PACKET_MAX_SIZE-32-used);
 }
 
 int createFirstPacket(char (*p)[PACKET_MAX_SIZE], int used, unsigned int l){
 
-	unsigned int fnsi = strlen(ptr->file_name)+1;//for '/0'
+	unsigned int fnsi = strlen(ptr->file_name);
   if(fnsi>999){
     printErr("Length of file name is larger than allowed (max=999 chars)");
   } else {
@@ -41,17 +41,16 @@ int createFirstPacket(char (*p)[PACKET_MAX_SIZE], int used, unsigned int l){
 unsigned char *encryptData(char *in,unsigned int *l){
 	
 	extern const char* encryptionKey;
-  unsigned int textlen = *l;
 
 	printf("finalLen bef enc:%d\n",*l);
-	while((*l%AES_BLOCK_SIZE)!=0){(*l)++;}
-	printf("finalLen after enc:%d\n",*l);
+	while(((*l)%AES_BLOCK_SIZE)!=0){(*l)++;}
+	printf("finalLen after enc:%d\n---\n",*l);
 
   AES_KEY key;
 	AES_set_encrypt_key((unsigned char*)encryptionKey,128,&key);
 
-  unsigned char *res = calloc(textlen + (AES_BLOCK_SIZE % textlen),1);
-  for (int i = 0; i < textlen; i += AES_BLOCK_SIZE ){
+  unsigned char *res = calloc(*l,1);
+  for (int i = 0; i < *l; i += AES_BLOCK_SIZE ){
     AES_encrypt((unsigned char*)in+i,res+i,&key);
   }
 
@@ -212,17 +211,14 @@ void client(char *file, char *host){
 	struct icmphdr *icmpH = (struct icmphdr*)packet;
 	int icmpHlen = sizeof(struct icmphdr);
 	icmpH->type = ICMP_ECHO;
-  icmpH->un.frag.mtu = 1500;
+  // icmpH->un.frag.mtu = 1500;
   icmpH->un.echo.sequence = htons(1);
-
   icmpH->un.echo.id = htons(PACKET_ID);
-
-  used += icmpHlen;
 
 	unsigned int totalBytesSent = 0;
 	unsigned int datasize = 0;
 
-  used = createFirstPacket(&packet,used,filelen);
+  used = createFirstPacket(&packet,icmpHlen,filelen);
 
   datasize = getMaxDataAvailable(used,totalBytesSent,filelen);
 
@@ -234,15 +230,45 @@ void client(char *file, char *host){
 
 	datasize += used - icmpHlen;
 
+	for (int i = 0; i < datasize; i++)
+	{
+		printf("%c",packet[icmpHlen+i]);
+	}
+	printf("\n");
+
+
   // encrypt data
-  unsigned char *enc_packet = encryptData(packet+icmpHlen,&datasize);
+  unsigned char *enc_data = encryptData(packet+icmpHlen,&datasize);
+
+	// printf("ENCNCNC:\n");
+	// int k,l;
+	// for (k = 0; k < datasize; k+=AES_BLOCK_SIZE)
+	// {
+	// 	for (l = 0; l < AES_BLOCK_SIZE; l++)
+	// 	{
+	// 		printf("%X ",enc_packet[8+k+l]);
+	// 	}
+	// 	printf("\n");
+	// }
+	// printf("i:%d\n",k);
+		
+
+	// printf("decrpy encrypted:\n");
+	// unsigned char* decrr = decryptData(enc_packet);
+
+	// for (int i = 0; i < PACKET_MAX_SIZE-8; i++)
+	// {
+	// 	printf("%c",decrr[i]);
+	// }
+	
 
 	//zero out packet after header
 	memset(packet+icmpHlen,0,datasize);
 	
 	//copy encrypted info into packet
-	memcpy(packet+icmpHlen,enc_packet,datasize);
-   
+	memcpy(packet+icmpHlen,enc_data,datasize);
+  free(enc_data);
+	
   icmpH->checksum = checksum(packet,icmpHlen+datasize,protocol);
 
   //send first packet with additional information
@@ -256,21 +282,24 @@ void client(char *file, char *host){
 
 	//send packets until whole file is sent
 	while(totalBytesSent<filelen) {
-	
+		printf("totalBytesSent:%d,filelen:%ld\n",totalBytesSent,filelen);
+		printf("datasize:%d\n",datasize);
+		printf("sqn:%d\n",ntohs(icmpH->un.echo.sequence));
+		
 		datasize = getMaxDataAvailable(used,totalBytesSent,filelen);
 		
-
 		readFileBytes(datasize);
 		memcpy(packet+used,ptr->filebuff,datasize);
 
 		// encrypt data
-  	enc_packet = encryptData(packet+icmpHlen,&datasize);
+  	enc_data = encryptData(packet+icmpHlen,&datasize);
 
 		//zero out packet after header
 		memset(packet+icmpHlen,0,PACKET_MAX_SIZE-icmpHlen);
 		
 		//copy encrypted info into packet
-		memcpy(packet+icmpHlen,enc_packet,datasize);
+		memcpy(packet+icmpHlen,enc_data,datasize);
+  	free(enc_data);
 		
 		//calculate checksum
 		icmpH->checksum = 0;
@@ -280,7 +309,9 @@ void client(char *file, char *host){
 		if (sendto(fd,packet,used+datasize,0,&servinfo,servlen) < 0){
 			//cleaning process TODO
 			printErr("Function sendto() failed");
-		}
+		} else {  
+    icmpH->un.echo.sequence += htons(1);
+  	}
 		
 		totalBytesSent+=datasize;
 	}
