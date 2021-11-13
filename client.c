@@ -1,11 +1,13 @@
 
 #include "secret.h"
+#include <sys/select.h>
+#include <poll.h>
 
 
 extern struct settings *ptr;
 
 int getMaxDataAvailable(int used,int done,int fl){
-  return (fl-done) < (PACKET_MAX_SIZE-32-used) ? (fl-done) : (PACKET_MAX_SIZE-32-used);
+  return (fl-done) < (PACKET_MAX_SIZE-used) ? (fl-done) : (PACKET_MAX_SIZE-used);
 }
 
 int createFirstPacket(char (*p)[PACKET_MAX_SIZE], int used, unsigned int l){
@@ -58,32 +60,32 @@ unsigned char *encryptData(char *in,unsigned int *l){
 }
 
 
-FILE *fileOpenReady(char *in, long unsigned int *len){
+void fileOpenReady(char *in, long unsigned int *len){
 
 	// code snippet to open file in binary mode
 	//https://stackoverflow.com/a/22059317
-	FILE *f = fopen(in,"rb"); //open in binary mode
-	fseek(f,0,SEEK_END);
+	ptr->f = fopen(in,"rb"); //open in binary mode
+	fseek(ptr->f,0,SEEK_END);
 
-	long long unsigned int tmp = ftell(f);
+	long long unsigned int tmp = ftell(ptr->f);
 	if(sizeof(*len) == 8){ //64bit OS
 		if(tmp > MAX_FILE_LEN){
 			free(in);
-			fclose(f);
+			fclose(ptr->f);
 			printErr("Size of file exceeds MAX_FILE_LEN (1 TiB) - what are you trying to send, NASA TOP SECRET DOCUMENTS?");
 		}
 	} else { //32bit OS
 		if (tmp > UINT32_MAX){
 			free(in);
-			fclose(f);
+			fclose(ptr->f);
 			printErr("Size of file exceeds UINT32_MAX (~4 Gbs)");
 		}
 	}
-	rewind(f);
+	rewind(ptr->f);
 	
 	*len = (unsigned long int)tmp;
 	ptr->filebuff = malloc(1); //ready for realloc
-	return f;
+	
 }
 
 void readFileBytes(unsigned int l){
@@ -101,6 +103,18 @@ void readFileBytes(unsigned int l){
 	return;
 }
 
+void waitForReply(){
+
+	// struct addrinfo *target,*tmp,hints;
+
+	// int fd = socket();
+
+	// char buf[50];
+	// if(recvfrom(fd,buf,50,0,) < 0) {
+	// 	printErr("recvfrom() failed @waitForReply()");
+	// }
+}
+
 // ------------------ CLIENT FUNC ------------------ //
 
 void client(char *file, char *host){
@@ -109,6 +123,7 @@ void client(char *file, char *host){
 		printf("-s(host): %s\n",host);
 		printErr("Not all necessary parameters were given.");
 	}
+		struct pollfd fds[1];
 
 	/**
 	 * -- unsigned long int sizes --
@@ -120,21 +135,16 @@ void client(char *file, char *host){
 	*/
 	long unsigned int filelen;
 
-	ptr->f = fileOpenReady(file,&filelen);
+	fileOpenReady(file,&filelen);
 
 	ptr->file_name = getFilenameFromPath(file);
 	printf("here, a file: %s\n",ptr->file_name); //DEBUG PRINT
 	
 	if (filelen == 0){
-		free(ptr->file_name); // TODO resolve this bad boy
 		free(host);
 		free(file);
 		printErr("Given file is empty");
 	}
-
-	// free(filename); //DEBUG
-	// free(filebuff); //DEBUG
-	// exit(0); //DEBUG
 
 	int fd; //file descriptor for socket
 	struct addrinfo *target,*tmp,hints;
@@ -157,6 +167,8 @@ void client(char *file, char *host){
 		exit(1);
 	}
 
+	free(host);
+
 	// snippet taken from https://man7.org/linux/man-pages/man3/getaddrfilelen_char.3.html
 	// getaddrfilelen_char returns in 'pai' (last argument) a list of address structures
 	// try to connect to atleast one.
@@ -164,7 +176,6 @@ void client(char *file, char *host){
 	for(target=tmp; target != NULL;target=target->ai_next){
 		protocol = target->ai_family == AF_INET ? IPPROTO_ICMP : IPPROTO_ICMPV6;
 
-		printf("---\n");
 		printf("addr:%s\n",target->ai_addr->sa_family==2?"ipv4":"ipv6 or other");//DEBUG
 		printf("family:%s\n",target->ai_family==2?"ipv4":"icmp6 or other");//DEBUG
 		if(protocol != 1){
@@ -180,14 +191,15 @@ void client(char *file, char *host){
 		break;
 	}
 
+	if(target == NULL){
+		freeaddrinfo(tmp);
+		printErr("No socket created successfully, maybe you forgot sudo?\n");
+	}
+
 	struct sockaddr servinfo = *(struct sockaddr*)target->ai_addr;
 	socklen_t servlen = target->ai_addrlen;
 	
 	freeaddrinfo(tmp);
-
-	if(target == NULL){
-		printErr("No socket was created successfully, maybe you forgot sudo?\n");
-	}
 
 	/**
 	 * PACKET -- is of size 1480 (1500-20 for IP header -is asigned automatically thanks to SOCK_RAW or some)
@@ -230,37 +242,8 @@ void client(char *file, char *host){
 
 	datasize += used - icmpHlen;
 
-	for (int i = 0; i < datasize; i++)
-	{
-		printf("%c",packet[icmpHlen+i]);
-	}
-	printf("\n");
-
-
   // encrypt data
   unsigned char *enc_data = encryptData(packet+icmpHlen,&datasize);
-
-	// printf("ENCNCNC:\n");
-	// int k,l;
-	// for (k = 0; k < datasize; k+=AES_BLOCK_SIZE)
-	// {
-	// 	for (l = 0; l < AES_BLOCK_SIZE; l++)
-	// 	{
-	// 		printf("%X ",enc_packet[8+k+l]);
-	// 	}
-	// 	printf("\n");
-	// }
-	// printf("i:%d\n",k);
-		
-
-	// printf("decrpy encrypted:\n");
-	// unsigned char* decrr = decryptData(enc_packet);
-
-	// for (int i = 0; i < PACKET_MAX_SIZE-8; i++)
-	// {
-	// 	printf("%c",decrr[i]);
-	// }
-	
 
 	//zero out packet after header
 	memset(packet+icmpHlen,0,datasize);
@@ -273,8 +256,13 @@ void client(char *file, char *host){
 
   //send first packet with additional information
   if(sendto(fd,packet,icmpHlen+datasize,0,&servinfo,servlen) < 0){
+		perror("perror says");
     printErr("sendto() failed for the first packet");
-  } else {  
+  } else {
+ 	printf("totalBytesSent:%d,filelen:%ld\n",totalBytesSent,filelen);
+	printf("datasize:%d\n",datasize);
+	printf("sqn:%d\n",ntohs(icmpH->un.echo.sequence));
+	 
     icmpH->un.echo.sequence += htons(1);
   }
 
@@ -282,10 +270,7 @@ void client(char *file, char *host){
 
 	//send packets until whole file is sent
 	while(totalBytesSent<filelen) {
-		printf("totalBytesSent:%d,filelen:%ld\n",totalBytesSent,filelen);
-		printf("datasize:%d\n",datasize);
-		printf("sqn:%d\n",ntohs(icmpH->un.echo.sequence));
-		
+	
 		datasize = getMaxDataAvailable(used,totalBytesSent,filelen);
 		
 		readFileBytes(datasize);
@@ -305,15 +290,26 @@ void client(char *file, char *host){
 		icmpH->checksum = 0;
 		icmpH->checksum = checksum(packet,used+datasize,protocol);
 		
+		memset(fds,0,sizeof(fds));
+
+
+		printf("sendto data:%d\n",used+datasize);
 		// https://man7.org/linux/man-pages/man3/sendto.3p.html
 		if (sendto(fd,packet,used+datasize,0,&servinfo,servlen) < 0){
 			//cleaning process TODO
 			printErr("Function sendto() failed");
-		} else {  
+		} else {
+ 		printf("totalBytesSent:%d,filelen:%ld\n",totalBytesSent,filelen);
+		printf("datasize:%d\n",datasize);
+		printf("sqn:%d\n",ntohs(icmpH->un.echo.sequence));
+	 
     icmpH->un.echo.sequence += htons(1);
   	}
 		
 		totalBytesSent+=datasize;
+
+		// waitForReply();
+
 	}
 
 	printf("file transfer done!\n");

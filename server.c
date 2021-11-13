@@ -22,6 +22,7 @@ extern struct settings *ptr;
  * https://wiki.wireshark.org/SLL
 */ 
 
+
 char *getFilenameFromPacket(char *p, unsigned int *r){
 // 	0-2b 				-- filename len = X
 // 	3-Xb 				-- filename
@@ -30,8 +31,6 @@ char *getFilenameFromPacket(char *p, unsigned int *r){
 	char fnl_buff[MAX_FILE_NAME_LEN];
 	memcpy(fnl_buff,p,MAX_FILE_NAME_LEN);
 	*r += MAX_FILE_NAME_LEN;
-
-	// printf("r:%d|fnl:%s\n",*r,fnl_buff);
 
 	char *endptr = NULL;
 	int fnl = (int)strtol(fnl_buff,&endptr,10);
@@ -61,7 +60,6 @@ unsigned int getFileLenFromPacket(char *p, unsigned int *r){
 	char *endptr = NULL;
 	unsigned int fl = strtoul(tmp,&endptr,10);
 	if(fl == 0 || *endptr != '\0' || endptr == tmp){
-		printf("fl: %d",fl);
 		printErr("strtoul() failed @getFileLenFromPacket()");
 	}
 	return fl;
@@ -82,7 +80,6 @@ unsigned char* decryptData(const unsigned char* d){
 	for (i= 0; i < (PACKET_MAX_SIZE-exclude); i+=AES_BLOCK_SIZE){
 		AES_decrypt(d+i,ret+i,&key);
 	}
-
 	return ret;
 }
 
@@ -93,22 +90,27 @@ void prepOutputFile(){
 		} else {
 			//create new file (one backup)
 			int fLen = strlen(ptr->file_name);
-
-			char* tmp1 = malloc(fLen);
-			memcpy(tmp1,ptr->file_name,fLen);
+			printf("flen: %d\n",fLen);
+			char* tmp = malloc(fLen);
+			if(tmp==NULL){
+				cleanStruct();
+				printErr("Malloc failed @ prepOutputFile()");
+			}
+			memcpy(tmp,ptr->file_name,fLen);
 
 			ptr->file_name = realloc(ptr->file_name,fLen+5);
 			memset(ptr->file_name,0,fLen);
 
 			memcpy(ptr->file_name,"isa_",4);
-			memcpy(ptr->file_name+4,tmp1,fLen);
-			free(tmp1);
+			memcpy(ptr->file_name+4,tmp,fLen);
+			free(tmp);
 
 		}
 
 	// open file for writing
 	ptr->f = fopen(ptr->file_name,"wb");
 	if(ptr->f == NULL){
+		cleanStruct();
 		printErr("File couldn't be opened(failed w/ 'ab' mode)[server-side]");
 	}
 }
@@ -125,7 +127,7 @@ int handleData(unsigned char* data, unsigned int sn){
 	unsigned int sn_packet = ntohs(icmpH->un.echo.sequence);
 	printf("%d caught!\n",sn_packet);
 	
-	//packet validation
+	//packet validation (ID & sequence number)
 	if((ntohs(icmpH->un.echo.id) != PACKET_ID) || (sn != sn_packet) ){
 		return -1; //wrong packet, do nothing
 	}
@@ -136,9 +138,6 @@ int handleData(unsigned char* data, unsigned int sn){
 
 	//first packet
 	if(sn == 1){
-		
-
-
 		char *decr_data = (char*)decryptData(data+icmpHlen); //save file data to ptr->filebuff
 		
 		ptr->file_name = getFilenameFromPacket(decr_data,&read);
@@ -162,13 +161,6 @@ int handleData(unsigned char* data, unsigned int sn){
 		unsigned char* decr_data = decryptData(data+icmpHlen);
 		
 		dip = getMaxDataAvailable(read,transfered,fileLen);
-
-		// printf("decrypted DATA:\n");
-		// for (size_t i = 0; i < dip; i++)
-		// {
-		// 	printf("%c",decr_data[read+i]);
-		// }
-		// printf("\n");
 
 		ptr->filebuff = calloc(dip,1);
 		memcpy(ptr->filebuff,decr_data,dip);
@@ -230,11 +222,12 @@ void packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char
     switch (iph->ip_p){
 		case 1:
 			if(icmph->type == ICMP_ECHO){
-				if(handleData((unsigned char*)(packet + SIZE_LCC + iphLen),++seq_num)){
-					//if one is returned, whole file transfer done!
-					seq_num = 0;
+				pid_t pid;
+				if ((pid = fork()) ==  0){
+					if((handleData((unsigned char*)(packet + SIZE_LCC + iphLen),++seq_num))==1){
+						seq_num = 0;
+					}
 				}
-				//send ack packet back ?
 			}
 			break;
 		case 58: // IPv6-ICMP
@@ -298,9 +291,9 @@ void server() {
 		exit(1);
 	}
 
-	if(strlen(errbuf) != 0){
-		printf("Warning from pcap_open_live: %s\n",errbuf);
-	}
+	// if(strlen(errbuf) != 0){
+	// 	printf("Warning from pcap_open_live: %s\n",errbuf);
+	// }
 
 	//add custom filter & apply
 	if(pcap_compile(handler,&filter,"icmp or icmp6",0,netaddr) == -1){
@@ -318,6 +311,8 @@ void server() {
 	if(pcap_loop(handler,-1,packet_hdlr_cb,NULL) == -1){
 		printErr("Can't sniff, pcap_loop failed");
 	}
+	
+	while(wait(NULL) > 0);
 
 	// capturing stopped, deallocate vars
   pcap_close(handler);

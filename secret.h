@@ -28,10 +28,12 @@
 
 #include <openssl/aes.h>// encryption
 
+#include <pthread.h>
+#include <signal.h>
 
 
 //define some constants (packet max size, max file len in bytes, max file len)
-#define PACKET_MAX_SIZE 1480
+#define PACKET_MAX_SIZE 1432
 #define MAX_FILE_LEN 1099511627775  // 1 TiB
 #define FILE_LEN_BYTES 13           //(strlen(1099511627775) = 13 positions = 1TiB as int)
 #define MAX_FILE_NAME_LEN 3         //number of bytes needed to write file name (max 999 string)
@@ -52,7 +54,7 @@ extern settings *ptr;
 
 void init();
 
-void clean();
+void cleanStruct();
 
 /**
  * function prints given error string and exits with errcode 1.
@@ -142,5 +144,12 @@ getFileLenFromPacket(char *p, unsigned int *r);
 
 void
 prepOutputFile();
+
+/**
+ * function handles SIGINT signal
+ * When CTRL+C (SIGINT) signal is sent it frees some memory before exiting
+ */
+void
+sigint_handler(int sn);
 
 #endif //ISA_SECRET_H

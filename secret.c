@@ -1,17 +1,5 @@
 // secret(c) -- main file
 
-/*
-~~~~~~~~~ TODO TODO TODO TODO ~~~~~~~~~
---- add possibility of having -r argument with -l to specify file name
---- resolve multiple file sending (server)
-- resolve client IPV6 --> cant ping ::1
----- encrypt a file
-
-- unalloc: *file, *host, *filebuff
-*/
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 //  Used for ISA project @BUT_FIT (cz:FIT VUT)                                //
 //  author: David Fridrich                                                    //
@@ -45,17 +33,13 @@
 // #define _XOPEN_SOURCE 700
 
 
-
-
 // struct settings *ptr;
 struct settings *ptr;
-// const char *encryptionKey = "xfridr08\0\0\0\0\0\0\0\0";
 const char *encryptionKey = "xfridr08";
 
 // more on this: https://stackoverflow.com/questions/1644868/define-macro-for-debug-printing-in-c
-// verbose print
 #define verbose_print(fmt, ...) \
-	do { if (ptr->_verbose_printing) printf("verbose: "fmt, __VA_ARGS__); } while(0)
+	do { if (ptr->_verbose_printing) printf(""fmt, __VA_ARGS__); } while(0)
 
 
 #include "secret.h" // mine
@@ -78,12 +62,27 @@ void init(){
 	ptr->verbose_printing = 0;
 	ptr->file_name 				= NULL;
 	ptr->filebuff					= NULL;
-
 }
 
 void printErr(char *s){
+	cleanStruct();
 	fprintf(stderr,"Error: %s\n",s);
 	exit(1);
+}
+
+void cleanStruct(){
+	if(ptr != NULL){
+		if(ptr->f != NULL){
+			fclose(ptr->f);
+		}
+		if(ptr->file_name != NULL){
+			free(ptr->file_name);
+		}
+		if(ptr->filebuff!= NULL){
+			free(ptr->filebuff);
+		}
+		free(ptr);
+	}
 }
 
 void printHelp(){
@@ -147,6 +146,9 @@ char *getFilenameFromPath(char *path){
 	} else {
 
 	char *p = malloc(l-backslashPos);
+	if(!p){
+		printErr("Malloced failed @getFilenameFromPath()");
+	}
 	memcpy(p,path+backslashPos+1,l-backslashPos);
 		return p;
 	}
@@ -162,10 +164,6 @@ parser(int argc, char **argv, char **file,char **host){
 
 	int is_server = 0;	
 
-	/*
-   * parameter -l is exclusive.
-	 *  if -l option is given, no other parameters can be given(except verbose).
-	*/
   for (int i = 1; i < argc; i++){
     if(!strcmp(argv[i],"-h")||!strcmp(argv[i],"--help")){
       printHelp();
@@ -176,6 +174,9 @@ parser(int argc, char **argv, char **file,char **host){
     else if(!strcmp(argv[i],"-s")){ //host
       if(argv[++i] != NULL){
         *host = malloc(strlen(argv[i])+1);
+				if(*host == NULL){
+					printErr("Malloc failed @parser(), for *host");
+				}
 				memcpy(*host,argv[i],strlen(argv[i])+1);
       } else {
         printErr("Parameter for -s (host) was not provided");
@@ -187,6 +188,9 @@ parser(int argc, char **argv, char **file,char **host){
 					printErr("File doesn't exist and/or has wrong read permissions set");
 				}
         *file = malloc(strlen(argv[i])+1);
+				if(*file == NULL){
+					printErr("Malloc failed @parser() for *file");
+				}
         memcpy(*file,argv[i],strlen(argv[i])+1);
 				
       } else {
@@ -198,6 +202,8 @@ parser(int argc, char **argv, char **file,char **host){
 		} 
 		
 		else {
+			if(*host!=NULL){free(*host);}
+			if(*file!=NULL){free(*file);}
       printErr("Unknown parameter was given");
     }
   }
@@ -213,7 +219,7 @@ parser(int argc, char **argv, char **file,char **host){
 
 // ------------------ CHECKSUM FUNC ------------------ //
 
-// this function is taken from:
+// source:
 // http://www.faqs.org/rfcs/rfc1071.html
 unsigned short checksum(void *b,int l,int p){
 
@@ -242,8 +248,16 @@ unsigned short checksum(void *b,int l,int p){
 	return 0;
 }
 
+void sigint_handler(int sn){
+	cleanStruct();
+	printf("CTRL+C was pressed, exiting\n");
+	exit(0);
+}
+
 // --------------------------------- MAIN --------------------------------- //
 int main(int argc, char **argv){
+
+	signal(SIGINT,sigint_handler);
 
 	//initialize some values
 	char *file = NULL; // r option
@@ -260,8 +274,6 @@ int main(int argc, char **argv){
 		free(file);
 		free(host);
 	}
-
-
 	return 0;
 }
 
