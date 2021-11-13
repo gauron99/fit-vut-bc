@@ -62,6 +62,8 @@ void init(){
 	ptr->verbose_printing = 0;
 	ptr->file_name 				= NULL;
 	ptr->filebuff					= NULL;
+	ptr->f								= NULL;
+	ptr->is_server 				= 0;
 }
 
 void printErr(char *s){
@@ -74,14 +76,18 @@ void cleanStruct(){
 	if(ptr != NULL){
 		if(ptr->f != NULL){
 			fclose(ptr->f);
+			ptr->f = NULL;
 		}
 		if(ptr->file_name != NULL){
 			free(ptr->file_name);
+			ptr->file_name = NULL;
 		}
 		if(ptr->filebuff!= NULL){
 			free(ptr->filebuff);
+			ptr->filebuff = NULL;
 		}
 		free(ptr);
+		ptr = NULL;
 	}
 }
 
@@ -162,14 +168,13 @@ parser(int argc, char **argv, char **file,char **host){
 		printHelp();
 	}
 
-	int is_server = 0;	
 
   for (int i = 1; i < argc; i++){
     if(!strcmp(argv[i],"-h")||!strcmp(argv[i],"--help")){
       printHelp();
     }
     else if(!strcmp(argv[i],"-l")){ //is server
-      is_server = 1;
+      ptr->is_server = 1;
     }
     else if(!strcmp(argv[i],"-s")){ //host
       if(argv[++i] != NULL){
@@ -210,11 +215,11 @@ parser(int argc, char **argv, char **file,char **host){
 
   // check parameters
 
-  if(is_server && (*file != NULL || *host != NULL)){
+  if(ptr->is_server && (*file != NULL || *host != NULL)){
     printErr("Parameter -l is exclusive. It can't be mixed with parameters -r & -s");
   }
 
-	return is_server ? IS_SERVER : IS_CLIENT;
+	return ptr->is_server ? IS_SERVER : IS_CLIENT;
 }
 
 // ------------------ CHECKSUM FUNC ------------------ //
@@ -249,9 +254,17 @@ unsigned short checksum(void *b,int l,int p){
 }
 
 void sigint_handler(int sn){
-	cleanStruct();
-	printf("CTRL+C was pressed, exiting\n");
-	exit(0);
+	if(ptr->is_server){
+		extern pcap_t *handler;
+		pcap_breakloop(handler);
+		cleanStruct();
+		printf("CTRL+C was pressed, stop capturing\n");
+
+	} else { //CTRL+C in client
+		printf("CTRL+C was pressed, exiting\n");
+		cleanStruct();
+		exit(0);
+	}
 }
 
 // --------------------------------- MAIN --------------------------------- //
@@ -271,8 +284,6 @@ int main(int argc, char **argv){
 	} else{ //IS_CLIENT
 
 		client(file,host);
-		free(file);
-		free(host);
 	}
 	return 0;
 }

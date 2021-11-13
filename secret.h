@@ -21,6 +21,7 @@
 #include <netdb.h>
 #include <unistd.h> 					// close()
 
+#include <pcap/pcap.h>
 #include <sys/stat.h> //file
 #include <sys/types.h>
 
@@ -28,29 +29,29 @@
 
 #include <openssl/aes.h>// encryption
 
-#include <pthread.h>
 #include <signal.h>
-
-
-//define some constants (packet max size, max file len in bytes, max file len)
-#define PACKET_MAX_SIZE 1432
-#define MAX_FILE_LEN 1099511627775  // 1 TiB
-#define FILE_LEN_BYTES 13           //(strlen(1099511627775) = 13 positions = 1TiB as int)
-#define MAX_FILE_NAME_LEN 3         //number of bytes needed to write file name (max 999 string)
-#define SIZE_LCC 16                 // size of Linux Cooked Capture (when listening on "any")
-#define PACKET_ID 9578              // ID of every packet sent by this program
+// 1385
+#define PACKET_MAX_SIZE   1425          //max size for packet (+ ip hdr + 15 padding)
+#define DATA_MAX_SIZE     1400          //max data size in packet
+#define MAX_FILE_LEN      1099511627775 // 1 TiB
+#define FILE_LEN_BYTES    13            //(strlen(1099511627775) = 13 positions = 1TiB as int)
+#define MAX_FILE_NAME_LEN 3             //number of bytes needed to write file name (max 999 string)
+#define SIZE_LCC          16            // size of Linux Cooked Capture (when listening on "any")
+#define PACKET_ID         9578          // ID of every packet sent by this program
 
 extern const char *encryptionKey;
 
 typedef struct settings{
-  char *file_name;
+  char          *file_name;
   unsigned char *filebuff;
-  FILE *f;
+  FILE          *f;
 
-  int verbose_printing;
+  int           is_server;
+  int           verbose_printing;
 }settings;
 
 extern settings *ptr;
+extern pcap_t *handler;
 
 void init();
 
@@ -136,8 +137,8 @@ checksum(void *b,int l,int p);
 void 
 packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
 
-char
-*getFilenameFromPacket(char *p, unsigned int *r);
+void
+getFilenameFromPacket(char *p, unsigned int *r);
 
 unsigned int
 getFileLenFromPacket(char *p, unsigned int *r);

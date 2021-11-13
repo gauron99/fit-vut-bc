@@ -7,7 +7,7 @@
 extern struct settings *ptr;
 
 int getMaxDataAvailable(int used,int done,int fl){
-  return (fl-done) < (PACKET_MAX_SIZE-used) ? (fl-done) : (PACKET_MAX_SIZE-used);
+  return (fl-done) < (DATA_MAX_SIZE-used) ? (fl-done) : (DATA_MAX_SIZE-used);
 }
 
 int createFirstPacket(char (*p)[PACKET_MAX_SIZE], int used, unsigned int l){
@@ -44,9 +44,7 @@ unsigned char *encryptData(char *in,unsigned int *l){
 	
 	extern const char* encryptionKey;
 
-	printf("finalLen bef enc:%d\n",*l);
 	while(((*l)%AES_BLOCK_SIZE)!=0){(*l)++;}
-	printf("finalLen after enc:%d\n---\n",*l);
 
   AES_KEY key;
 	AES_set_encrypt_key((unsigned char*)encryptionKey,128,&key);
@@ -84,7 +82,6 @@ void fileOpenReady(char *in, long unsigned int *len){
 	rewind(ptr->f);
 	
 	*len = (unsigned long int)tmp;
-	ptr->filebuff = malloc(1); //ready for realloc
 	
 }
 
@@ -103,17 +100,6 @@ void readFileBytes(unsigned int l){
 	return;
 }
 
-void waitForReply(){
-
-	// struct addrinfo *target,*tmp,hints;
-
-	// int fd = socket();
-
-	// char buf[50];
-	// if(recvfrom(fd,buf,50,0,) < 0) {
-	// 	printErr("recvfrom() failed @waitForReply()");
-	// }
-}
 
 // ------------------ CLIENT FUNC ------------------ //
 
@@ -167,8 +153,6 @@ void client(char *file, char *host){
 		exit(1);
 	}
 
-	free(host);
-
 	// snippet taken from https://man7.org/linux/man-pages/man3/getaddrfilelen_char.3.html
 	// getaddrfilelen_char returns in 'pai' (last argument) a list of address structures
 	// try to connect to atleast one.
@@ -176,12 +160,6 @@ void client(char *file, char *host){
 	for(target=tmp; target != NULL;target=target->ai_next){
 		protocol = target->ai_family == AF_INET ? IPPROTO_ICMP : IPPROTO_ICMPV6;
 
-		printf("addr:%s\n",target->ai_addr->sa_family==2?"ipv4":"ipv6 or other");//DEBUG
-		printf("family:%s\n",target->ai_family==2?"ipv4":"icmp6 or other");//DEBUG
-		if(protocol != 1){
-			printf("protocol:%s(val: %d)\n", "ICMP6 maybe?",protocol);//DEBUG
-		}
-		
 		fd = socket(target->ai_family,target->ai_socktype,protocol); 
 		if (fd < 0){
 			close(fd);
@@ -217,13 +195,12 @@ void client(char *file, char *host){
 
 	//init packet -- largest possible packet size is set to 1480B (MTU - IPheader(20bytes))
 	char packet[PACKET_MAX_SIZE];
-	memset(&packet,0,PACKET_MAX_SIZE);
+	memset(packet,0,PACKET_MAX_SIZE);
 
 	// ICMP header setup default values
 	struct icmphdr *icmpH = (struct icmphdr*)packet;
 	int icmpHlen = sizeof(struct icmphdr);
 	icmpH->type = ICMP_ECHO;
-  // icmpH->un.frag.mtu = 1500;
   icmpH->un.echo.sequence = htons(1);
   icmpH->un.echo.id = htons(PACKET_ID);
 
@@ -259,10 +236,6 @@ void client(char *file, char *host){
 		perror("perror says");
     printErr("sendto() failed for the first packet");
   } else {
- 	printf("totalBytesSent:%d,filelen:%ld\n",totalBytesSent,filelen);
-	printf("datasize:%d\n",datasize);
-	printf("sqn:%d\n",ntohs(icmpH->un.echo.sequence));
-	 
     icmpH->un.echo.sequence += htons(1);
   }
 
@@ -290,27 +263,24 @@ void client(char *file, char *host){
 		icmpH->checksum = 0;
 		icmpH->checksum = checksum(packet,used+datasize,protocol);
 		
-		memset(fds,0,sizeof(fds));
+		// memset(fds,0,sizeof(fds));
 
 
-		printf("sendto data:%d\n",used+datasize);
 		// https://man7.org/linux/man-pages/man3/sendto.3p.html
 		if (sendto(fd,packet,used+datasize,0,&servinfo,servlen) < 0){
-			//cleaning process TODO
-			printErr("Function sendto() failed");
+			perror("Perror says");
+			printErr("Function sendto() failed (not first packet)");
 		} else {
- 		printf("totalBytesSent:%d,filelen:%ld\n",totalBytesSent,filelen);
-		printf("datasize:%d\n",datasize);
-		printf("sqn:%d\n",ntohs(icmpH->un.echo.sequence));
 	 
     icmpH->un.echo.sequence += htons(1);
   	}
 		
 		totalBytesSent+=datasize;
 
-		// waitForReply();
-
 	}
 
 	printf("file transfer done!\n");
+	cleanStruct();
+	free(host);
+	//where is file freed?
 }

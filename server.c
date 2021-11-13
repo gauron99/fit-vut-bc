@@ -1,7 +1,6 @@
 
 
 #include <pcap.h>
-#include <pcap/pcap.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -13,6 +12,7 @@
 #include "secret.h"
 
 extern struct settings *ptr;
+pcap_t *handler;         				// packet capture handle 
 
 /**
  * When capturing from the "any" device, or from one of those other devices,
@@ -23,7 +23,7 @@ extern struct settings *ptr;
 */ 
 
 
-char *getFilenameFromPacket(char *p, unsigned int *r){
+void getFilenameFromPacket(char *p, unsigned int *r){
 // 	0-2b 				-- filename len = X
 // 	3-Xb 				-- filename
 
@@ -37,17 +37,15 @@ char *getFilenameFromPacket(char *p, unsigned int *r){
 	if(*endptr != '\0'){
 		printErr("strtol() failed @getFilenameFromPacket()");
 	}
-	
 	// get name of file
-	char *fname = calloc(fnl,1); // +1 for '\0' included in fnl
-	if(fname == NULL){
+	ptr->file_name = calloc(fnl+1,1);//+1 for '\0'
+	if(ptr->file_name == NULL){
 		printErr("Calloc() failed @getFilenameFromPacket()");
 	}
 
-	memcpy(fname,p+MAX_FILE_NAME_LEN,fnl);
+	memcpy(ptr->file_name,p+MAX_FILE_NAME_LEN,fnl);
+	ptr->file_name[fnl]='\0'; //add terminating null char
 	*r += fnl;
-	
-	return fname;
 }
 
 unsigned int getFileLenFromPacket(char *p, unsigned int *r){
@@ -72,12 +70,10 @@ unsigned char* decryptData(const unsigned char* d){
 
 	AES_KEY key;
 	AES_set_decrypt_key((unsigned char*)encryptionKey,128,&key);
-
-	unsigned char *ret = calloc(PACKET_MAX_SIZE-exclude,1);
-
+	unsigned char *ret = calloc(DATA_MAX_SIZE-exclude,1);
 	// decrypt everything except icmp header
 	int i;
-	for (i= 0; i < (PACKET_MAX_SIZE-exclude); i+=AES_BLOCK_SIZE){
+	for (i= 0; i < (DATA_MAX_SIZE-exclude); i+=AES_BLOCK_SIZE){
 		AES_decrypt(d+i,ret+i,&key);
 	}
 	return ret;
@@ -90,27 +86,29 @@ void prepOutputFile(){
 		} else {
 			//create new file (one backup)
 			int fLen = strlen(ptr->file_name);
-			printf("flen: %d\n",fLen);
-			char* tmp = malloc(fLen);
+			char* tmp = malloc(fLen+1);
 			if(tmp==NULL){
-				cleanStruct();
-				printErr("Malloc failed @ prepOutputFile()");
+				printErr("Malloc failed @prepOutputFile()");
 			}
 			memcpy(tmp,ptr->file_name,fLen);
 
-			ptr->file_name = realloc(ptr->file_name,fLen+5);
+			char* tmp_reall = realloc(ptr->file_name,fLen+5);
+			if(tmp_reall == NULL){
+				printErr("Realloc failed @(prepOutputFile()");
+			}
+			ptr->file_name = tmp_reall;
+			
 			memset(ptr->file_name,0,fLen);
 
 			memcpy(ptr->file_name,"isa_",4);
 			memcpy(ptr->file_name+4,tmp,fLen);
+			ptr->file_name[fLen+4] = '\0';
 			free(tmp);
-
 		}
 
 	// open file for writing
 	ptr->f = fopen(ptr->file_name,"wb");
 	if(ptr->f == NULL){
-		cleanStruct();
 		printErr("File couldn't be opened(failed w/ 'ab' mode)[server-side]");
 	}
 }
@@ -122,7 +120,6 @@ int handleData(unsigned char* data, unsigned int sn){
 
 	struct icmphdr *icmpH = (struct icmphdr*)data;
 	int icmpHlen = sizeof(struct icmphdr);
-
 
 	unsigned int sn_packet = ntohs(icmpH->un.echo.sequence);
 	printf("%d caught!\n",sn_packet);
@@ -138,11 +135,12 @@ int handleData(unsigned char* data, unsigned int sn){
 
 	//first packet
 	if(sn == 1){
+
 		char *decr_data = (char*)decryptData(data+icmpHlen); //save file data to ptr->filebuff
 		
-		ptr->file_name = getFilenameFromPacket(decr_data,&read);
+		getFilenameFromPacket(decr_data,&read);
 
-		prepOutputFile();
+		prepOutputFile();	
 
 		fileLen = getFileLenFromPacket(decr_data,&read);
 
@@ -150,9 +148,8 @@ int handleData(unsigned char* data, unsigned int sn){
 
 		//init filebuff
 		ptr->filebuff = calloc(dip,1);
-
 		memcpy(ptr->filebuff,decr_data+read,dip);
-
+		free(decr_data);
 		transfered += dip;
 		
 	} else { //NOT first packet (every other one)
@@ -164,9 +161,9 @@ int handleData(unsigned char* data, unsigned int sn){
 
 		ptr->filebuff = calloc(dip,1);
 		memcpy(ptr->filebuff,decr_data,dip);
+		free(decr_data);
 
 		transfered += dip;
-
 	}
 	
 	// append to file
@@ -174,20 +171,21 @@ int handleData(unsigned char* data, unsigned int sn){
 		printErr("Fwrite returned unexpected value");
 	} else {
 		free(ptr->filebuff);
+		ptr->filebuff = NULL;
 	}
 
 	//all data has been transfered
 	if(transfered == fileLen){
 
-		// printf(">>%s<<\n",ptr->filebuff);
-
-		// printf("~~ File transfer done! ~~\n");
 		printf("DONE! Wrote to file: %s\n",ptr->file_name);
 		transfered = 0;
 		fileLen = 0;
 
 		fclose(ptr->f);
+		ptr->f = NULL;
+
 		free(ptr->file_name);
+		ptr->file_name = NULL;
 
 		return 1;
 	}
@@ -209,12 +207,13 @@ void packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char
 
 	struct ip *iph;
   u_int iphLen;
+	u_int iphV6Len = 40; //size of ipv6 standard header is 40b
 
 	static unsigned int seq_num = 0;
 
 		//ip header
 		iph = (struct ip*) (packet + SIZE_LCC);
-    iphLen = iph->ip_hl*4; // == 20
+    iphLen = iph->ip_hl*4; // standard of 20b
 
 		//icmp header
 		struct icmphdr *icmph = (struct icmphdr*)(packet + SIZE_LCC + iphLen);
@@ -222,21 +221,21 @@ void packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char
     switch (iph->ip_p){
 		case 1:
 			if(icmph->type == ICMP_ECHO){
-				pid_t pid;
-				if ((pid = fork()) ==  0){
 					if((handleData((unsigned char*)(packet + SIZE_LCC + iphLen),++seq_num))==1){
 						seq_num = 0;
 					}
-				}
 			}
 			break;
 		case 58: // IPv6-ICMP
-			printf("%d: another one! - IPv6 \n",++seq_num);
+			if(icmph->type == ICMP_ECHO){
+					if((handleData((unsigned char*)(packet + SIZE_LCC + iphV6Len),++seq_num))==1){
+						seq_num = 0;
+					}
+			}
 		default:
 			break;
-		}
+			}
 }
-
 
 // ------------------ SERVER FUNC ------------------ //
 
@@ -246,7 +245,6 @@ void packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char
 */
 void server() {
 	char errbuf[PCAP_ERRBUF_SIZE];  // constant defined in pcap.h
-  pcap_t *handler;                 // packet capture handle 
   pcap_if_t *alldev, *dev ;       // all available devices
 
   char *devname = NULL;           // a name of the chosen device
@@ -254,7 +252,7 @@ void server() {
   bpf_u_int32 netaddr;            // network address configured at the input device
   bpf_u_int32 mask;               // network mask of the input device
   
-	struct bpf_program filter;          // the compiled filter
+	struct bpf_program filter;      // the compiled filter
 
 
 	// open the input devices (interfaces) to choose from
@@ -291,18 +289,16 @@ void server() {
 		exit(1);
 	}
 
-	// if(strlen(errbuf) != 0){
-	// 	printf("Warning from pcap_open_live: %s\n",errbuf);
-	// }
-
 	//add custom filter & apply
 	if(pcap_compile(handler,&filter,"icmp or icmp6",0,netaddr) == -1){
-		printErr("Can't compile given filter");
+		fprintf(stderr,"Error: pcap_compile(): %s\n",errbuf);
+		exit(1);
 	}
 
 
 	if(pcap_setfilter(handler,&filter) == -1){
-		printErr("Can't set filter for chosen device");
+		fprintf(stderr,"Error: pcap_setfilter(): %s\n",errbuf);
+		exit(1);
 	}
 
 	printf("Starting server, press CTRL-C to stop me!\n");
@@ -311,8 +307,6 @@ void server() {
 	if(pcap_loop(handler,-1,packet_hdlr_cb,NULL) == -1){
 		printErr("Can't sniff, pcap_loop failed");
 	}
-	
-	while(wait(NULL) > 0);
 
 	// capturing stopped, deallocate vars
   pcap_close(handler);

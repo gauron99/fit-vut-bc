@@ -1,7 +1,5 @@
 
-
-
-.PHONY: secret all cl build l local
+.PHONY: secret all clean l clean-o archive readme
 
 CC=gcc
 CFLAGS= -std=gnu99 -g -Wall 
@@ -9,7 +7,7 @@ LDFLAGS= -lcrypto -lssl -lpcap
 
 MAIN=secret
 
-all: clean $(MAIN) clear-o
+all: clean $(MAIN) clean-o
 
 $(MAIN): $(MAIN).o server.o client.o
 	$(CC) $(CFLAGS) -o $(MAIN) $(MAIN).o server.o client.o $(LDFLAGS)
@@ -23,18 +21,17 @@ server.o: server.c $(MAIN).h
 client.o: client.c $(MAIN).h
 	$(CC) $(CFLAGS) -c $< $(LDFLAGS)
 
-
 l:
 	sudo ./secret -l
 
 clean:
-	rm -f secret *.o vgcore*
+	rm -f secret *.o vgcore* 
 
-clear-o:
-	rm *.o
+clean-o:
+	rm -f *.o
 
-local:
-	sudo ./secret -s localhost -r file_to_send.txt
+archive:
+	tar -czvf xfridr08.tar.gz *.c *.h Makefile $(MAIN).1 manual.pdf
 
-local-big:
-	sudo ./secret -s localhost -r file_to_send_larger.txt
+readme:
+	man -l $(MAIN).1

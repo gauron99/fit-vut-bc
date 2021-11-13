@@ -44,11 +44,3 @@ Segfault nelze.
 
 body: x/20 (15 impl, 5 docu)
 
-### sidenotes
-  - catch all packets, filter after
-  OR
-  - catch specifically what I want
-
-  https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
-  list of the IP protocol numbers found in the field Protocol of the IPv4 header
-  and the Next Header field of the IPv6 header
