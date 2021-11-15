@@ -24,6 +24,9 @@ client.o: client.c $(MAIN).h
 l:
 	sudo ./secret -l
 
+clean-all: clean 
+	rm -f xfridr08.tar
+
 clean:
 	rm -f secret *.o vgcore* 
 
@@ -31,7 +34,7 @@ clean-o:
 	rm -f *.o
 
 archive:
-	tar -czvf xfridr08.tar.gz *.c *.h Makefile $(MAIN).1 manual.pdf
+	tar -cvf xfridr08.tar *.c *.h Makefile $(MAIN).1 manual.pdf
 
 readme:
 	man -l $(MAIN).1

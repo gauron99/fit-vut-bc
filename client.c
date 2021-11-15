@@ -124,7 +124,6 @@ void client(char *file, char *host){
 	fileOpenReady(file,&filelen);
 
 	ptr->file_name = getFilenameFromPath(file);
-	printf("here, a file: %s\n",ptr->file_name); //DEBUG PRINT
 	
 	if (filelen == 0){
 		free(host);
@@ -231,6 +230,18 @@ void client(char *file, char *host){
 	
   icmpH->checksum = checksum(packet,icmpHlen+datasize,protocol);
 
+	fds[0].fd = fd;
+
+	if((fds[0].fd == -1) || (fds[1].fd == -1)){
+		printErr("Poll failed");
+	}
+	fds[0].events = POLLOUT;
+
+	int rdy = poll(fds,1,-1);
+	if(rdy < 0){
+		printErr("poll() failed");
+	}
+
   //send first packet with additional information
   if(sendto(fd,packet,icmpHlen+datasize,0,&servinfo,servlen) < 0){
 		perror("perror says");
@@ -263,8 +274,10 @@ void client(char *file, char *host){
 		icmpH->checksum = 0;
 		icmpH->checksum = checksum(packet,used+datasize,protocol);
 		
-		// memset(fds,0,sizeof(fds));
-
+		int rdy = poll(fds,1,-1);
+		if(rdy < 0){
+			printErr("poll() failed");
+		}
 
 		// https://man7.org/linux/man-pages/man3/sendto.3p.html
 		if (sendto(fd,packet,used+datasize,0,&servinfo,servlen) < 0){

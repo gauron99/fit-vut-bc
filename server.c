@@ -122,12 +122,12 @@ int handleData(unsigned char* data, unsigned int sn){
 	int icmpHlen = sizeof(struct icmphdr);
 
 	unsigned int sn_packet = ntohs(icmpH->un.echo.sequence);
-	printf("%d caught!\n",sn_packet);
 	
 	//packet validation (ID & sequence number)
 	if((ntohs(icmpH->un.echo.id) != PACKET_ID) || (sn != sn_packet) ){
 		return -1; //wrong packet, do nothing
 	}
+	printf("%d caught!\n",sn_packet);
 
 	//says how many bytes have been read from packet so far(useful for skiping 
 	//bytes before file data)
@@ -241,7 +241,7 @@ void packet_hdlr_cb(u_char *args, const struct pcap_pkthdr *header, const u_char
 
 /*
  * inspiration from:
- * 'sniff-filter.c' file in "isa/soubory" from 'Petr Matousek, 2020'
+ * 'sniff-filter.c' example file in "isa/soubory" from 'Petr Matousek, 2020'
 */
 void server() {
 	char errbuf[PCAP_ERRBUF_SIZE];  // constant defined in pcap.h
@@ -253,7 +253,6 @@ void server() {
   bpf_u_int32 mask;               // network mask of the input device
   
 	struct bpf_program filter;      // the compiled filter
-
 
 	// open the input devices (interfaces) to choose from
   if (pcap_findalldevs(&alldev, errbuf)){

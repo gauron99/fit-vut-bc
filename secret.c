@@ -35,7 +35,7 @@
 
 // struct settings *ptr;
 struct settings *ptr;
-const char *encryptionKey = "xfridr08";
+const char *encryptionKey = "xfridr08xfridr08";
 
 // more on this: https://stackoverflow.com/questions/1644868/define-macro-for-debug-printing-in-c
 #define verbose_print(fmt, ...) \
@@ -282,7 +282,6 @@ int main(int argc, char **argv){
 	if(parser(argc,argv, &file, &host) == IS_SERVER){
 		server();
 	} else{ //IS_CLIENT
-
 		client(file,host);
 	}
 	return 0;
