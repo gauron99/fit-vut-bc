@@ -18,7 +18,7 @@ navrhnout a implementovat informační systém s webovým rozhraním pro zvolen�
 * Návrh webového uživatelského rozhraní aplikace
 * Implementace vlastní aplikace
 
-## Rozsah implementos
+## Rozsahos implementos
 * Musí umožňovat vložení odpovídajících vstupů
 * Nezobrazovat obsah tabulek databáze, ale prezentovat uložená data tak, aby byla pro danou roli uživatele a danou činnost užitečná (např. spojit data z více tabulek, je-li to vhodné, poskytnout odkazy na související data, apod)
 * Správa uživatelů a jejich rolí (podle povahy aplikace, např. obchodník, zákazník, administrátor). Tím se rozumí přidávání nových uživatelů u jednotlivých rolí, stejně tak možnost editace a mazání nebo deaktivace účtů. Musí být k dispozici alespoň dvě různé role uživatelů
@@ -34,23 +34,17 @@ navrhnout a implementovat informační systém s webovým rozhraním pro zvolen�
 
 ## Implementos prostředkos
 FAQ-<https://www.fit.vut.cz/units/cvt/faq/.cs>
-* Front-end
+* FRONT-END == HTML + CSS (max React)
     * HTML5 + CSS, s využitím JavaScriptu, pokud je to vhodné
-    * Je povoleno využití libovolných volně šířených JavaScriptových a CSS frameworků (jQuery, Bootstrap, atd.)
-    * Případně lze využít i AJAX či pokročilejší klientské frameworky (Angular, React, Vue, apod.), není to ale vyžadováno
-* Back-end
-    * PHP jedině lul veri nice (FAQ - bod 13)
+
+* BACK-END == prob JS (max JS/node.js)
+    * TAK POZOR NEMUSIS JEN PHP TADYK TAKZE JEDEM
         * **kódování UTF-8** (soubor .htaccess - dle návodu v FAQ - bod 14)
         * problém s nutností použití vyšší verze php než 5.3 (FAQ - bod 15)
-    * alternativně můžete použít jinou serverovou technologii (např. Python, Javascript/Node.js, Java, C#, Go, Ruby, apod.) a vhodný framework (Django, Flask, Express, Spring, ASP.NET, apod.)
-        * **podmínkou #1** je, aby byl informační systém dostupný - ověřte si předem, že máte k dispozici vhodný hosting/cloud, na kterém bude schopni IS zprovoznit (např. Heroku, Google Cloud, RedHat Openshift, MS Azure, apod.)
+        * ** #1** je, aby byl informační systém dostupný - ověřte si předem, že máte k dispozici vhodný hosting/cloud, na kterém bude schopni IS zprovoznit (např. Heroku, Google Cloud, RedHat Openshift, MS Azure, apod.)
         * **podmínkou #2** je, abyste nepoužili hotový redakční systém, administrační stránky umožňující spravovat obsah apod. (např. při použití Frameworku Django se žádný uživatel nebude přihlašovat do administrační stránky)
-* Databázičky
+* DB
     * **mySQL ONLY** :sweats: -- je to na eve udělat nebo co
-    * alternativně jde **relační database systemek -- postgreSQL**
-    * můžem použít ORM knihovnu bo co
-    * **SQL Lite NELZE NIKDY PROSTĚ NEDÁ SE VOLE**
-    * nerelační databáze **NELZE** opět nikdy prostě
 
 ## Dokumentos cementos
 
@@ -85,4 +79,7 @@ Body -- X/30
 
 ## TRYHARD ONLY VIEW BACHA NEBEZPEŠNÝ
 vyhledávání tras s přestupy mezi spoji
-    
+
+
+
+sqlcmd -S 34.116.167.145 -U sqlserver -P 'dbmasterkey'    
