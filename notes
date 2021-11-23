@@ -3,3 +3,4 @@ use component to tell react what you want to see on the screen (when data change
 <div> element is React.createElement('div')
 
 
+JSX instead of JS for easier HTML 
