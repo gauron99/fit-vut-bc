@@ -1,10 +1,35 @@
+/* some colors used*/
+:root{
+  --light_blue_color: #5Ab9ea;
+  --light_cyan_color: #84ceeb;
+  --darker_color: #5680e9;
+  --more_darker_color: #0E2784;/*#0E2784 || #17329C*/
+  --gray_color: #c1c8e4;
+  --purple_color: #8860d0;
+}
+
 body {
-  background-color: #ddd;
+  background-color: #c1c8e4;
+
   font-size: 20px;
 }
 
-.Navigation {
-  text-align: center;
 
+.navigation {
+  text-align: center;
+  border-bottom: 2px solid #5680e9;
+  background-color:#5ab9ea;
+}
+
+.nav-link, .navbar-brand{
+  color: var(--more_darker_color);
+}
+
+/* .navbar-brand{
+  color:var(--more_darker_color)
+} */
+
+.navbar{
+  border: 2px;
 }
 
