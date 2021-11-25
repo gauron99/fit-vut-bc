@@ -16,6 +16,7 @@ ReactDOM.render(
     <Navigation />
     <Routes>
       <Route path="/" element={<Home />} />
+      {/* <Route path="/search" element={<Search />} /> */}
       <Route path="/history" element={<History />} />
       <Route path="/favourites" element={<Favourites />} />
       <Route path="/account" element={<Account />} />

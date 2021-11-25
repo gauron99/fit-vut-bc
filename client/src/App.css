@@ -6,30 +6,88 @@
   --more_darker_color: #0E2784;/*#0E2784 || #17329C*/
   --gray_color: #c1c8e4;
   --purple_color: #8860d0;
+
+  --navigation_background_color: #5ab9ea;
+  --body_background_color: #c1c8e4;
 }
 
 body {
-  background-color: #c1c8e4;
-
+  background-color: var(--body_background_color);
   font-size: 20px;
 }
 
+label {
+  display: block;
+}
 
 .navigation {
   text-align: center;
-  border-bottom: 2px solid #5680e9;
-  background-color:#5ab9ea;
+  border-bottom: 2px solid var(--darker_color);
+  background-color: var(--navigation_background_color);
 }
 
 .nav-link, .navbar-brand{
   color: var(--more_darker_color);
 }
 
-/* .navbar-brand{
-  color:var(--more_darker_color)
-} */
-
-.navbar{
-  border: 2px;
+.home-window {
+  margin: 10%; /* centralize window*/
+  border: 5px solid var(--more_darker_color); /* DEBUG */
 }
 
+.main-search-block {
+  background-color: var(--light_cyan_color);
+  margin-left: 36%;
+  margin-right: 36%;
+  border: 2px solid var(--more_darker_color);
+  align-content: center;
+  padding: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* 730px x UNKNOWN(840px)  MIN SIZE OF WINDOW labels overlap after*/
+.button-submit{
+  width: 100%;
+  border-radius: 2px;
+}
+
+.row-header {
+  text-align: center;
+  /* background-color: var(--light_cyan_color); */
+}
+
+hr.solid {
+  border-bottom: 2px solid var(--more_darker_color);
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+
+label{
+  font-weight:bold;
+  margin-bottom: -3px;
+}
+
+input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+input[type="time"], input[type="date"] {
+  display: flex;
+  width: 100%;
+
+}
+
+.row {
+  margin: 0px;
+}
+
+.row::after {
+  content: "";
+  clear: both;
+}
+
+.column {
+  width: 50%;
+}

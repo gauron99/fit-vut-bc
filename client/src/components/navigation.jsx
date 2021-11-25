@@ -15,17 +15,17 @@ function Navigation() {
             <ul className="navbar-nav ml-auto">
               <li className="nav-item">
                 <NavLink className="nav-link" to="/history">
-                  History of the wolrd
+                  History
                 </NavLink>
               </li>
               <li className="nav-item">
                 <NavLink className="nav-link" to="/favourites">
-                  yo fav
+                  Favourites
                 </NavLink>
               </li>
               <li className="nav-item">
                 <NavLink className="nav-link" to="/account">
-                  yo acc
+                  Account
                 </NavLink>
               </li>
             </ul>
