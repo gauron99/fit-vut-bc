@@ -12,3 +12,10 @@ init:
 	echo "running npm install in main dir...";
 	npm install;
 	echo "All necessary packages installed.";
+
+build:
+	cd client;
+	npm run build;
+	echo "Bad boy is build! make a run for it! I'm going back...";
+	cd ../;
+

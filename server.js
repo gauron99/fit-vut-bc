@@ -12,20 +12,24 @@ const PORT = 8000;
 //   // database: 'the-db',
 // });
 
-
 // add middleware
 app.use(express.static("client/build"));
 
-// app.get("/", (req, res) => {
-  // res.sendFile("/index.html")
-  // res.sendFile(path.join(__dirname,"public","index.html"));
-  // console.log("send dis file to cons!");
-//  });
 
-// app.get("/add",(req,res) => {
-//   const sqlIn = "INSERT INTO iis ()"
-//   res.send("added some stuff to DB :cuteface:");
-// })
+
+// https://stackoverflow.com/questions/54282344/how-does-express-and-react-routes-work-on-initial-get-request-from-browser
+// /api is the connector to the backend, exclude anything that matches "/api"
+app.get(/^\/(?!api).*/mg, (req, res, next) => {
+  res.send("index.html")
+  next()
+});
+
+app.get("/api*",(req,res) => {
+  var params = req.params[0];
+  console.log(req.params)
+  console.log(params)
+});
+
 
 app.get("/login",(req,res) => {
   res.send("login scrn");
