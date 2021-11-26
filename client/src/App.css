@@ -46,6 +46,20 @@ label {
   padding-right: 10px;
 }
 
+.ShowHistory {
+  text-align: center;
+  align-content: center;
+}
+
+.show-table {
+  background-color: var(--light_blue_color);
+  border: 1px solid #FFFFFF;
+  width: 100%;
+  height: auto;
+  text-align: left;
+  align-content: center;
+}
+
 /* 730px x UNKNOWN(840px)  MIN SIZE OF WINDOW labels overlap after*/
 .button-submit{
   width: 100%;

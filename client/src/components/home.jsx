@@ -37,7 +37,7 @@ class SearchWithLabel extends React.Component{
         <input type="text" id="search-from" name="from" placeholder="odkud..."></input>
         <label for="search-to">Kam</label>
         <input type="text" id="search-to" name="to" placeholder="kam..."></input>
-        
+
         <div className="row">
           <div className="column">
         <label for="search-date">Datum</label>
@@ -56,6 +56,30 @@ class SearchWithLabel extends React.Component{
   }
 }
 
+
+class ShowTable extends React.Component{
+  render(){
+    return(
+          <table className="show-table">
+              <tr>
+                  <th>Odchod</th>
+                  <th>Odkud</th>
+                  <th>Prichod</th>
+                  <th>Kam</th>
+                  <th>Cena</th>
+              </tr>
+              <tr>
+                  <td>time</td>
+                  <td>from</td>
+                  <td>time</td>
+                  <td>to</td>
+                  <td>$$$$</td>
+              </tr>
+          </table>
+    )
+  }
+}
+
 class MainSearchBlock extends React.Component{
   render (){
     return (
@@ -66,6 +90,7 @@ class MainSearchBlock extends React.Component{
         </div>
         <hr className = "solid" />
         <SearchWithLabel />
+
       </div>
       )
   }
@@ -79,6 +104,11 @@ function Home() {
 
         </MainSearchBlock>
       </div>
+      <div className="">
+      <ShowTable>
+      </ShowTable>
+      </div>
+
     </>
   );
 }
