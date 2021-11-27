@@ -19,38 +19,43 @@ import React from "react";
 //   );
 // }
 
+
+
 class SearchWithLabel extends React.Component{
-  constructor(){
-    super();
+  constructor(props){
+    super(props);
     var today = new Date();
     // timeNow = Date.ti
-    this.dateNow = today.getDay() + '.' + today.getMonth() + '.';
-    this.timeNow = today.getHours() + ":" + today.getMinutes();
+    this.dateNow = today.getFullYear() +'-'+ today.getMonth() +'-'+ today.getDate();
+    this.timeNow = ("00" + today.getHours()).slice(-2) + ":" + 
+                    ("00" + today.getMinutes()).slice(-2) + ":" +
+                    ("00" + today.getSeconds()).slice(-2);
+
+
   }
   render(){
-    console.log(this.timeNow)
-    console.log(this.dateNow)
+    console.log("timenow: ",this.timeNow)
+    console.log("datenow: ",this.dateNow)
 
     return(
       <form>
-        <label for="search-from">Odkud</label>
+        <label htmlFor="search-from">Odkud</label>
         <input type="text" id="search-from" name="from" placeholder="odkud..."></input>
-        <label for="search-to">Kam</label>
+        <label htmlFor="search-to">Kam</label>
         <input type="text" id="search-to" name="to" placeholder="kam..."></input>
 
         <div className="row">
           <div className="column">
-        <label for="search-date">Datum</label>
+        <label htmlFor="search-date">Datum</label>
         <input type="date" id="search-date" name="date" placeholder={this.dateNow} />
           </div>
           <div className="column">
-        <label for="search-time">Čas</label>
+        <label htmlFor="search-time">Čas</label>
         <input type="time" id="search-time" name="time" placeholder={this.timeNow} />
           </div>
         </div>
         <hr className="solid"/>
-        <button type="submit" className="button-submit">Vyhledat</button>
-
+        <button type="button" onClick={this.props.funkca} className="button-submit">Vyhledat</button>
       </form>
     )
   }
@@ -61,20 +66,16 @@ class ShowTable extends React.Component{
   render(){
     return(
           <table className="show-table">
-              <tr>
+              <thead>
                   <th>Odchod</th>
                   <th>Odkud</th>
                   <th>Prichod</th>
                   <th>Kam</th>
                   <th>Cena</th>
-              </tr>
-              <tr>
-                  <td>time</td>
-                  <td>from</td>
-                  <td>time</td>
-                  <td>to</td>
-                  <td>$$$$</td>
-              </tr>
+              </thead>
+              <tbody>
+                    {this.props.veci.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}</tr>)}
+              </tbody>
           </table>
     )
   }
@@ -89,26 +90,56 @@ class MainSearchBlock extends React.Component{
           <b>VYHLEDEJ SPOJ</b>
         </div>
         <hr className = "solid" />
-        <SearchWithLabel />
+        <SearchWithLabel funkca={this.props.funkca} veci={this.props.veci}/>
 
       </div>
       )
   }
 }
 
+class WrapPico extends React.Component{
+    constructor(props){
+        super(props);
+        
+        this.vyhledatSpoj = this.vyhledatSpoj.bind(this);
+    }
+    state = {
+        veci: [["4.20", "Brno", "6.96", "furtBrno", "4.20$"]]
+    }
+    vyhledatSpoj() {
+        var xhr = new XMLHttpRequest()
+
+        // get a callback when the server responds
+        xhr.addEventListener('load', () => {
+        // update the state of the component with the result here
+            console.log(JSON.parse(xhr.responseText)[0])
+            this.setState({veci: [Object.values(JSON.parse(xhr.responseText)[0])]});
+
+        })
+        // open the request with the verb and the url
+        xhr.open('GET', '/api/spoje')
+        // send the request
+        xhr.send()
+    }
+
+    render (){
+        return (
+            <div>
+            <div className="home-window">
+            <MainSearchBlock funkca={this.vyhledatSpoj} veci={this.state.veci}/>
+        </div>
+        <div className="">
+        <ShowTable veci={this.state.veci}/>
+        </div>
+        </div>
+        )
+  }
+}
+
 function Home() {
-  return (
+    return (
     <>
-      <div className="home-window">
-        <MainSearchBlock>
-
-        </MainSearchBlock>
-      </div>
-      <div className="">
-      <ShowTable>
-      </ShowTable>
-      </div>
-
+      <WrapPico />
     </>
   );
 }
