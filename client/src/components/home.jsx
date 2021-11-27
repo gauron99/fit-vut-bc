@@ -25,13 +25,12 @@ class SearchWithLabel extends React.Component{
   constructor(props){
     super(props);
     var today = new Date();
-    // timeNow = Date.ti
-    this.dateNow = today.getFullYear() +'-'+ today.getMonth() +'-'+ today.getDate();
-    this.timeNow = ("00" + today.getHours()).slice(-2) + ":" + 
-                    ("00" + today.getMinutes()).slice(-2) + ":" +
-                    ("00" + today.getSeconds()).slice(-2);
-
-
+    
+    // months are indexed from 0 for some reason
+    this.dateNow = today.getFullYear() +'-'+ (today.getMonth()+1) +'-'+ today.getDate();
+    this.timeNow = ("0" + today.getHours()).slice(-2) + ":" + 
+                    ("0" + today.getMinutes()).slice(-2) + ":" +
+                    ("0" + today.getSeconds()).slice(-2);
   }
   render(){
     console.log("timenow: ",this.timeNow)
@@ -47,11 +46,11 @@ class SearchWithLabel extends React.Component{
         <div className="row">
           <div className="column">
         <label htmlFor="search-date">Datum</label>
-        <input type="date" id="search-date" name="date" placeholder={this.dateNow} />
+        <input type="date" id="search-date" name="date" defaultValue={this.dateNow} />
           </div>
           <div className="column">
         <label htmlFor="search-time">Čas</label>
-        <input type="time" id="search-time" name="time" placeholder={this.timeNow} />
+        <input type="time" id="search-time" name="time" defaultValue={this.timeNow} />
           </div>
         </div>
         <hr className="solid"/>

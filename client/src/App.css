@@ -37,8 +37,8 @@ label {
 
 .main-search-block {
   background-color: var(--light_cyan_color);
-  margin-left: 36%;
-  margin-right: 36%;
+  margin-left: 30%;
+  margin-right: 30%;
   border: 2px solid var(--more_darker_color);
   align-content: center;
   padding: 5px;
@@ -104,4 +104,49 @@ input[type="time"], input[type="date"] {
 
 .column {
   width: 50%;
+}
+
+/* login */
+.login-main {
+  text-align: center;
+  border: 2px var(--more_darker_color) solid; 
+  margin-top: 2%;
+  margin-left: 30%;
+  margin-right:30%;
+  background-color: var(--darker_color);
+}
+
+.login-input {
+  margin: 2%;
+  width: auto;
+}
+
+.login-item {
+  margin-bottom: 2%;
+  width: 100%;
+}
+
+.float-left {
+  float: left;
+}
+
+.float-left::after{
+  content: "";
+  clear: both;
+} 
+
+
+.button-login {
+  width: 50%;
+}
+
+
+.float-right-hint{
+  float: right;
+  font-size: 6px;
+}
+
+.float-right-hint::after{
+    content: "";
+  clear: both;
 }
