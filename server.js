@@ -3,22 +3,42 @@ const express = require("express");
 const app = express();
 const PORT = 8000;
 var router = express.Router();
+var mysql = require('mysql');
 
 var spoje = {};
 var id = 0;
+
+
+
 
 // setup using body-parser (is integrated in express itself?) for POST requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}));
 
-// Database setup
-// const mysql = require('mysql');
-// const db = mysql.createPool({
-//   host:     '34.116.167.145',
-//   user:     'root',
-//   password: 'dbmasterkey',
-//   // database: 'the-db',
-// });
+var pool  = mysql.createPool({
+    connectionLimit : 10,
+    host            : '85.208.51.209',
+    user            : 'loudik',
+    password        : 'popici',
+    database        : 'iis_db'
+  });
+
+kvery = (query) => {
+    return new Promise((resolve,reject) =>{
+        pool.query(query, (error, results) => {
+            if (error) return reject(error);
+            return resolve(results);
+        });
+    });
+}
+
+function fillObj(results) {
+    var pieces = {}
+    for (const zaznam of results){
+        pieces[zaznam.ID] = zaznam.name;
+    }
+    return pieces;
+}
 
 // add middleware -- static files can now be used from frontend
 app.use(express.static("client/build"));
@@ -39,7 +59,7 @@ router.get('/', function(req, res){
     res.json({m: "eyo"});
 });
 
-// on routes that end in /bears
+// on routes that end in /spoje
 // ----------------------------------------------------
 router.route('/spoje')
 
@@ -47,7 +67,7 @@ router.route('/spoje')
     .post(function(req, res) {
         var spoj = {odc: req.query.odchod, odk: req.query.odkud, pri: req.query.prichod, kam: req.query.kam, cena: req.query.cena};
         spoje[id++] = spoj;
-        // save the bear and check for errors
+        // save the spoj and check for errors
         res.json({ message: 'spoj spojed' });
         console.log(spoje);
     })
@@ -57,24 +77,117 @@ router.route('/spoje')
         res.json(spoje);
     });
 
+router.route('/read_and_subsequently_possibly_config_if_desired_or_not_if_not_necessary_or_not_desired')
 
+    .get(async function(req, res) {
+        var persons = {};
+        try{
+            var results = await kvery('SELECT ID, name FROM Admin');
+            persons['Admins'] = fillObj(results);
+        
+            results = await kvery('SELECT ID, name FROM Conveyor');
+            persons['Conveyor'] = fillObj(results);
+
+            results = await kvery('SELECT ID, name FROM Crew');
+            persons['Crew'] = fillObj(results);
+
+            results = await kvery('SELECT ID, name FROM Passenger');
+            persons['Passenger'] = fillObj(results);
+
+            console.log("ouu",persons);
+            res.json(persons);
+        } catch(e) {
+            console.log(e);
+        }
+    })
+
+router.route('/passenger_manage')
+
+    .post(async function(req, res) {
+        pool.query('INSERT INTO Passenger(name,passwd) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\");', (err, result) => {
+            if (err) console.log('problemis');
+        })
+    })
+    
+    .put(async function(req, res) {
+        pool.query('UPDATE Passenger SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID), (err, result) => {
+            if (err) console.log('problemis');
+        }
+    })
+
+    .delete(async function(req, res) {
+        const id = parseInt(req.query.ID);
+        pool.query('DELETE FROM Passenger WHERE ID='+id+';'), (err, result) => {
+            if (err) console.log('problemis');
+        }
+    })
+
+router.route('/crew_manage')
+
+    .post(async function(req, res) {
+        pool.query('INSERT INTO Crew(name,passwd,conveyorID) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\",\"'+req.query.conveyorID+'\");', (err, result) => {
+            if (err) console.log('problemis');
+        })
+    })
+    
+    .put(async function(req, res) {
+        pool.query('UPDATE Crew SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\", conveyorID = \"'+req.query.conveyorID+'\" WHERE ID='+req.query.ID), (err, result) => {
+            if (err) console.log('problemis');
+        }
+    })
+
+    .delete(async function(req, res) {
+        const id = parseInt(req.query.ID);
+        pool.query('DELETE FROM Crew WHERE ID='+id+';'), (err, result) => {
+            if (err) console.log('problemis');
+        }    
+    })
+
+router.route('/conveyor_manage')
+
+    .post(async function(req, res) {
+        pool.query('INSERT INTO Conveyor(firm,passwd) VALUES (\"'+req.query.firm+'\",\"'+req.query.passwd+'\");', (err, result) => {
+            if (err) console.log('problemis');
+        })
+    })
+    
+    .put(async function(req, res) {
+        pool.query('UPDATE Conveyor SET firm = \"'+req.query.firm+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID), (err, result) => {
+            if (err) console.log('problemis');
+        }
+    })
+
+    .delete(async function(req, res) {
+        const id = parseInt(req.query.ID);
+        pool.query('DELETE FROM Conveyor WHERE ID='+id+';'), (err, result) => {
+            if (err) console.log('problemis');
+        }
+    })
+
+router.route('/admin_manage')
+
+    .post(async function(req, res) {
+        pool.query('INSERT INTO Admin(name,passwd) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\");', (err, result) => {
+            if (err) console.log('problemis');
+        })
+    })
+    
+    .put(async function(req, res) {
+        pool.query('UPDATE Admin SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID), (err, result) => {
+            if (err) console.log('problemis');
+        }
+    })
+
+    .delete(async function(req, res) {
+        const id = parseInt(req.query.ID);
+        pool.query('DELETE FROM Admin WHERE ID='+id+';'), (err, result) => {
+            if (err) console.log('problemis');
+        }
+    })
 
 // all of our routes will be prefixed with /api
 app.use('/api', router);
 
-// app.get("/api*",(req,res) => {
-//   let O = JSON.stringify(req.query); //this works
-//   let m = req.query.from;
-//   let n = req.query.to;
-//   let o = req.query.date;
-//   let p = req.query.time;
-//   console.log(m)
-
-//   console.log(req.params)
-//   console.log(req.params[0])
-//   //res.json({m: "api call bakc boi|" + O + "|"+ m + n + o +p})
-//   res.json({m: "bruh"})
-// });
 
 // https://stackoverflow.com/questions/54282344/how-does-express-and-react-routes-work-on-initial-get-request-from-browser
 // /api is the connector to the backend, exclude anything that matches "/api"
