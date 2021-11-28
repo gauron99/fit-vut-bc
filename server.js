@@ -298,17 +298,9 @@ app.use('/api', router);
 // https://stackoverflow.com/questions/54282344/how-does-express-and-react-routes-work-on-initial-get-request-from-browser
 // /api is the connector to the backend, exclude anything that matches "/api"
 
-//TODO might move this under /api handler because priority exists and the handler
-//above WILL handle FIRST. No Next() will be called therefore the second handler
-//wont do anything... test if works
 
-// app.get(/^\/(?!api).*/mg, (req, res, next) => {
-//   res.send("index.html")
-//   next()
-// });
-app.get("*", (req, res, next) => {
-  res.send("index.html")
-  next()
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname,"client","build","index.html"));      
 });
 
 app.listen(PORT, () => {
