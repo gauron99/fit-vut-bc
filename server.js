@@ -4,6 +4,7 @@ const app = express();
 const PORT = 8000;
 var router = express.Router();
 var mysql = require('mysql');
+const { json } = require("stream/consumers");
 
 var spoje = {};
 var id = 0;
@@ -36,6 +37,14 @@ function fillObj(results) {
     var pieces = {}
     for (const zaznam of results){
         pieces[zaznam.ID] = zaznam.name;
+    }
+    return pieces;
+}
+
+function fillObj2(results) {
+    var pieces = {}
+    for (const zaznam of results){
+        pieces[zaznam.ID] = zaznam.firm;
     }
     return pieces;
 }
@@ -77,6 +86,8 @@ router.route('/spoje')
         res.json(spoje);
     });
 
+
+// USER MANAGEMENT API
 router.route('/read_and_subsequently_possibly_config_if_desired_or_not_if_not_necessary_or_not_desired')
 
     .get(async function(req, res) {
@@ -85,8 +96,8 @@ router.route('/read_and_subsequently_possibly_config_if_desired_or_not_if_not_ne
             var results = await kvery('SELECT ID, name FROM Admin');
             persons['Admins'] = fillObj(results);
         
-            results = await kvery('SELECT ID, name FROM Conveyor');
-            persons['Conveyor'] = fillObj(results);
+            results = await kvery('SELECT ID, firm FROM Conveyor');
+            persons['Conveyor'] = fillObj2(results);
 
             results = await kvery('SELECT ID, name FROM Crew');
             persons['Crew'] = fillObj(results);
@@ -102,89 +113,184 @@ router.route('/read_and_subsequently_possibly_config_if_desired_or_not_if_not_ne
     })
 
 router.route('/passenger_manage')
-
+    .get(async function(req, res){
+        var result = await kvery('SELECT * FROM Passenger');
+        res.json(result)
+    })
     .post(async function(req, res) {
-        pool.query('INSERT INTO Passenger(name,passwd) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\");', (err, result) => {
-            if (err) console.log('problemis');
-        })
+        await kvery('INSERT INTO Passenger(name,passwd) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\");');
     })
     
     .put(async function(req, res) {
-        pool.query('UPDATE Passenger SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID), (err, result) => {
-            if (err) console.log('problemis');
-        }
+        await kvery('UPDATE Passenger SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID+';');
     })
 
     .delete(async function(req, res) {
-        const id = parseInt(req.query.ID);
-        pool.query('DELETE FROM Passenger WHERE ID='+id+';'), (err, result) => {
-            if (err) console.log('problemis');
-        }
+        await kvery('DELETE FROM Passenger WHERE ID='+req.query.ID+';');
     })
 
 router.route('/crew_manage')
-
+    .get(async function(req, res) {
+        var result = await kvery('SELECT * FROM Crew;');
+        res.json(result)
+})
     .post(async function(req, res) {
-        pool.query('INSERT INTO Crew(name,passwd,conveyorID) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\",\"'+req.query.conveyorID+'\");', (err, result) => {
-            if (err) console.log('problemis');
-        })
+        await kvery('INSERT INTO Crew(name,passwd,conveyorID) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\",\"'+req.query.conveyorID+'\");');
     })
     
     .put(async function(req, res) {
-        pool.query('UPDATE Crew SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\", conveyorID = \"'+req.query.conveyorID+'\" WHERE ID='+req.query.ID), (err, result) => {
-            if (err) console.log('problemis');
-        }
+        await kvery('UPDATE Crew SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\", conveyorID = \"'+req.query.conveyorID+'\" WHERE ID='+req.query.ID+';');
     })
 
     .delete(async function(req, res) {
-        const id = parseInt(req.query.ID);
-        pool.query('DELETE FROM Crew WHERE ID='+id+';'), (err, result) => {
-            if (err) console.log('problemis');
-        }    
+        await kvery('DELETE FROM Crew WHERE ID='+req.query.ID+';');
     })
 
 router.route('/conveyor_manage')
+    .get(async function(req, res) {
+        var result = await kvery('SELECT * FROM Conveyor;');
+        res.json(result)
+    })
 
     .post(async function(req, res) {
-        pool.query('INSERT INTO Conveyor(firm,passwd) VALUES (\"'+req.query.firm+'\",\"'+req.query.passwd+'\");', (err, result) => {
-            if (err) console.log('problemis');
-        })
+        await kvery('INSERT INTO Conveyor(firm,passwd) VALUES (\"'+req.query.firm+'\",\"'+req.query.passwd+'\");');
     })
     
     .put(async function(req, res) {
-        pool.query('UPDATE Conveyor SET firm = \"'+req.query.firm+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID), (err, result) => {
-            if (err) console.log('problemis');
-        }
+        await kvery('UPDATE Conveyor SET firm = \"'+req.query.firm+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID+';');
     })
 
     .delete(async function(req, res) {
-        const id = parseInt(req.query.ID);
-        pool.query('DELETE FROM Conveyor WHERE ID='+id+';'), (err, result) => {
-            if (err) console.log('problemis');
-        }
+        await kvery('DELETE FROM Conveyor WHERE ID='+req.query.ID+';');
     })
 
 router.route('/admin_manage')
-
+    .get(async function(req, res) {
+        var result = await kvery('SELECT * FROM Admin;');
+        res.json(result)
+    })
     .post(async function(req, res) {
-        pool.query('INSERT INTO Admin(name,passwd) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\");', (err, result) => {
-            if (err) console.log('problemis');
-        })
+        await kvery('INSERT INTO Admin(name,passwd) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\");');
     })
     
     .put(async function(req, res) {
-        pool.query('UPDATE Admin SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID), (err, result) => {
-            if (err) console.log('problemis');
-        }
+        await kvery('UPDATE Admin SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID+';');
     })
 
     .delete(async function(req, res) {
-        const id = parseInt(req.query.ID);
-        pool.query('DELETE FROM Admin WHERE ID='+id+';'), (err, result) => {
-            if (err) console.log('problemis');
-        }
+        await kvery('DELETE FROM Admin WHERE ID='+req.query.ID+';');
     })
 
+router.route('/login')
+
+    .post(async function(req, res) {
+        var admins = await kvery('SELECT passwd FROM Admin WHERE name=\"'+req.query.name+'\";');
+        var conveyors = await kvery('SELECT passwd FROM Conveyor WHERE firm=\"'+req.query.name+'\";');
+        var crew = await kvery('SELECT passwd FROM Crew WHERE name=\"'+req.query.name+'\";');
+        var passengers = await kvery('SELECT passwd FROM Passenger WHERE name=\"'+req.query.name+'\";');
+        var answer = {};
+        if (admins[0]){
+            answer['ROLE'] = "admin";
+            answer['ACCESS'] = admins[0].passwd == req.query.passwd ? "GRANTED" : "DENIED";
+        }
+        else if (conveyors[0]){
+            answer['ROLE'] = "conveyor";
+            answer['ACCESS'] = conveyors[0].passwd == req.query.passwd ? "GRANTED" : "DENIED";
+        }
+        else if (crew[0]){
+            answer['ROLE'] = "crew";
+            answer['ACCESS'] = crew[0].passwd == req.query.passwd ? "GRANTED" : "DENIED";
+        }
+        else if (passengers[0]){
+            answer['ROLE'] = "passenger";
+            answer['ACCESS'] = passengers[0].passwd == req.query.passwd ? "GRANTED" : "DENIED";
+        }
+        else {
+            answer['ROLE'] = "nenalezeno";
+            answer['ACCESS'] = "DENIED"
+        }
+        res.json(answer);
+    })
+
+// SPOJE MANAGEMENT API
+
+router.route('/stops')
+    .get(async function(req, res) {
+        var result = await kvery('SELECT * FROM Stop WHERE ID='+req.query.ID+';');
+        res.json(result);
+    })
+    .post(async function(req, res) {
+        await kvery('INSERT INTO Stop(name,conveyorID,confirmed) VALUES (\"'+req.query.name+'\",'+req.query.conveyorID+',FALSE);');
+    })
+
+    .put(async function(req, res) {
+        await kvery('UPDATE Stop SET name = \"'+req.query.name+'\", conveyorID = '+req.query.conveyorID+', confirmed = '+req.query.confirmed+' WHERE ID='+req.query.ID+';');
+    })
+
+    .delete(async function(req, res) {
+        await kvery('DELETE FROM Stop WHERE ID='+req.query.ID+';');
+    })
+
+
+router.route('/stops_unconfirmed')
+    .get(async function(req, res) {
+        var results = await kvery('SELECT * FROM Stop WHERE confirmed is FALSE;');
+        res.json(results);
+    })
+
+router.route('/confirm_stop')
+    .post(async function(req, res) {
+        await kvery('UPDATE Stop SET confirmed = TRUE WHERE ID='+req.query.ID+';');
+    })
+
+router.route('/vehicle')
+    .get(async function(req, res) {
+        var result = await kvery('SELECT FROM Vehicle WHERE ID='+req.query.ID+';');
+        res.json(result);
+    })
+    .post(async function(req, res) {
+        await kvery('INSERT INTO Vehicle(max_seats_poor,max_seats_rich,description,last_visited,conveyorID) VALUES ('+req.query.max_seats_poor+', '+req.query.max_seats_rich+',\"'+req.query.description+'\",'+req.query.last_visited+','+req.query.conveyorID+');');
+    })
+
+    .put(async function(req, res) {
+        await kvery('UPDATE Vehicle SET max_seats_poor = '+req.query.max_seats_poor+', max_seats_rich = '+req.query.max_seats_rich+', description = \"'+req.query.description+'\", last_visited = '+req.query.last_visited+', conveyorID = '+req.query.conveyorID+' WHERE ID='+req.query.ID+';');
+    })
+
+    .delete(async function(req, res) {
+        await kvery('DELETE FROM Vehicle WHERE ID='+req.query.ID+';');
+    })
+
+
+router.route('/spoje')
+    .get(async function(req, res) {
+        var result = await kvery('SELECT connID FROM Connection_stop WHERE ID='+req.query.ID+';');
+        res.json(result);
+    })
+    .post(async function(req, res) {
+        await kvery('INSERT INTO Connection(conveyorID,vehicleID,price_poor,price_rich) VALUES ('+req.query.conveyorID+', '+req.query.vehicleID+','+req.query.price_poor+','+req.query.price_rich+');');
+        var connID = await kvery('SELECT LAST_INSERT_ID();');
+        var zastavky = req.body.zastavky;
+        for (let stop of zastavky){
+            var ID = await kvery('SELECT ID FROM Stop WHERE name=\"'+stop.name+'\";')
+            await kvery('INSERT INTO Connection_stop(connID,stopID,time) VALUES ('+connID[0]['LAST_INSERT_ID()']+', '+ID[0].ID+','+stop.cas+');');
+        }       
+    })
+
+    .put(async function(req, res) {
+        await kvery('UPDATE Vehicle SET max_seats_poor = '+req.query.max_seats_poor+', max_seats_rich = '+req.query.max_seats_rich+', description = \"'+req.query.description+'\", last_visited = '+req.query.last_visited+', conveyorID = '+req.query.conveyorID+' WHERE ID='+req.query.ID+';');
+    })
+
+    .delete(async function(req, res) {
+        await kvery('DELETE FROM Vehicle WHERE ID='+req.query.ID+';');
+    })
+
+router.route('/test')
+
+    .get(async function(req, res) {        
+        var result = await kvery('SELECT ID, firm FROM Conveyor');
+        res.json(result)
+    })        
+    
 // all of our routes will be prefixed with /api
 app.use('/api', router);
 
