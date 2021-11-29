@@ -68,42 +68,50 @@ router.get('/', function(req, res){
     res.json({m: "eyo"});
 });
 
-// on routes that end in /spoje
-// ----------------------------------------------------
-router.route('/spoje')
+// // on routes that end in /spoje
+// // ----------------------------------------------------
+// router.route('/spoje')
 
-    // create a spoj (accessed at POST http://localhost:8000/api/spoje)
-    .post(function(req, res) {
-        var spoj = {odc: req.query.odchod, odk: req.query.odkud, pri: req.query.prichod, kam: req.query.kam, cena: req.query.cena};
-        spoje[id++] = spoj;
-        // save the spoj and check for errors
-        res.json({ message: 'spoj spojed' });
-        console.log(spoje);
-    })
+//     // create a spoj (accessed at POST http://localhost:8000/api/spoje)
+//     .post(function(req, res) {
+//         var spoj = {odc: req.query.odchod, odk: req.query.odkud, pri: req.query.prichod, kam: req.query.kam, cena: req.query.cena};
+//         spoje[id++] = spoj;
+//         // save the spoj and check for errors
+//         res.json({ message: 'spoj spojed' });
+//         console.log(spoje);
+//     })
 
-    // get all the spoje (accessed at GET http://localhost:8000/api/spoje)
-    .get(function(req, res) {
-        res.json(spoje);
-    });
+//     // get all the spoje (accessed at GET http://localhost:8000/api/spoje)
+//     .get(function(req, res) {
+//         res.json(spoje);
+//     });
 
 
 // USER MANAGEMENT API
 router.route('/read_and_subsequently_possibly_config_if_desired_or_not_if_not_necessary_or_not_desired')
 
     .get(async function(req, res) {
-        var persons = {};
+        var persons = [];
         try{
             var results = await kvery('SELECT ID, name FROM Admin');
-            persons['Admins'] = fillObj(results);
-        
+            for (let person of results){
+                persons.push({ID: person.ID, name: person.name, type: "admin"});
+            }        
+
             results = await kvery('SELECT ID, firm FROM Conveyor');
-            persons['Conveyor'] = fillObj2(results);
+            for (let person of results){
+                persons.push({ID: person.ID, name: person.firm, type: "conveyor"});
+            }
 
             results = await kvery('SELECT ID, name FROM Crew');
-            persons['Crew'] = fillObj(results);
+            for (let person of results){
+                persons.push({ID: person.ID, name: person.name, type: "crew"});
+            }
 
             results = await kvery('SELECT ID, name FROM Passenger');
-            persons['Passenger'] = fillObj(results);
+            for (let person of results){
+                persons.push({ID: person.ID, name: person.name, type: "passenger"});
+            }
 
             console.log("ouu",persons);
             res.json(persons);
@@ -131,7 +139,7 @@ router.route('/passenger_manage')
 
 router.route('/crew_manage')
     .get(async function(req, res) {
-        var result = await kvery('SELECT * FROM Crew;');
+        var result = await kvery('SELECT Crew.ID, Crew.name, Crew.passwd FROM Crew, Conveyor WHERE Conveyor.firm = "'+req.query.firm+'" AND Crew.conveyorID = Conveyor.ID;');
         res.json(result)
 })
     .post(async function(req, res) {
@@ -263,8 +271,19 @@ router.route('/vehicle')
 
 router.route('/spoje')
     .get(async function(req, res) {
-        var result = await kvery('SELECT connID FROM Connection_stop WHERE ID='+req.query.ID+';');
-        res.json(result);
+        var spoje = [];
+        var result = await kvery('SELECT connID, arrival FROM Connection_stop AS CSS WHERE CSS.stopID IN (SELECT ID FROM Stop WHERE Stop.ID = stopID AND Stop.name = "'+req.query.odkud+'") AND CSS.connID IN (SELECT connID FROM Connection_stop CS WHERE CS.stopID IN (SELECT ID FROM Stop AS S WHERE S.name = "'+req.query.kam+'") AND TIMEDIFF(CSS.arrival, CS.arrival) < 0 AND TIMEDIFF(TIME("'+req.query.kdy+'"),CSS.arrival) < 0);');
+        for (let spoj of result){
+            var spojReturn = {}
+            var result2 = await kvery('SELECT arrival FROM Connection_stop WHERE stopID IN (SELECT ID FROM Stop AS S WHERE S.name = "'+req.query.kam+'") AND connID = '+spoj.connID+';');
+            var price = await kvery('SELECT sum(price_rich) AS cenaRich, sum(price_poor) AS cenaPoor FROM Connection, Connection_stop WHERE '+spoj.connID+' = Connection.ID AND Connection.ID = Connection_stop.connID AND TIMEDIFF(TIME("'+spoj.arrival+'"),arrival) <= 0 AND TIMEDIFF(TIME("'+result2[0].arrival+'"),arrival) > 0;');
+            spojReturn['odjezd'] = spoj.arrival;
+            spojReturn['prijezd'] = result2[0].arrival;
+            spojReturn['cenaRich'] = price[0].cenaRich;
+            spojReturn['cenaPoor'] = price[0].cenaPoor;
+            spoje.push(spojReturn);
+        }
+        res.json(spoje);
     })
     .post(async function(req, res) {
         await kvery('INSERT INTO Connection(conveyorID,vehicleID,price_poor,price_rich) VALUES ('+req.query.conveyorID+', '+req.query.vehicleID+','+req.query.price_poor+','+req.query.price_rich+');');
