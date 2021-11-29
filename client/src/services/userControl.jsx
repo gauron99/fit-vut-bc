@@ -1,14 +1,9 @@
-// import React from "react";
+import React,{useEffect,useState} from "react";
+import Account from "../components/account"
 
 export const handleRegister = (props) => {
-
-}
-
-export const handleLogin = (props) => {
-
-  const n = props.name;
-  const p = props.password
-
+  const regMEnow = true;
+  Account(regMEnow); //call account handler?
 }
 
 export const Logout = (props) => {
@@ -19,14 +14,23 @@ export const Logout = (props) => {
 // returns true if speficied user is logged in
 // special keyword "anyone" checks if anyone is logged in
 export const isLoggedIn = (props) => {
-  return true;
+  return (localStorage.getItem("token") != null) ? true : false;
 }
 
-// returns null if token doesnt exist / returns token if exists (array of [name,password])
 export const getToken = () => {
-  let token = sessionStorage.getItem("token");
+  let token = localStorage.getItem("token",token)
+  console.log("TOKEN in SES: ",token);
+  return JSON.parse(token, null, -1);
 }
 
-export const setToken = (props) => {
-  sessionStorage.setItem("token",JSON.stringify(props.userToken))
+export const setToken = (data) => {
+  console.log("SESS DATA SETTING TO: ",data)
+  localStorage.setItem("token",JSON.stringify(data))
+}
+
+export const removeToken = () => {
+  localStorage.removeItem("token");
+  const data = localStorage.getItem("token") === null;
+  console.log("removed is null now?: ",data)
+
 }

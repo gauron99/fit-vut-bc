@@ -1,5 +1,7 @@
 import React,{useState,useEffect} from "react";
 import {GeneralErrorPage} from "./home";
+import {getToken} from "../services/userControl"
+
 import "../People.css"
 
 const EditConvStops = () => {
@@ -23,7 +25,7 @@ const EditConvMachine = () => {
 
 
 const editPersonel = (id) => {
-  console.log("tady budes editovat")
+  console.log("tady budes editovat, otevres na to maly okno nebo tak")
 }
 
 const GetPerson = (val) => {
@@ -47,23 +49,34 @@ const EditConvPerson = () => {
 
   const [personel,setPersonel] = useState([]);
 
+
+  // useEffect(() => {
+
+  //   getData()
+  // }, []);
+
+  // async function getData() {
+  //   const response = await fetch('/api/crew_manage?'+ token.firm);
+  //   const result = await response.json();
+  //   console.log(result.data);
+
+  // }
+
   useEffect(()=>{
-    fetch("/api/crew_manage",{
+    const token = getToken()
+    fetch("/api/crew_manage?firm="+token.firm,{
       method: "GET",
       headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json'
-      
       },
       // body: JSON.stringify({ dopravceID: 'd' })
      })
     .then((res) => res.json())
     .then((result) => {
-
       setPersonel(result)
-
     })
-  })
+  },[personel])
 
   console.log(personel);
 

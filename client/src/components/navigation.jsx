@@ -56,9 +56,9 @@ class PrivilegedNavigation extends React.Component {
 
 const SelectMode = (props) =>{
     
-    useEffect(() => {
-      props.setView("CONVEYOR")
-    });
+    // useEffect(() => {
+    //   props.setView("CONVEYOR")
+    // });
 
     if(props.view === "UNREGISTERED" || props.view === "USER"){
       return <NormalNavigation />

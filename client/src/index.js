@@ -15,14 +15,8 @@ import Edit from "./components/edit";
 // let modes = ["UNREGISTERED","USER","CREW","CONVEYOR","ADMIN"]
 const ViewSetup = () => {
 
-  const [token, setToken] = useState({name:"",password:""});
   const [view, setView] = useState("UNREGISTERED");
   
-  const tokenTmp = getToken();
-  if(tokenTmp){
-    setToken({name:tokenTmp[0],password:tokenTmp[1]});
-  } 
-
   return (
     <Router>
     <Navigation view={view} setView={setView}/>
