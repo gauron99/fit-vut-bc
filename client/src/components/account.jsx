@@ -72,7 +72,7 @@ const DeleteAcc = (login,setL,setV,navv) => {
   removeToken("token");
   DelAcc(login.login,setL,setV);
 
-  navv('/account');
+  navv('/');
 }
 
 const Logout = (setL,setV,navv) => {
@@ -80,7 +80,7 @@ const Logout = (setL,setV,navv) => {
     setL({login:'',passwd:'',type:''});
     setV("UNREGISTERED");
 
-  navv('/account')
+  navv('/')
   
 }
 
