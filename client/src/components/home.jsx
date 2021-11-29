@@ -55,7 +55,8 @@ class ShowTable extends React.Component{
                   <th>Odkud</th>
                   <th>Prichod</th>
                   <th>Kam</th>
-                  <th>Cena</th>
+                  <th>CenaPoor</th>
+                  <th>CenaRich</th>
               </thead>
               <tbody>
                     {this.props.veci.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}</tr>)}
@@ -88,20 +89,27 @@ class WrapPico extends React.Component{
         this.vyhledatSpoj = this.vyhledatSpoj.bind(this);
     }
     state = {
-        veci: [["4.20", "Brno", "6.96", "furtBrno", "4.20$"]]
+        veci: [[]]
     }
     vyhledatSpoj() {
         var xhr = new XMLHttpRequest()
-
+        var odkud = document.getElementById("search-from").value;
+        var kam = document.getElementById("search-to").value;
+        var kdy = document.getElementById("search-time").value;
+        console.log(odkud,kam,kdy);
         // get a callback when the server responds
         xhr.addEventListener('load', () => {
         // update the state of the component with the result here
-            console.log(JSON.parse(xhr.responseText)[0])
-            this.setState({veci: [Object.values(JSON.parse(xhr.responseText)[0])]});
-
+            var spoje = JSON.parse(xhr.responseText);
+            var stateSpoje = [];
+            for (let spoj of spoje){
+                stateSpoje.push(Object.values(spoj));
+            }
+            console.log(stateSpoje);
+            this.setState({veci: stateSpoje});
         })
         // open the request with the verb and the url
-        xhr.open('GET', '/api/spoje')
+        xhr.open('GET', '/api/spoje?odkud='+odkud+'&kam='+kam+'&kdy='+kdy);
         // send the request
         xhr.send()
     }
