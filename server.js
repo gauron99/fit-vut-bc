@@ -277,6 +277,7 @@ router.route('/spoje')
             var spojReturn = {}
             var result2 = await kvery('SELECT arrival FROM Connection_stop WHERE stopID IN (SELECT ID FROM Stop AS S WHERE S.name = "'+req.query.kam+'") AND connID = '+spoj.connID+';');
             var price = await kvery('SELECT sum(price_rich) AS cenaRich, sum(price_poor) AS cenaPoor FROM Connection, Connection_stop WHERE '+spoj.connID+' = Connection.ID AND Connection.ID = Connection_stop.connID AND TIMEDIFF(TIME("'+spoj.arrival+'"),arrival) <= 0 AND TIMEDIFF(TIME("'+result2[0].arrival+'"),arrival) > 0;');
+            spojReturn['linka'] = spoj.connID;
             spojReturn['odjezd'] = spoj.arrival;
             spojReturn['odkud'] = req.query.odkud;
             spojReturn['prijezd'] = result2[0].arrival;

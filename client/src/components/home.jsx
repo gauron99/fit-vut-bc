@@ -46,11 +46,17 @@ class SearchWithLabel extends React.Component{
 }
 
 
+
 class ShowTable extends React.Component{
-  render(){
+    lol(comp){
+        console.log(comp)
+    }
+    render(){
     return(
+        <div>
           <table className="show-table">
               <thead>
+                  <th>Linka</th>
                   <th>Odchod</th>
                   <th>Odkud</th>
                   <th>Prichod</th>
@@ -59,9 +65,10 @@ class ShowTable extends React.Component{
                   <th>CenaRich</th>
               </thead>
               <tbody>
-                    {this.props.veci.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}</tr>)}
+                    {this.props.veci.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}<td><button type='button' onClick={this.lol.bind(this, comp[0])} className="button-show">uhoh</button></td></tr>)}
               </tbody>
           </table>
+          </div>
     )
   }
 }
@@ -89,7 +96,7 @@ class WrapPico extends React.Component{
         this.vyhledatSpoj = this.vyhledatSpoj.bind(this);
     }
     state = {
-        veci: [[]]
+        veci: []
     }
     vyhledatSpoj() {
         var xhr = new XMLHttpRequest()
