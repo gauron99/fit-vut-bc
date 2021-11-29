@@ -1,5 +1,7 @@
 import React,{useEffect,useState,useRef} from 'react';
-import { isLoggedIn, getToken, handleLogin,handleRegister} from '../services/userControl';
+import { isLoggedIn, getToken, handleLogin,handleRegister, removeToken} from '../services/userControl';
+import { useNavigate } from 'react-router';
+
 import "../App.css";
 
 
@@ -50,24 +52,60 @@ const EditLogin = (props) => {
 
 // /////////////////////////////////////////////////////////////////////////////
 
-const Logout = () => {
-  return(
-    null
-  )
+
+
+async function DelAcc(data,setL,setV) {
+  console.log("/api/delete?"+data)
+
+  await fetch("/api/delete?"+data,{
+    method: "DELETE",
+  })
+  .then(()=> {
+    
+    setL({login:'',passwd:'',type:''})
+    setV("UNREGISTERED")
+    alert("účet úspěšně smazán");
+  })
+}
+
+const DeleteAcc = (login,setL,setV,navv) => {
+  removeToken("token");
+  DelAcc(login.login,setL,setV);
+
+  navv('/account');
+}
+
+const Logout = (setL,setV,navv) => {
+    removeToken("token");
+    setL({login:'',passwd:'',type:''});
+    setV("UNREGISTERED");
+
+  navv('/account')
+  
 }
 
 const EditLogout = (props) => {
-  // console.log("HAHAHAHAHA")
+  const setLogin = props.setLogin;
+  const setView = props.setView;
+
+  const navv = useNavigate();
   const token = getToken();
+
   if(token){
+
     return (
       <div>
-      <p>Jste přihlášen jako {token.login} (úroveň: {token.type})</p>
-      <button type="submit" className="button-submit" onClick={Logout}>Odhlásit</button>
-    </div>
+        <p>Jste přihlášen jako {token.login} (úroveň: {token.type})</p>
+        <button type="button" className="button-submit" onClick={() => Logout(setLogin,setView,navv)}>Odhlásit</button>
+        <button type="button" className="button-submit" onClick={() => DeleteAcc(token.login,setLogin,setView,navv)}>Smazat</button>
+        
+      </div>
+      
   )
   } else {
-    <EditLogin/>
+    return (
+      <EditLogin/>
+    )
   }
 }
 
@@ -139,7 +177,7 @@ async function loginUser(setLogin,data) {
   .then(data => {
     console.log("afterFETCHER: ",data);
     if(data.ACCESS == "GRANTED"){
-      alert("login uspesny");
+      alert("login úspěšný");
       const d = {
         login: us,
         passwd: pas,
@@ -151,6 +189,10 @@ async function loginUser(setLogin,data) {
       alert("Nepodařilo se přihlásit");
     }
   })
+  .then( () => {
+    const data = getToken("token")
+    setLogin({login:data.login, passwd:data.passwd,type:data.type})
+  })
 };
  
 const AccountSelector = (props) => {
@@ -158,40 +200,10 @@ const AccountSelector = (props) => {
     loginUser(props.setLogin,data);
     }
 
-  useEffect(()=>{
-    console.log("TELLME: ",props.isLoggedin);
-    if(props.isLoggedin !== true){
-
-      let data;
-      localStorage.getItem("token",data);
-      if(data){
-        const loc = JSON.parse(data);
-        
-        props.setLogin(() => ({
-          login: loc.login,
-          passwd: loc.passwd,
-          type: loc.type
-        }))
-        props.setviewACC(1);
-        if(loc.type == "admin"){
-          props.setView("ADMIN");
-        } else if (loc.type == "crew"){
-          props.setView("CREW");
-        } else if (loc.type == "conveyor"){
-          props.setView("CONVEYOR");
-        } else if (loc.type == "passanger"){
-          props.setView("USER");
-        } else {
-          props.setView("UNREGISTERED");
-        }
-      }
-    }
-  },[props.login,props.view,props.viewACC])
-
-  if (props.viewACC == 0){ //basic page, not logged in
+  if (props.viewACC === 0){ //basic page, not logged in
     console.log("LOGGING IN")
     return <EditLogin handleSubmit={handleSubmitLogin}/>
-  } else if (props.viewACC == 1) { //logged in page
+  } else if (props.viewACC === 1) { //logged in page
     console.log("ALREADY LOGGED IN")
     return <EditLogout view={props.view} setView={props.setView} login={props.login} setLogin={props.setLogin}/>;
   } else {// trying to register
@@ -204,11 +216,48 @@ const Account = (props) => {
   // if someone is logged in, show logout button
   const [viewACC,setviewACC] = useState(0);
   const [login,setLogin] = useState({login:'',passwd:'',type:''});
-  const [isLoggedin,setisLoggedin] = useState(false)
 
+  console.log("ACCOUNTview: ",props.view)
+  console.log("ACCOUNTlogin: ",login)
+  console.log("ACCOUNTviewacc: ",viewACC)
+  console.log("loggedIN: ",isLoggedIn())
 
-  return <AccountSelector view={props.view} setView={props.setView} viewACC={viewACC} setviewACC={setviewACC}
-                          login={login} setLogin={setLogin} isLoggedin={isLoggedin} setisLoggedin={setisLoggedin}/>
+  useEffect(()=>{
+    if(isLoggedIn()){
+      console.log("TELLME IN: ",isLoggedIn());
+
+      let data = getToken("token");
+      console.log(data)
+      if(data){
+        const loc = data;
+        if(login.login !== loc.login){
+          setLogin(() => ({
+            login: loc.login,
+            passwd: loc.passwd,
+            type: loc.type
+          }))
+        }        
+
+        if(viewACC !== 1){
+          setviewACC(1);
+        }
+
+        if(loc.type === "admin" && props.view !== "ADMIN"){
+          props.setView("ADMIN");
+        } else if (loc.type === "crew" && props.view !== "CREW"){
+          props.setView("CREW");
+        } else if (loc.type === "conveyor" && props.view !== "CONVEYOR"){
+          props.setView("CONVEYOR");
+        } else if (loc.type === "passenger" && props.view !== "USER"){
+          props.setView("USER");
+        } else if (loc.type==='' && props.view !== "UNREGISTERED"){
+            props.setView("UNREGISTERED");
+          }
+        }
+    }
+  },[login,props.view,viewACC])
+
+  return <AccountSelector view={props.view} setView={props.setView} viewACC={viewACC} setviewACC={setviewACC} login={login} setLogin={setLogin} />
 }
 
 export default Account;

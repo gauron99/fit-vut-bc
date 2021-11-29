@@ -14,7 +14,8 @@ export const Logout = (props) => {
 // returns true if speficied user is logged in
 // special keyword "anyone" checks if anyone is logged in
 export const isLoggedIn = (props) => {
-  return (localStorage.getItem("token") != null) ? true : false;
+  // return (localStorage.getItem("token") !== null) ? true : false;
+  return ((JSON.parse(localStorage.getItem("token")) !== null) ? true : false);
 }
 
 export const getToken = () => {
