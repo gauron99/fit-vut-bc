@@ -33,22 +33,6 @@ kvery = (query) => {
     });
 }
 
-function fillObj(results) {
-    var pieces = {}
-    for (const zaznam of results){
-        pieces[zaznam.ID] = zaznam.name;
-    }
-    return pieces;
-}
-
-function fillObj2(results) {
-    var pieces = {}
-    for (const zaznam of results){
-        pieces[zaznam.ID] = zaznam.firm;
-    }
-    return pieces;
-}
-
 // add middleware -- static files can now be used from frontend
 app.use(express.static("client/build"));
 
@@ -67,24 +51,6 @@ router.use(function(req, res, next) {
 router.get('/', function(req, res){
     res.json({m: "eyo"});
 });
-
-// // on routes that end in /spoje
-// // ----------------------------------------------------
-// router.route('/spoje')
-
-//     // create a spoj (accessed at POST http://localhost:8000/api/spoje)
-//     .post(function(req, res) {
-//         var spoj = {odc: req.query.odchod, odk: req.query.odkud, pri: req.query.prichod, kam: req.query.kam, cena: req.query.cena};
-//         spoje[id++] = spoj;
-//         // save the spoj and check for errors
-//         res.json({ message: 'spoj spojed' });
-//         console.log(spoje);
-//     })
-
-//     // get all the spoje (accessed at GET http://localhost:8000/api/spoje)
-//     .get(function(req, res) {
-//         res.json(spoje);
-//     });
 
 
 // USER MANAGEMENT API
