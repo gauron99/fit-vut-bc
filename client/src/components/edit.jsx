@@ -1,6 +1,8 @@
 import React from "react";
 import {getToken, isLoggedIn} from "../services/userControl";
 import {EditCrewPage} from "../components/edit_crew";
+import {EditAdminPage} from "../components/admin";
+import {EditConveyorPage} from "../components/conveyor"
 
 export const EditErrorPage = () => {
   const t = getToken();
@@ -11,33 +13,13 @@ export const EditErrorPage = () => {
   }
 }
 
-
-
-const EditConveyorPage = () => {
-  // check if conveyor is connected, if so, which one
-  if(isLoggedIn("CONVEYOR")){
-    
-  } else {
-    return <EditErrorPage />
-  }
-}
-
-const EditAdminPage = () => {
-// check if admin is connected
-  if(isLoggedIn("ADMIN")){
-    
-  }else {
-    return <EditErrorPage />
-  }
-}
-
 const EditMakeBasicStruct = (props) => {
   const v = props.view;
-  if (v === "CREW"){
+  if (v === "CREW" && isLoggedIn("CREW")){
     return <EditCrewPage />
-  } else if(v === "CONVEYOR"){
+  } else if(v === "CONVEYOR" && isLoggedIn("CONVEYOR")){
     return <EditConveyorPage />
-  } else if(v === "ADMIN"){
+  } else if(v === "ADMIN" && isLoggedIn("ADMIN")){
     return <EditAdminPage />
   } else {
     return (
@@ -48,12 +30,9 @@ const EditMakeBasicStruct = (props) => {
 
 const Edit = (props) => {
 
-  
-
   return(
     <EditMakeBasicStruct view={props.view}/>
   )
 }
 
 export default Edit;
-

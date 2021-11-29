@@ -56,9 +56,9 @@ class PrivilegedNavigation extends React.Component {
 
 const SelectMode = (props) =>{
     
-    // useEffect(() => {
-    //   props.setView("ADMIN")
-    // });
+    useEffect(() => {
+      props.setView("CONVEYOR")
+    });
 
     if(props.view === "UNREGISTERED" || props.view === "USER"){
       return <NormalNavigation />
@@ -78,6 +78,7 @@ const Navigation = (props) => {
         <NavLink className="navbar-brand" to="/">
           Domů
         </NavLink>
+        <div>debug: {view}</div>
           <div>
             <SelectMode view={view} setView={setView} />
           </div>
