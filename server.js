@@ -108,7 +108,7 @@ router.route('/read_and_subsequently_possibly_config_if_desired_or_not_if_not_ne
                 persons.push({ID: person.ID, name: person.name, type: "crew"});
             }
 
-            results = await kvery('SELECT ID, name FROM Passenger');
+            results = await kvery('SELECT ID, name FROM Passenger WHERE registered=TRUE');
             for (let person of results){
                 persons.push({ID: person.ID, name: person.name, type: "passenger"});
             }
@@ -122,15 +122,15 @@ router.route('/read_and_subsequently_possibly_config_if_desired_or_not_if_not_ne
 
 router.route('/passenger_manage')
     .get(async function(req, res){
-        var result = await kvery('SELECT * FROM Passenger');
+        var result = await kvery('SELECT * FROM Passenger WHERE registered=TRUE');
         res.json(result)
     })
     .post(async function(req, res) {
-        await kvery('INSERT INTO Passenger(name,passwd) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\");');
+        await kvery('INSERT INTO Passenger(name,passwd,registered) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\",'+req.query.registered+');');
     })
     
     .put(async function(req, res) {
-        await kvery('UPDATE Passenger SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID+';');
+        await kvery('UPDATE Passenger SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID+', registered = '+req.query.registered+';');
     })
 
     .delete(async function(req, res) {
@@ -195,7 +195,7 @@ router.route('/login')
         var admins = await kvery('SELECT passwd FROM Admin WHERE name=\"'+req.query.name+'\";');
         var conveyors = await kvery('SELECT passwd FROM Conveyor WHERE firm=\"'+req.query.name+'\";');
         var crew = await kvery('SELECT passwd FROM Crew WHERE name=\"'+req.query.name+'\";');
-        var passengers = await kvery('SELECT passwd FROM Passenger WHERE name=\"'+req.query.name+'\";');
+        var passengers = await kvery('SELECT passwd FROM Passenger WHERE name=\"'+req.query.name+'\" AND registered = TRUE;');
         var answer = {};
         if (admins[0]){
             answer['ROLE'] = "admin";
@@ -278,9 +278,11 @@ router.route('/spoje')
             var result2 = await kvery('SELECT arrival FROM Connection_stop WHERE stopID IN (SELECT ID FROM Stop AS S WHERE S.name = "'+req.query.kam+'") AND connID = '+spoj.connID+';');
             var price = await kvery('SELECT sum(price_rich) AS cenaRich, sum(price_poor) AS cenaPoor FROM Connection, Connection_stop WHERE '+spoj.connID+' = Connection.ID AND Connection.ID = Connection_stop.connID AND TIMEDIFF(TIME("'+spoj.arrival+'"),arrival) <= 0 AND TIMEDIFF(TIME("'+result2[0].arrival+'"),arrival) > 0;');
             spojReturn['odjezd'] = spoj.arrival;
+            spojReturn['odkud'] = req.query.odkud;
             spojReturn['prijezd'] = result2[0].arrival;
-            spojReturn['cenaRich'] = price[0].cenaRich;
+            spojReturn['kam'] = req.query.kam;
             spojReturn['cenaPoor'] = price[0].cenaPoor;
+            spojReturn['cenaRich'] = price[0].cenaRich;
             spoje.push(spojReturn);
         }
         res.json(spoje);
@@ -303,12 +305,80 @@ router.route('/spoje')
         await kvery('DELETE FROM Vehicle WHERE ID='+req.query.ID+';');
     })
 
-router.route('/test')
-
+router.route('/gde_spoj')
     .get(async function(req, res) {        
-        var result = await kvery('SELECT ID, firm FROM Conveyor');
+        var result = await kvery('SELECT Stop.name FROM Vehicle, Stop WHERE Vehicle.last_visited = Stop.ID AND Vehicle.ID = '+req.query.ID+';');
         res.json(result)
     })        
+
+router.route('/reservation')
+    .get(async function(req, res) {
+        var result = await kvery('SELECT * FROM Reservation WHERE ID = '+req.query.ID+';');
+        res.json(result)
+    })
+
+    .post(async function(req, res){
+        var fail = 0;
+        var vehID = await kvery('SELECT vehicleID FROM Connection WHERE ID ='+req.query.connectionID+';')
+        for (let seat of req.query.seats.split(',')){
+            var result = await kvery('SELECT free FROM Vehicle_seat WHERE vehicleID='+vehID[0].vehicleID+' AND seat='+seat+';');
+            if (result[0].free == 0) fail = 1;
+        }
+        if (fail == 1){
+            res.json({msg: 'HAHA BITCH TOO SLOW'});
+        }
+        else {
+            await kvery('INSERT INTO Reservation(connectionID, passengerID, paid) VALUES ('+req.query.connectionID+', '+req.query.passengerID+', FALSE)');
+            var resID = await kvery('SELECT LAST_INSERT_ID();');
+    
+            for (let seat of req.query.seats.split(',')){
+                await kvery('INSERT INTO Reservation_seat(reservationID, seat) VALUES ('+resID[0]['LAST_INSERT_ID()']+','+seat+')');
+                await kvery('UPDATE Vehicle_seat SET free=FALSE WHERE vehicleID='+vehID[0].vehicleID+' AND seat='+seat+';');
+            }
+            res.json({msg: 'secko cajk'});    
+        }
+    })
+
+router.route('/free_vehicle_seats_poor')
+    .get(async function(req, res) {
+        var result = await kvery('SELECT seat FROM Vehicle_seat WHERE free=TRUE AND class=2 AND vehicleID ='+req.query.ID+';');
+        res.json(result)
+    })
+
+router.route('/free_vehicle_seats_rich')
+    .get(async function(req, res) {
+        var result = await kvery('SELECT seat FROM Vehicle_seat WHERE free=TRUE AND class=1 AND vehicleID ='+req.query.ID+';');
+        res.json(result)
+    })
+
+router.route('/reservation_confirm')
+
+    .get(async function(req, res) {
+        var result = await kvery('SELECT * FROM Reservation WHERE paid = FALSE;');
+        res.json(result)
+    })
+
+    .post(async function(req, res) {
+        await kvery('UPDATE Reservation SET paid = TRUE WHERE ID ='+req.query.ID+';');
+        var result = await kvery('SELECT Reservation.passengerID AS RPID, Passenger.registered AS PBOOL FROM Reservation, Passenger WHERE Reservation.passengerID = Passenger.ID AND Reservation.ID ='+req.query.ID+';');
+        if (result[0].PBOOL == "FALSE"){
+            await kvery('DELETE FROM Passenger WHERE ID ='+result[0].RPID+';');
+        }
+    })
+
+router.route('/test')
+    .get(async function(req, res) {
+        var result = await kvery('SELECT * FROM Passenger;');
+        res.json(result)
+    })
+
+    .post(async function(req, res) {
+        await kvery('UPDATE Reservation SET paid = TRUE WHERE ID ='+req.query.ID+';');
+        var result = await kvery('SELECT Reservation.passengerID AS RPID, Passenger.registered AS PBOOL FROM Reservation, Passenger WHERE Reservation.passengerID = Passenger.ID AND Reservation.ID ='+req.query.ID+';');
+        if (result[0].PBOOL == "FALSE"){
+            await kvery('DELETE FROM Passenger WHERE ID ='+result[0].RPID+';');
+        }
+    })
     
 // all of our routes will be prefixed with /api
 app.use('/api', router);
