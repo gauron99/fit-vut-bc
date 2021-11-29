@@ -134,7 +134,7 @@ router.route('/passenger_manage')
     })
 
     .delete(async function(req, res) {
-        await kvery('DELETE FROM Passenger WHERE ID='+req.query.ID+';');
+        await kvery('DELETE FROM Passenger WHERE name='+req.query.name+';');
     })
 
 router.route('/crew_manage')
@@ -151,7 +151,7 @@ router.route('/crew_manage')
     })
 
     .delete(async function(req, res) {
-        await kvery('DELETE FROM Crew WHERE ID='+req.query.ID+';');
+        await kvery('DELETE FROM Crew WHERE firm='+req.query.name+';');
     })
 
 router.route('/conveyor_manage')
@@ -169,7 +169,7 @@ router.route('/conveyor_manage')
     })
 
     .delete(async function(req, res) {
-        await kvery('DELETE FROM Conveyor WHERE ID='+req.query.ID+';');
+        await kvery('DELETE FROM Conveyor WHERE name='+req.query.name+';');
     })
 
 router.route('/admin_manage')
@@ -186,7 +186,7 @@ router.route('/admin_manage')
     })
 
     .delete(async function(req, res) {
-        await kvery('DELETE FROM Admin WHERE ID='+req.query.ID+';');
+        await kvery('DELETE FROM Admin WHERE name='+req.query.name+';');
     })
 
 router.route('/login')
@@ -236,7 +236,7 @@ router.route('/stops')
     })
 
     .delete(async function(req, res) {
-        await kvery('DELETE FROM Stop WHERE ID='+req.query.ID+';');
+        await kvery('DELETE FROM Stop WHERE name='+req.query.name+';');
     })
 
 
