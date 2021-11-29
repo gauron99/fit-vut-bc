@@ -22,10 +22,17 @@ const EditConvMachine = () => {
 }
 
 
+const editPersonel = (id) => {
+  console.log("tady budes editovat")
+}
+
 const GetPerson = (val) => {
   const x = val.val;
   // getToken() zjisti kdo to je a tady bude kontrola jestli tu osobu vubec chces 
   // if(x.conveyorID === )
+
+
+
   return(
     <tr>
       <td>{x.ID}</td>

@@ -19,7 +19,7 @@ export const Logout = (props) => {
 // returns true if speficied user is logged in
 // special keyword "anyone" checks if anyone is logged in
 export const isLoggedIn = (props) => {
-  return null;
+  return true;
 }
 
 // returns null if token doesnt exist / returns token if exists (array of [name,password])
