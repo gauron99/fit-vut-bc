@@ -28,61 +28,46 @@ const editPersonel = (id) => {
   console.log("tady budes editovat, otevres na to maly okno nebo tak")
 }
 
-const GetPerson = (val) => {
-  const x = val.val;
-  // getToken() zjisti kdo to je a tady bude kontrola jestli tu osobu vubec chces 
-  // if(x.conveyorID === )
+// const GetPerson = (val) => {
+//   const x = val.val;
+//   return(
+//   <tr>
+//   <td>{x.ID}</td>
+//   <td>{x.name}</td>
+//   <td>{x.passwd}</td>
+//   <td><button class="editbtn" onClick={()=> editPersonel(x.ID)}>edit</button></td>
+// </tr>
+//   )
+// }
 
-
-
-  return(
-    <tr>
-      <td>{x.ID}</td>
-      <td>{x.name}</td>
-      <td>{x.passwd}</td>
-      <td><button class="editbtn" onClick={()=> editPersonel(x.ID)}>edit</button></td>
-    </tr>
-  )
+async function GetPeople(personel,setPersonel) {
+  const token = getToken();
+  await fetch("/api/crew_manage?firm="+token.login,{
+    method: "GET",
+    headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+    },
+   })
+  .then((res) => res.json())
+  .then((result) => {
+    console.log(personel);
+    setPersonel(result)
+  })
 }
 
-const EditConvPerson = () => {
+const EditConvPerson = (props) => {
 
   const [personel,setPersonel] = useState([]);
 
-
-  // useEffect(() => {
-
-  //   getData()
-  // }, []);
-
-  // async function getData() {
-  //   const response = await fetch('/api/crew_manage?'+ token.firm);
-  //   const result = await response.json();
-  //   console.log(result.data);
-
-  // }
+  console.log("convPAGE:",props.convPage);
 
   useEffect(()=>{
-    const token = getToken()
-    fetch("/api/crew_manage?firm="+token.firm,{
-      method: "GET",
-      headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-      },
-      // body: JSON.stringify({ dopravceID: 'd' })
-     })
-    .then((res) => res.json())
-    .then((result) => {
-      setPersonel(result)
-    })
-  },[personel])
-
-  console.log(personel);
-
-
-  return(
-    <div className="main-page-people">
+    GetPeople(personel,setPersonel);
+  },[])
+    
+    return(
+      <div className="main-page-people">
       <table className="people-table">
         <thead>
           <tr>
@@ -94,8 +79,15 @@ const EditConvPerson = () => {
         </thead>
         <tbody>
           {personel.map(val => {
+            console.log("VAL: ",val.ID)
+            console.log("VALF: ",val)
             return (
-              <GetPerson val={val}/>
+              <tr>
+                <td>{val.ID}</td>
+                <td>{val.name}</td>
+                <td>{val.passwd}</td>
+                <td><button class="editbtn" onClick={()=> editPersonel(val.ID)}>edit</button></td>
+              </tr>
             )
           })}
         </tbody>
@@ -106,7 +98,7 @@ const EditConvPerson = () => {
 
 const EditConveyorChangeView = (props) => {
   if(props.convPage === 0){
-    return <EditConvPerson/>
+    return <EditConvPerson convPage={props.convPage} setConvPage={props.setConvPage}/>
   } else if(props.convPage===1) {
     return <EditConvMachine/>
   } else if(props.convPage===2) {
@@ -136,10 +128,10 @@ const EditHeaderPeople = (props) => {
   )
 }
 
-
 export const EditConveyorPage = () => {
     
   const [convPage,setConvPage] = useState(0);
+  console.log("CONVPAGEROOT: ",convPage);
 
   return (
     <div>
