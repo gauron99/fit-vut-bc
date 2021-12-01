@@ -15,20 +15,16 @@ export const EditAdminPage = () => {
     })
     .then((res) => res.json())
     .then((result) => {
-
-      setUsers(Object.entries(result));
+        var lidicky = [];
+        for (let lidicka of result){
+            lidicky.push(Object.values(lidicka));
+        }
+      setUsers(lidicky);
 
     });
   }, []);
 
   console.log(users); //works
-  // console.log(users.Admins)
-  const adm = users[0];
-  const conv = users[1];
-  const crew = users[2];
-  const passe = users[3];
-
-  console.log("---")
 
   return (
     <div className="admin_frame">
@@ -43,7 +39,7 @@ export const EditAdminPage = () => {
             </tr>
           </thead>
           <tbody>
-
+            {users.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}<td><button type='button' onClick={() => console.log('pls')} className="button-show">uhoh</button></td></tr>)}
           </tbody>
       </table>
       </div>
