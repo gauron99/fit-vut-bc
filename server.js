@@ -219,7 +219,7 @@ router.route('/confirm_stop')
 
 router.route('/vehicle')
     .get(async function(req, res) {
-        var result = await kvery('SELECT FROM Vehicle WHERE ID='+req.query.ID+';');
+        var result = await kvery('SELECT * FROM Vehicle WHERE ID='+req.query.ID+';');
         res.json(result);
     })
     .post(async function(req, res) {
