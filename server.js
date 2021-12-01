@@ -238,7 +238,7 @@ router.route('/vehicle')
 router.route('/spoj')
     .get(async function(req, res) {
       var result = await kvery('SELECT * FROM Connection WHERE ID='+req.query.ID);
-      res.json(res);  
+      res.json(result[0]);  
     })
 
 router.route('/spoje')
