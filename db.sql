@@ -1,6 +1,3 @@
-CREATE DATABASE iis_db;
-USE iis_db;
-
 CREATE TABLE `Conveyor` (
   `ID` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `passwd` VARCHAR(100) NOT NULL,
@@ -107,10 +104,10 @@ CREATE TABLE `Reservation_seat` (
  INSERT INTO Stop VALUES(4,"Simonova",3,FALSE);
  
  INSERT INTO Vehicle (max_seats_poor,max_seats_rich,description,last_visited,conveyorID)
- VALUES (5,6,"novej vuz vole, potahy cajk, sukat se bude o sto sest",1,1);
+ VALUES (1,2,"novej vuz vole, potahy cajk, sukat se bude o sto sest",1,1);
  
  INSERT INTO Vehicle (max_seats_poor,max_seats_rich,description,last_visited,conveyorID)
- VALUES (12,2,"pro rich bich",2,2);
+ VALUES (3,0,"pro rich bich",2,2);
  
  INSERT INTO Vehicle (max_seats_poor,max_seats_rich,description,last_visited,conveyorID)
  VALUES (1,11,"stara rachotina z nemecka, kvalita slusna",3,3);
@@ -122,23 +119,14 @@ CREATE TABLE `Reservation_seat` (
  INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (101,1,"06:24:00");
  INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (101,2,"06:25:00"); 
  INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (101,4,"08:22:00"); 
- INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (101,3,"09:22:00"); 
-
-
+ 
  INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (102,4,"06:24:00"); 
  INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (102,3,"08:24:00"); 
  INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (102,2,"13:24:00"); 
- INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (102,1,"14:24:00"); 
  
  INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (100,2,"13:24:00"); 
  INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (100,1,"16:34:00"); 
  INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (100,4,"23:11:00"); 
- INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (100,3,"23:11:00"); 
-
- INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (103,3,"06:24:00");
- INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (103,2,"06:25:00"); 
- INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (103,1,"08:22:00"); 
- INSERT INTO Connection_stop (connID,stopID,arrival) VALUES (103,4,"08:22:00"); 
 
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (1,0,1,TRUE); 
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (1,1,1,TRUE); 
@@ -147,6 +135,19 @@ CREATE TABLE `Reservation_seat` (
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (2,0,2,TRUE); 
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (2,1,2,TRUE); 
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (2,2,2,TRUE); 
+ 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,1,1,1);
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,2,1,1);
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,3,1,1);
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,4,1,1);
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,5,1,1);
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,6,1,1);
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,7,1,1);
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,8,1,1);
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,9,1,1);
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,10,1,1);
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,11,1,1);
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,1,2,1);
  
  INSERT INTO Crew (ID,conveyorID,passwd,name) VALUES (1,1,"hovnokleslo","Michal Dvořák");
  INSERT INTO Crew (ID,conveyorID,passwd,name) VALUES (2,2,"hezlo321","Petr Straka");
