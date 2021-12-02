@@ -28,18 +28,6 @@ const editPersonel = (id) => {
   console.log("tady budes editovat, otevres na to maly okno nebo tak")
 }
 
-// const GetPerson = (val) => {
-//   const x = val.val;
-//   return(
-//   <tr>
-//   <td>{x.ID}</td>
-//   <td>{x.name}</td>
-//   <td>{x.passwd}</td>
-//   <td><button class="editbtn" onClick={()=> editPersonel(x.ID)}>edit</button></td>
-// </tr>
-//   )
-// }
-
 async function GetPeople(personel,setPersonel) {
   const token = getToken();
   await fetch("/api/crew_manage?firm="+token.login,{

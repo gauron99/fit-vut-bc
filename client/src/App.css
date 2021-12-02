@@ -147,3 +147,34 @@ input[type="time"], input[type="date"] {
     content: "";
   clear: both;
 }
+
+
+/* POPUP */
+.popup-window{
+  position:fixed;
+  top: 10%;
+  left: 20%;
+  width: 50%;
+  background-color: var(--more_darker_color);
+  border: 2px black solid;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.popup-in{
+  position: relative;
+  padding: 10px;
+  width: 100%;
+  background-color: var(--light_cyan_color);
+}
+
+.reserve-close-button {
+  float:right
+}
+
+.reserve-close-button::after{
+  content: "";
+  clear: both;
+}

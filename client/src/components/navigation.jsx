@@ -78,7 +78,7 @@ const Navigation = (props) => {
         <NavLink className="navbar-brand" to="/">
           Domů
         </NavLink>
-        <div>debug: {view}</div>
+        <div>{view}</div>
           <div>
             <SelectMode view={view} setView={setView} />
           </div>

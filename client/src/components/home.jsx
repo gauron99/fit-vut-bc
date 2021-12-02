@@ -1,4 +1,5 @@
 import React from "react";
+import { PopupRegister } from "./popup";
 
 export const GeneralErrorPage = () => {
   return (
@@ -18,15 +19,15 @@ class SearchWithLabel extends React.Component{
                     ("0" + today.getSeconds()).slice(-2);
   }
   render(){
-    console.log("timenow: ",this.timeNow)
+    console.log("timenow: ",this.timeNow) 
     console.log("datenow: ",this.dateNow)
 
     return(
       <form>
         <label htmlFor="search-from">Odkud</label>
-        <input type="text" id="search-from" name="from" placeholder="odkud..."></input>
+        <input defaultValue="Simonova" type="text" id="search-from" name="from" placeholder="odkud..."></input>
         <label htmlFor="search-to">Kam</label>
-        <input type="text" id="search-to" name="to" placeholder="kam..."></input>
+        <input defaultValue="Honzova" type="text" id="search-to" name="to" placeholder="kam..."></input>
 
         <div className="row">
           <div className="column">
@@ -35,7 +36,8 @@ class SearchWithLabel extends React.Component{
           </div>
           <div className="column">
         <label htmlFor="search-time">Čas</label>
-        <input type="time" id="search-time" name="time" defaultValue={this.timeNow} />
+        <input type="time" id="search-time" name="time" defaultValue={"01:01:01"} />
+        {/* <input type="time" id="search-time" name="time" defaultValue={this.timeNow} /> */}
           </div>
         </div>
         <hr className="solid"/>
@@ -45,10 +47,28 @@ class SearchWithLabel extends React.Component{
   }
 }
 
-
-
 class ShowTable extends React.Component{
-    lol(comp){
+  constructor(props){
+    super(props);
+    // set initial state
+    this.state={
+      usePOP: false,
+      connID: 0
+    } 
+    // bind function
+    this.handlePOP = this.handlePOP.bind(this)
+  }
+
+  handlePOP(e) {
+    // change the state whenever the button is pressed
+    this.setState(prev => ({
+      usePOP: !prev.usePOP,
+      connID: e.target.id
+    }));
+
+  }
+
+  lol(comp){
         console.log(comp)
     }
     render(){
@@ -65,7 +85,8 @@ class ShowTable extends React.Component{
                   <th>CenaRich</th>
               </thead>
               <tbody>
-                    {this.props.veci.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}<td><button type='button' onClick={this.lol.bind(this, comp[0])} className="button-show">uhoh</button></td></tr>)}
+                    {this.props.veci.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}<td><button type='button' id={comp[0]} onClick={(e)=>this.handlePOP(e)} className="button-show">Jízdenky</button></td></tr>)}
+                    <PopupRegister trigger={this.state.usePOP} updTrigger={this.handlePOP} connID={this.state.connID}/>
               </tbody>
           </table>
           </div>
