@@ -16,12 +16,22 @@ var id = 0;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}));
 
+// var pool  = mysql.createPool({
+//     connectionLimit : 10,
+//     host            : '85.208.51.209',
+//     user            : 'loudik',
+//     password        : 'popici',
+//     database        : 'iis_db'
+//   });
+
+
 var pool  = mysql.createPool({
     connectionLimit : 10,
-    host            : '85.208.51.209',
-    user            : 'loudik',
-    password        : 'popici',
-    database        : 'iis_db'
+    host            : 'localhost',
+    user            : 'root',
+    password        : '',
+    database        : 'iis_db',
+    port            : 3306
   });
 
 kvery = (query) => {
@@ -158,30 +168,35 @@ router.route('/admin_manage')
 router.route('/login')
 
     .post(async function(req, res) {
-        var admins = await kvery('SELECT passwd FROM Admin WHERE name=\"'+req.query.name+'\";');
-        var conveyors = await kvery('SELECT passwd FROM Conveyor WHERE firm=\"'+req.query.name+'\";');
-        var crew = await kvery('SELECT passwd FROM Crew WHERE name=\"'+req.query.name+'\";');
-        var passengers = await kvery('SELECT passwd FROM Passenger WHERE name=\"'+req.query.name+'\" AND registered = TRUE;');
+        var admins = await kvery('SELECT passwd,ID FROM Admin WHERE name=\"'+req.query.name+'\";');
+        var conveyors = await kvery('SELECT passwd,ID FROM Conveyor WHERE firm=\"'+req.query.name+'\";');
+        var crew = await kvery('SELECT passwd,ID FROM Crew WHERE name=\"'+req.query.name+'\";');
+        var passengers = await kvery('SELECT passwd,ID FROM Passenger WHERE name=\"'+req.query.name+'\" AND registered = TRUE;');
         var answer = {};
         if (admins[0]){
-            answer['ROLE'] = "admin";
+            answer['ROLE']   = "admin";
             answer['ACCESS'] = admins[0].passwd == req.query.passwd ? "GRANTED" : "DENIED";
+            answer['ID']     = admins[0].ID;
         }
         else if (conveyors[0]){
-            answer['ROLE'] = "conveyor";
+            answer['ROLE']   = "conveyor";
             answer['ACCESS'] = conveyors[0].passwd == req.query.passwd ? "GRANTED" : "DENIED";
+            answer['ID']     = conveyors[0].ID;
         }
         else if (crew[0]){
-            answer['ROLE'] = "crew";
+            answer['ROLE']   = "crew";
             answer['ACCESS'] = crew[0].passwd == req.query.passwd ? "GRANTED" : "DENIED";
+            answer['ID']     = crew[0].ID;
         }
         else if (passengers[0]){
-            answer['ROLE'] = "passenger";
+            answer['ROLE']   = "passenger";
             answer['ACCESS'] = passengers[0].passwd == req.query.passwd ? "GRANTED" : "DENIED";
+            answer['ID']     = passengers[0].ID;
         }
         else {
-            answer['ROLE'] = "nenalezeno";
+            answer['ROLE']   = "nenalezeno";
             answer['ACCESS'] = "DENIED"
+            answer['ID']     = -1;
         }
         res.json(answer);
     })
@@ -298,7 +313,7 @@ router.route('/reservation')
             if (result[0].free == 0) fail = 1;
         }
         if (fail == 1){
-            res.json({msg: 'HAHA BITCH TOO SLOW'});
+            res.json({msg: 'ERR'});
         }
         else {
             await kvery('INSERT INTO Reservation(connectionID, passengerID, paid) VALUES ('+req.query.connectionID+', '+req.query.passengerID+', FALSE)');
@@ -308,7 +323,7 @@ router.route('/reservation')
                 await kvery('INSERT INTO Reservation_seat(reservationID, seat) VALUES ('+resID[0]['LAST_INSERT_ID()']+','+seat+')');
                 await kvery('UPDATE Vehicle_seat SET free=FALSE WHERE vehicleID='+vehID[0].vehicleID+' AND seat='+seat+';');
             }
-            res.json({msg: 'secko cajk'});    
+            res.json({msg: 'OK'});    
         }
     })
 
