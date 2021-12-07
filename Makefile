@@ -11,7 +11,7 @@ build: $(MAIN).c
 
 # tady pridat standardni parametry pro spusteni
 run: 
-	./$(MAIN) -b 10 --paleta 5
+	./$(MAIN) -b 20 --pulpaleta 16 --paleta 10  --dvojpaleta 6
 
 clean:
 	rm -f *.o $(MAIN)
