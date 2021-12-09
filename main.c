@@ -8,9 +8,25 @@
 #define PALLETE_SPACE_FULL 1
 #define PALLETE_SPACE_DOUBLE 2
 
+#define NUM_DRIVERS_STANDARD 5
+#define MAX_DRIVERS 10
+
+#define NUM_DIRECTIONS 2
+
+
+// zakladni promenne pouzite v celem programu
+int num_drivers = NUM_DRIVERS_STANDARD;
+int inc_drivers = 0; //false
+
+
+long int GAIN_MONEY = 0;
+long int TIME_SPENT = 0;
+
+// vypis chybu (s libovolnymi argumenty) a ukonci
 #define printf_err(fmt, ...) \
 	do { printf(fmt, ##__VA_ARGS__); exit(1); } while(0)
 
+// celkovy pocet zasilek, ktery je na skladu
 int sklad = 0;
 
 int trucks = -1; //def=1 
@@ -27,6 +43,13 @@ int dist_pkgs_small = -1;
 int dist_pkgs_half_pallete = -1;
 int dist_pkgs_pallete = -1;
 int dist_pkgs_double_pallete = -1;
+
+
+// oznacuje hodnotu poctu zasilek, ktere dojedou ten den (prepocteno i s intervaly pokud jsou zadany)
+int in_today_small;
+int in_today_half;
+int in_today_full;
+int in_today_double;
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -59,20 +82,22 @@ ps_del_all DELS_ALL = {500,1000,2000};
 
 
 enum velikost_zasilky{
+  NIC = 0,
   BALIK = 20,
   PULPALETA,
   PALETA,
   DVOJPALETA,
-  NIC,
 };
 
 // je potreba zasilky odvezt po 'meste' nebo na 'venkov' (venkov -> + ~2h cesta)
 enum rozvoz_smer{
-  MESTO = 1,
+  NIKDE = 0,
+  MESTO, // toto musi byt 1
   VENKOV,
 };
 
 enum service{
+  S_NIC = 0,
   S_DELIV = 10,
   S_DELIV_CARRY,
   S_DELIV_BUILD,
@@ -80,13 +105,16 @@ enum service{
 };
 
 typedef struct rozvoz_auto{
-  int doba; // jak dlouho zabere jizda == pracovni doba ridice 
+  int id;
+  int doba; // jak dlouho zabere jizda == pracovni doba ridice
   int cena; // kolik vydela
   enum rozvoz_smer smer; //smer kterym jede
+  float zaplneny_prostor;
 }rozvoz_auto;
 
+
 // defaultne mame 3 auta na rozvoz
-struct rozvoz_auto auta[3];
+struct rozvoz_auto auta[MAX_DRIVERS];
 
 //struktura pro jednu zasilku
 typedef struct zasilka{
@@ -100,12 +128,13 @@ typedef struct zasilka{
 
 struct zasilka zasilky[10000] = {0};
 
-
 // rika co je prave na skladu (kazdy den privezou nove)
 int curr_small = 0;
 int curr_half = 0;
 int curr_full = 0;
 int curr_double = 0;
+
+double totalDriversHours = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -119,7 +148,6 @@ void parserInterval(char *s, char *arg);
 void validateTrucks();
 enum rozvoz_smer getRandomDest();
 void getDelivery();
-int getRandomServicePriceAndTime(int count); //TODO
 /* ------- DECLARATIONS END------- */
 
 void printState(const char* s){
@@ -157,14 +185,14 @@ void printHelp(){
   printf("  PS3: Kamiony jezdi pouze s minimalnim vytizenim 80%%, tedy pokud pocet zasilek nebude objemove sedet na dostatecne vytizeni kamionu, tento kamion nedojede (dojede mene zasilek)\n");
   printf("  Kazdy den dojede(ou) kamion(y) s vybranym zbozim.\n");
   printf("Parametr N se muze chovat jako stredni hodnota. Pri nastaveni -v\n");
-  printf("\n");
-  printf("\n");
+  printf("Maximalni pocet dostupnych aut je 10. Lze nastavit, ze se automaticky zvysi pocet pouzivanych aut pro den, pokud narusta pocet zasilek na skladu:\n");
+  printf("  --vic_aut               | pokud je to mozne zvysi pocet pouzivanych aut pro rozvoz v pripade\n");
   printf("\n");
   exit(0);
 }
 
 int getRand(int low, int high){
-  int tmp = (rand() % (high - low)) + low;
+  int tmp = (rand() % (high - low)) + low + 1;
   // printf("random:%d-%d: %d\n",low,high,tmp);
   return tmp;
 }
@@ -208,7 +236,6 @@ int parser(int argc, char **argv){
   char *end = NULL;
   for (int i = 1; i < argc; i++){
     end = NULL;
-    printf("%d:%s\n",i,argv[i]);
     if(!strcmp(argv[i],"-h")){
       printHelp();
     } else if(strcmp(argv[i],"-b")==0 || strcmp(argv[i],"--balik")==0) {
@@ -261,7 +288,9 @@ int parser(int argc, char **argv){
           printf_err("Chyba! Chci cislo pro dvojpaletu\n");
         } 
       }
-    }      
+    } else if(!strcmp(argv[i],"--vic_aut")){
+      inc_drivers = 1; 
+    }
   }
   return 0;
 }
@@ -269,27 +298,44 @@ int parser(int argc, char **argv){
 void validateTrucks(){
 // aspon 80% = 26.4 z 33 (paletovych mist)
   if(trucks <= 0){ //default
-    if(packages_small != -1 || packages_half_pallete != -1 || packages_pallete != -1 || packages_double_pallete != -1){ 
+    if(in_today_small != -1 || in_today_half != -1 || in_today_full != -1 || in_today_double != -1){ 
       //alespon jeden parameter je zadan
       int space = 0;
-      if(packages_small >= 0){space += packages_small*PALLETE_SPACE_SMALL;}
-      if(packages_half_pallete >= 0){space +=packages_half_pallete*PALLETE_SPACE_HALF;}
-      if(packages_pallete >= 0){space +=packages_pallete*PALLETE_SPACE_FULL;}
-      if(packages_double_pallete>=0){space +=packages_double_pallete*PALLETE_SPACE_DOUBLE;}
+      if(in_today_small >= 0){space += in_today_small *PALLETE_SPACE_SMALL;}
+      if(in_today_half >= 0){space +=in_today_half    *PALLETE_SPACE_HALF;}
+      if(in_today_full >= 0){space +=in_today_full    *PALLETE_SPACE_FULL;}
+      if(in_today_double>=0){space +=in_today_double  *PALLETE_SPACE_DOUBLE;}
       printf("Zabrane misto: %d palet\n",space);
       trucks = (int)(space / 33);
+
       int space_lt = space % 33; //space_last_truck
       if(space_lt <= 26){
         if(trucks <= 0){
-          printf_err("Nedostatecny pocet zasilek(%d). Nepojede ani jeden kamion\n",space);
+          printf("Nedostatecny pocet zasilek.Vytizeni kamionu je %d paletovych mist -> Je potreba alespon 26. Navysuji pocet zasilek\n",space);
+          // navyseni o 1 cely kamion
+          in_today_double += 6 ;
+          in_today_full   += 9 ;
+          in_today_half   += 16;
+          in_today_small  += 20;
+
+          // znovu prirad misto
+          space  =in_today_double *PALLETE_SPACE_DOUBLE; 
+          space +=in_today_full   *PALLETE_SPACE_FULL;
+          space +=in_today_half   *PALLETE_SPACE_HALF;
+          space +=in_today_small  *PALLETE_SPACE_SMALL;
+
+          printf("space:%d\n",space);
+          trucks = (int)(space / 33);
+          space_lt = space % 33; //space_last_truck
+
         }
         printf("Aktualni pocet zasilek %d (poveze %d kamionu) nevytizi posledni kamion dostatecne(volne misto: %d), snizuji pocet zasilek\n",space,trucks,space_lt);
         while(space_lt > 0){
-          printf("space_remaining: %d\n",space_lt);
-          if(packages_double_pallete > 0 && space_lt >= 2){packages_double_pallete-=2;space_lt-=2;}
-          else if(packages_pallete > 0 && space_lt >= 1){packages_pallete-=1;space_lt-=1;}
-          else if(packages_half_pallete > 1 && space_lt >= 1){packages_half_pallete-=2;space_lt-=1;}
-          else if(packages_small > 4 && space_lt >= 1){packages_small-=5;space_lt-=1;}
+          // printf("space_remaining: %d\n",space_lt); //DEBUG
+          if(in_today_double > 0 && space_lt >= 2){in_today_double-=2;space_lt-=2;}
+          else if(in_today_full > 0 && space_lt >= 1){in_today_full-=1;space_lt-=1;}
+          else if(in_today_half > 1 && space_lt >= 1){in_today_half-=2;space_lt-=1;}
+          else if(in_today_small > 4 && space_lt >= 1){in_today_small-=5;space_lt-=1;}
         }
       }
     }
@@ -297,43 +343,42 @@ void validateTrucks(){
       //zadny parametr neni zadan a trucks taky neni (truck == 1 & napln nahodne hodnoty)
       //DEFAULT TRUCK == 1, prumerny pocet kombinovanych zasilek ~50
       trucks = 1;
-      packages_double_pallete = 6;
-      packages_pallete = 9;
-      packages_half_pallete = 16;
-      packages_small = 20;
+      in_today_double = 6;
+      in_today_full = 9;
+      in_today_half = 16;
+      in_today_small = 20;
     }
   }
   else {
     // trucks je vetsi nez 0
-      packages_double_pallete = 6*trucks;
-      packages_pallete = 9*trucks;
-      packages_half_pallete = 16*trucks;
-      packages_small = 20*trucks;
+      in_today_double = 6*trucks;
+      in_today_full = 9*trucks;
+      in_today_half = 16*trucks;
+      in_today_small = 20*trucks;
   }
 }
 
 
 enum rozvoz_smer getRandomDest(){
   int cnt = getRand(0,100);
-  return cnt >=50 ? MESTO : VENKOV;
+  return cnt >50 ? MESTO : VENKOV;
 }
 
 enum service getRandomService(enum velikost_zasilky vz){
+  int rd = getRand(0,99);
   switch(vz){
     case BALIK:
-      int rd = getRand(0,99);
-      if(rd < 33){return(S_DELIV);}
-      if(rd >= 33 && rd < 66){return(S_DELIV_BUILD);}
-      if(rd >= 66){return(S_DELIV_CARRY);}
+      if(rd <= 33){return(S_DELIV);}
+      if(rd > 33 && rd <= 66){return(S_DELIV_BUILD);}
+      if(rd > 66){return(S_DELIV_CARRY);}
       break;
     case PULPALETA:
     case PALETA:
     case DVOJPALETA:
-      int r = getRand(0,100);
-      if(r < 25){return(S_DELIV);}
-      if(r >= 25 && r < 50){return(S_DELIV_BUILD);}
-      if(r >= 50 && r < 75){return(S_DELIV_CARRY);}
-      if(r >= 75){return(S_DELIV_ALL);}
+      if(rd <= 25){return(S_DELIV);}
+      if(rd > 25 && rd <= 50){return(S_DELIV_BUILD);}
+      if(rd > 50 && rd <= 75){return(S_DELIV_CARRY);}
+      if(rd > 75){return(S_DELIV_ALL);}
       break;
     default:
       return -1;
@@ -341,12 +386,41 @@ enum service getRandomService(enum velikost_zasilky vz){
   return -1;
 }
 
-int nOfPkgs(){
+int nOfPkgs(int *a,int *b,int *c,int *d){
   int res = 0;
-  res += packages_small;
-  res += packages_half_pallete;
-  res += packages_pallete;
-  res += packages_double_pallete;
+  if(dist_pkgs_small>0){
+    *a = getRand(packages_small-dist_pkgs_small, packages_small+dist_pkgs_small);
+    res += *a;
+  } else {
+    *a = packages_small;
+    res += *a;
+
+  }
+
+  if(dist_pkgs_half_pallete > 0){
+     *b = getRand(packages_half_pallete-dist_pkgs_half_pallete, packages_half_pallete+dist_pkgs_half_pallete);
+      res += *b;
+  } else {
+    *b = packages_half_pallete;
+    res += *b;
+
+  }
+
+  if(dist_pkgs_pallete > 0){
+    *c = getRand(packages_pallete-dist_pkgs_pallete, packages_pallete+dist_pkgs_pallete);
+    res += *c;
+  } else {
+    *c = packages_pallete;
+    res += *c;
+  }
+  
+  if(dist_pkgs_double_pallete > 0){
+    *d = getRand(packages_double_pallete-dist_pkgs_double_pallete, packages_double_pallete+dist_pkgs_double_pallete);
+    res += *d;
+  }else {
+    *d = packages_double_pallete;
+    res += *d;
+  }
 
   sklad += res;
   // printf("new pkgs: %d(%d)\n",res,sklad);
@@ -355,7 +429,7 @@ int nOfPkgs(){
 
 int getDirection(){
   int tmp = getRand(0,2);
-  return tmp==0 ? MESTO : VENKOV;
+  return tmp==1 ? MESTO : VENKOV;
 }
 
 // ~ cas cisteho servisu (bez pridani 2h za cestovani)
@@ -445,33 +519,47 @@ enum velikost_zasilky getPkgType(int *a, int *b, int *c, int *d){
     return(DVOJPALETA);
   }
   else{
-    return -1;
+    return NIC;
   }
 }
 
 void getDelivery(){
-  // update pole zasilek
-  int new = nOfPkgs();
+  int a,b,c,d;
 
-  int a = packages_small;
-  int b = packages_half_pallete;
-  int c = packages_pallete;
-  int d = packages_double_pallete;
+  // pridej do a,b,c,d pocty novych zasilek podle typu a vrat celkovy pocet do 'new'
+  int new = nOfPkgs(&a,&b,&c,&d);
+
+  printf("Dnesni zasilky(%d): %d,%d,%d,%d\n",new,a,b,c,d);
+  // vytvor dnesni dodavku zasilek
+  in_today_small  = a;
+  in_today_half   = b;
+  in_today_full   = c;
+  in_today_double = d;
+
+  // pripocitej konkretni zasilky do aktualniho stavu skladu
+  curr_small  += a;
+  curr_half   += b;
+  curr_full   += c;
+  curr_double += d;
+  enum velikost_zasilky tmp_rs;
+  // actually vytvor zasilky ve skladu
 
   for(int i = 0; i < new; ++i){
     int found_space = 0;
-    for(int j = 0;j < 10000;++j ){
+    for(int j = 0;j < 10000;++j){
+      tmp_rs = NIC;
       // najdi volne misto v poli zasilek
-      if(zasilky[i].typ == NIC){
+      if(zasilky[j].typ == NIC){
         found_space = 1;
 
-        zasilky[i].typ    = getPkgType(&a,&b,&c,&d);
-        if(zasilky[i].typ == -1){zasilky[i].typ = 0; break;} //pokud jsme prebrali vsechny zasilky
+        tmp_rs = getPkgType(&a,&b,&c,&d); 
+        if(tmp_rs == NIC){break;} //pokud jsme prebrali vsechny zasilky
 
-        zasilky[i].servis = getRandomService(zasilky[i].typ);
-        zasilky[i].smer   = getDirection();
-        zasilky[i].cas    = getPkgTime(zasilky[i].servis);//cas v minutach
-        zasilky[i].cena   = getPkgPrice(zasilky[i].servis,zasilky[i].typ);//cena v korunach
+        zasilky[j].typ    = tmp_rs;
+        zasilky[j].servis = getRandomService(zasilky[j].typ);
+        zasilky[j].smer   = getDirection();
+        zasilky[j].cas    = getPkgTime(zasilky[j].servis);//cas v minutach
+        zasilky[j].cena   = getPkgPrice(zasilky[j].servis,zasilky[j].typ);//cena v korunach
         break;
       }
     }
@@ -479,11 +567,200 @@ void getDelivery(){
       printf_err("Na skladu je vice nez 10 000 zasilek. Je zastaven provoz!\n");
     }
   }
+}
 
-  curr_small  += packages_small;
-  curr_half   += packages_half_pallete;
-  curr_full   += packages_pallete;
-  curr_double += packages_double_pallete;
+void printZasilkyNaSkladu(){
+  printf("~~Zasilky na skladu~~\n");
+  for(int i = 0; i <10000;++i){
+    if(zasilky[i].typ != NIC){
+      printf("%d: typ=%d, smer=%d, servis=%d\n",zasilky[i].id,zasilky[i].typ,zasilky[i].smer,zasilky[i].servis);
+    }
+  }
+  printf("~~ ~~ ~~ ~~~ ~~ ~~ ~~\n");
+}
+
+// jakmile nalozis zasilku do auta, je odstranena ze skladu
+void removePackageFromWarehouse(struct zasilka z){
+  sklad -= 1;
+  
+  switch (z.typ)
+  {
+  case BALIK:
+    curr_small -= 1;
+    break;
+  case PULPALETA:
+    curr_half -= 1;
+    break;
+  case PALETA:
+    curr_full -= 1;
+    break;
+  case DVOJPALETA:
+    curr_double -= 1;
+    break;
+  
+  default:
+    break;
+  }
+  
+  zasilky[z.id].cas = 0;
+  zasilky[z.id].cena = 0;
+  zasilky[z.id].servis = 0;
+  zasilky[z.id].smer = 0;
+  zasilky[z.id].typ = 0;
+
+}
+
+
+// spocitej pocet zasilek rozdelenych podle smeru, vrat smer
+int getHiDirByNumOfPckgs(){ // WORKS
+
+  int highest = 0;
+  int dir;
+  // mesto zacne na jednicce, NIKDE je 0, tzn. preskoceno
+  for(int i = MESTO; i <= NUM_DIRECTIONS; ++i){
+    int tmp = 0;
+    for(int j = 0;j<10000;++j){
+      if(zasilky[j].smer == i){
+        tmp += 1;
+      }
+    }
+    // printf("Smer %i ma %d zasilek\n",i,tmp); //DEBUG
+    if(tmp > highest){
+      highest = tmp;
+      dir = i;
+    }
+  }
+  return dir;
+}
+
+struct zasilka assignPackage(){
+  // seber prvni zasilku
+  static int assignID = 0;
+  for(;assignID<10000;++assignID){
+    if(zasilky[assignID].typ != NIC){
+      return zasilky[assignID];
+    }
+  }
+  struct zasilka z = {.id = -1,.typ = 0};
+  return z;
+}
+
+enum rozvoz_smer* getDirs(){ //WORKS
+  enum rozvoz_smer* rs = malloc(NUM_DIRECTIONS*sizeof(enum rozvoz_smer));
+
+  int hd = getHiDirByNumOfPckgs();
+  // printf("smer s nejvetsim poctem zasilek:%d \n",hd); //DEBUG
+  rs[0] = hd;
+  int cnt = 1;
+  // uloz smery do pole
+  for(int i = 1; i <= NUM_DIRECTIONS;++i){
+    if(i != hd){
+      rs[cnt] = i;
+      cnt++;
+    }
+  }
+  return rs;
+}
+
+
+// najdi zasilku ve skladu vhodnou pro nalozeni, podle doby kterou zabere na doruceni
+zasilka findPackage(enum velikost_zasilky vz,enum rozvoz_smer rs,int doba){ //WORKS
+  for (int i = 0; i < 10000; ++i){
+    if(zasilky[i].typ == vz && zasilky[i].smer == rs){//pokud sedi typ a smer
+
+      // (POSSIBLE TODO upravit na vice nahodnou dobu, mozna nahodne zvolit 8 az 10 (standard. prac. doba ridice) aby vice reflektovala tuto flaktuaci / nestalost
+      if(doba + zasilky[i].cas <= 600){ //casove se vleze do 10 hodin 
+        return zasilky[i];
+      }
+    } 
+  } 
+  zasilka z = {.id = -1,.typ=-1};
+  return z;
+}
+
+// pridej zasilky do auta (vyuziva funkci findPackage() v cyklu)
+int getPossiblePackage(struct rozvoz_auto **car){
+  zasilka z = {0};
+  // printf("auto: \n");
+  // printf("-  doba: %d, cena:%d, smer:%d, zapln.prostor:%.2f \n",(*car)->doba,(*car)->cena,(*car)->smer,(*car)->zaplneny_prostor);
+
+  if((*car)->zaplneny_prostor <= 8){ // vleze se dvoj paleta
+    z = findPackage(DVOJPALETA,(*car)->smer,(*car)->doba);
+    if(z.id != -1){
+      // printf("- nasel jsem dvojpaletu s id: %d; zabere: %d\n",z.id,z.cas);
+      removePackageFromWarehouse(z);
+      (*car)->doba += z.cas;
+      (*car)->cena += z.cena;
+      (*car)->zaplneny_prostor += 2.0;
+      return 1;
+    }
+  }
+  if((*car)->zaplneny_prostor <= 9){ //vleze se paleta
+    z = findPackage(PALETA,(*car)->smer,(*car)->doba);
+    if(z.id != -1){
+      // printf("- nasel jsem paletu s id: %d; zabere: %d\n",z.id,z.cas);
+      removePackageFromWarehouse(z);
+      (*car)->doba += z.cas;
+      (*car)->cena += z.cena;
+      (*car)->zaplneny_prostor += 1.0;
+      return 1;
+    }
+  }
+  if((*car)->zaplneny_prostor <= 9.5){ //vleze se pulpaleta
+    z = findPackage(PULPALETA,(*car)->smer,(*car)->doba);
+    if(z.id != -1){
+      // printf("- nasel jsem pulpaletu s id: %d; zabere: %d\n",z.id,z.cas);
+      removePackageFromWarehouse(z);
+      (*car)->doba += z.cas;
+      (*car)->cena += z.cena;
+      (*car)->zaplneny_prostor += 0.5;
+      return 1;
+    }
+  }
+  if((*car)->zaplneny_prostor <= 9.8){ //vleze se balik
+    z = findPackage(BALIK,(*car)->smer,(*car)->doba);
+    if(z.id != -1){
+      // printf("- nasel jsem balik s id: %d; zabere: %d\n",z.id,z.cas);
+      removePackageFromWarehouse(z);
+      (*car)->doba += z.cas;
+      (*car)->cena += z.cena;
+      (*car)->zaplneny_prostor += 0.2;
+      return 1;
+    }
+  }
+  return 0; //nenasel jsem ani jednu moznou zasilku
+}
+void unloadCar(struct rozvoz_auto *car){
+  car->smer = 0;
+  car->zaplneny_prostor = 0.0;
+}
+
+void loadCar(struct rozvoz_auto *car){
+  enum rozvoz_smer *rs = getDirs();
+
+  int done = 0;
+  // pro kazdy smer zkus (pocinaje tim co ma nejvice objednavek)
+  for(int i = 0; i < NUM_DIRECTIONS;++i){
+    car->smer = rs[i]; //nastav smer
+
+    if(car->smer != MESTO){car->doba = 120;} //pokud se rozvazi na venkov, doba cesty jen tam+zpet je ~2hod
+    else{car->doba = 0;}
+
+    while(1){ //nakladej auto dokud nenastane jedna z podminek pro zastaveni nakladani
+      if(!getPossiblePackage(&car)){//vrati 0 == jiz neni co nalozit -> (pokud je zaplneny prostor 0, znamena to ze se nenalozilo nic, zkus dalsi smer)
+        // printf("(loadCar_in)>auto %d ma nalozeno %.2f paletoveho prostoru.\n",car->id,car->zaplneny_prostor); //DEBUG
+        if(car->zaplneny_prostor != 0.0){
+          done=1;
+        }
+        break;
+      } 
+    }
+    if(done){break;}
+  }
+
+  // printf("(loadCar_out)>smer:%d,cena:%d,doba:%d prostor:%.2f",car->smer,car->cena,car->doba,car->zaplneny_prostor); //DEBUG
+
+  free(rs); //alokuje se ve funkci getDirs()
 }
 
 int main(int argc, char **argv){
@@ -493,28 +770,79 @@ int main(int argc, char **argv){
   //inicializace ID zasilek (pokud je zasilka dorucena, ID se uvolnuje a je znovu pouzitelne)
   for(int i = 0; i < 10000;++i){
     zasilky[i].id = i;
-      zasilky[i].typ = NIC;
+    zasilky[i].typ = NIC;
+  }
+  // inicializace ID aut (pro jednodussi rozpoznavani pri praci)
+  for(int i = 0; i < MAX_DRIVERS;++i){
+    auta[i].id = i;
   }
 
   if(parser(argc,argv) < 0){
     printHelp();
   }
-  printState("Pred kontrolou");
-  validateTrucks();// spocitej, kolik kamionu dojede -- vytizeni alespon 80%
-  printState("Po kontrole");
 
-  if(trucks==1){
-    printf("Kazdy den prijede 1 kamion\n");
-  } else if(trucks==2 || trucks==3 || trucks==4){
-    printf("Kazdy den prijedou %d kamiony\n",trucks);
-  } else {
-    printf("Kazdy den prijede %d kamionu\n",trucks);
-  }
-  const int pocet_dni = 1;
-  for (int i = 1; i <= pocet_dni; ++i){
+  const int pocet_dni = 10;
+  // simulace DNY (jeden cyklus == jeden den)
+  for (int den = 1; den <= pocet_dni; ++den){
+    printf("\n !!! DEN %d !!! \n",den);
+    if(sklad > 50 && num_drivers < MAX_DRIVERS && inc_drivers){
+      num_drivers++;
+    } else if(sklad < 10 && num_drivers > 3 && inc_drivers){
+      num_drivers--;
+    }
+    printf("Mame %d ridicu dnes!\n",num_drivers);
     getDelivery();
-    printf("(Rano)Den %3d: [%2d,%2d,%2d,%2d]\n",i,curr_small,curr_half,curr_full,curr_double);
+    validateTrucks();
+    printf("(Rano)Den %3d: [%2db,%2dp,%2dP,%2dPP](celkem: %d)\n",den,curr_small,curr_half,curr_full,curr_double,sklad);
+    printf("Na skladu je celkem %d zasilek\n",sklad);
     // mame pouze 3 auta; rozvoz = Mesto || Venkov
 
-  }  
+    // printZasilkyNaSkladu(); //DEBUG
+
+    int finishDay = 0;
+    // simulace ridicu dovazejicich zasilky
+    while(1){
+
+      // simuluj jednu jizdu ridicu (kazdy cyklus jiny ridic)
+      for(int ridic = 0; ridic < num_drivers; ++ridic){
+        
+        // nejsou zasilky na skladu
+        if(sklad == 0){finishDay = 1;break;}
+
+        // pokud ma ridic za den najeto 8+ hodin(pracuje 8-10), uz nikam nejede
+        if(auta[ridic].doba > 480){continue;}
+
+        //simulace: naloz zasilky do auta (pokud pracovni doba nepresahne 480)
+        loadCar(&auta[ridic]);
+        //simulace: odvez zasilky klientum
+        printf("nalozeno final! autoid:%d:smer:%d,cena:%d,doba:%d prostor:%.2f\n",auta[ridic].id,auta[ridic].smer,auta[ridic].cena,auta[ridic].doba,auta[ridic].zaplneny_prostor);
+        unloadCar(&auta[ridic]);
+
+      }
+
+      // pokud maji vsichni vice nez 8 hodin, skonci den
+      int allDriversDone = 1;
+      for(int j = 0;j < num_drivers;++j){
+        printf("CHECK - END OF DAY - autoid:%d,doba:%d, vydelal:%d,-\n",auta[j].id,auta[j].doba,auta[j].cena);
+        if(auta[j].doba <= 480){
+          allDriversDone = 0;
+          break;
+        }
+      }
+
+      if(allDriversDone){finishDay = 1;}
+      if(finishDay){
+        // uloz hodnoty -- vynuluj ridice -- vynuluj ridice
+        for (int i = 0; i < num_drivers; i++){
+          auta[i].doba = 0;
+          auta[i].zaplneny_prostor = 0;
+          auta[i].smer = 0;
+          auta[i].cena = 0;
+        }
+        break;
+      }
+    }
+    printf("~~~~~~~\n");
+    printf("(Vecer)Den %3d: [%2db,%2dp,%2dP,%2dPP](celkem: %d)\n",den,curr_small,curr_half,curr_full,curr_double,sklad);
+  }
 }
