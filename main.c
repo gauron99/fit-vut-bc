@@ -19,8 +19,16 @@ int num_drivers = NUM_DRIVERS_STANDARD;
 int inc_drivers = 0; //false
 
 
-long int GAIN_MONEY = 0;
-long int TIME_SPENT = 0;
+struct vysledky{
+  // kolik penez se vydelalo za sluzby a doruceni
+  long long int MONEY_EARNED;
+
+  // kolikrat se jelo, a celkove jak dlouho
+  long double TIME_RIDE_SPENT[2];
+  
+  // jak moc bylo auto vytizene
+  long double CAR_SPACE_USED[2]; 
+}vysled;
 
 // vypis chybu (s libovolnymi argumenty) a ukonci
 #define printf_err(fmt, ...) \
@@ -141,14 +149,54 @@ double totalDriversHours = 0;
 ////////////////////////////////////////////////////////////////////////////////
 
 /* ------- DECLARATIONS ------- */
+void initAnswers();
+void showAnswers();
+void printState(const char* s);
 void printHelp();
 int getRand(int low,int high);
 int parser(int argc, char **argv);
 void parserInterval(char *s, char *arg);
 void validateTrucks();
 enum rozvoz_smer getRandomDest();
+enum service getRandomService(enum velikost_zasilky vz);
+int nOfPkgs(int *a,int *b,int *c,int *d);
+int getDirection();
+int getPkgTime(enum service s);
+int getPkgPrice(enum service s,enum velikost_zasilky vz);
+enum velikost_zasilky getPkgType(int *a, int *b, int *c, int *d);
 void getDelivery();
+void removePackageFromWarehouse(struct zasilka z);
+int getHiDirByNumOfPckgs();
+enum rozvoz_smer* getDirs();
+zasilka findPackage(enum velikost_zasilky vz,enum rozvoz_smer rs,int doba);
+int getPossiblePackage(struct rozvoz_auto **car);
+void unloadCar(struct rozvoz_auto *car);
+void loadCar(struct rozvoz_auto *car);
 /* ------- DECLARATIONS END------- */
+
+void initAnswers(){
+
+  // [0] == celkovy prostor, [1] == pocet aut
+  vysled.CAR_SPACE_USED[0] = 0.0;
+  vysled.CAR_SPACE_USED[1] = 0.0;
+
+  vysled.MONEY_EARNED = 0;
+
+  // [0] == celkovy cas, [1] == pocet jizd
+  vysled.TIME_RIDE_SPENT[0] = 0.0;
+  vysled.TIME_RIDE_SPENT[1] = 0.0;
+  return;
+}
+
+void showAnswers(){
+  printf(" ~~ Ziskane vysledky ~~ \n");
+  printf("\n");
+  printf("Celkove ziskane penize: %lld,-\n",vysled.MONEY_EARNED);
+  printf("Celkovy cas straveny jizdou aut: %.0Lfmin. \n",vysled.TIME_RIDE_SPENT[0]);
+  printf("Prumerny cas za jizdu: %.2Lfmin\n",vysled.TIME_RIDE_SPENT[0]/vysled.TIME_RIDE_SPENT[1]);
+  printf("Auto bylo prumerne zaplneno na %.4Lf palet na auto (z 10)\n",vysled.CAR_SPACE_USED[0]/vysled.CAR_SPACE_USED[1]);
+  printf("\n");
+}
 
 void printState(const char* s){
   printf("Aktualni stav (%s) ~~~~~\n",s);
@@ -340,7 +388,7 @@ void validateTrucks(){
       }
     }
     else {
-      //zadny parametr neni zadan a trucks taky neni (truck == 1 & napln nahodne hodnoty)
+      //zadny parametr neni zadan a trucks taky neni (truck == 1 & napln default hodnoty)
       //DEFAULT TRUCK == 1, prumerny pocet kombinovanych zasilek ~50
       trucks = 1;
       in_today_double = 6;
@@ -357,7 +405,6 @@ void validateTrucks(){
       in_today_small = 20*trucks;
   }
 }
-
 
 enum rozvoz_smer getRandomDest(){
   int cnt = getRand(0,100);
@@ -633,18 +680,6 @@ int getHiDirByNumOfPckgs(){ // WORKS
   return dir;
 }
 
-struct zasilka assignPackage(){
-  // seber prvni zasilku
-  static int assignID = 0;
-  for(;assignID<10000;++assignID){
-    if(zasilky[assignID].typ != NIC){
-      return zasilky[assignID];
-    }
-  }
-  struct zasilka z = {.id = -1,.typ = 0};
-  return z;
-}
-
 enum rozvoz_smer* getDirs(){ //WORKS
   enum rozvoz_smer* rs = malloc(NUM_DIRECTIONS*sizeof(enum rozvoz_smer));
 
@@ -731,6 +766,9 @@ int getPossiblePackage(struct rozvoz_auto **car){
   return 0; //nenasel jsem ani jednu moznou zasilku
 }
 void unloadCar(struct rozvoz_auto *car){
+  vysled.CAR_SPACE_USED[0] += car->zaplneny_prostor;
+  vysled.CAR_SPACE_USED[1] += 1;
+
   car->smer = 0;
   car->zaplneny_prostor = 0.0;
 }
@@ -776,6 +814,7 @@ int main(int argc, char **argv){
   for(int i = 0; i < MAX_DRIVERS;++i){
     auta[i].id = i;
   }
+  initAnswers();
 
   if(parser(argc,argv) < 0){
     printHelp();
@@ -815,9 +854,8 @@ int main(int argc, char **argv){
         //simulace: naloz zasilky do auta (pokud pracovni doba nepresahne 480)
         loadCar(&auta[ridic]);
         //simulace: odvez zasilky klientum
-        printf("nalozeno final! autoid:%d:smer:%d,cena:%d,doba:%d prostor:%.2f\n",auta[ridic].id,auta[ridic].smer,auta[ridic].cena,auta[ridic].doba,auta[ridic].zaplneny_prostor);
+        printf("nalozeno! autoid:%d:smer:%d,cena:%d,doba:%d prostor:%.2f\n",auta[ridic].id,auta[ridic].smer,auta[ridic].cena,auta[ridic].doba,auta[ridic].zaplneny_prostor);
         unloadCar(&auta[ridic]);
-
       }
 
       // pokud maji vsichni vice nez 8 hodin, skonci den
@@ -832,8 +870,13 @@ int main(int argc, char **argv){
 
       if(allDriversDone){finishDay = 1;}
       if(finishDay){
+
         // uloz hodnoty -- vynuluj ridice -- vynuluj ridice
         for (int i = 0; i < num_drivers; i++){
+          vysled.MONEY_EARNED += auta[i].cena;
+          vysled.TIME_RIDE_SPENT[0] += auta[i].doba;
+          vysled.TIME_RIDE_SPENT[1] += 1;
+
           auta[i].doba = 0;
           auta[i].zaplneny_prostor = 0;
           auta[i].smer = 0;
@@ -845,4 +888,7 @@ int main(int argc, char **argv){
     printf("~~~~~~~\n");
     printf("(Vecer)Den %3d: [%2db,%2dp,%2dP,%2dPP](celkem: %d)\n",den,curr_small,curr_half,curr_full,curr_double,sklad);
   }
+
+
+  showAnswers();
 }
