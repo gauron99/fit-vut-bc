@@ -11,7 +11,7 @@ build: $(MAIN).c
 
 # tady pridat standardni parametry pro spusteni
 run: 
-	./$(MAIN) -b 20,5 --pulpaleta 16,5 --paleta 7,3  --dvojpaleta 3,3 
+	./$(MAIN) -b 20,5 --pulpaleta 16,5 --paleta 7,3  --dvojpaleta 3,3 --vic_aut 
 malo:
 	./$(MAIN) -b 15 --pulpaleta 10 --paleta 10  --dvojpaleta 2
 
