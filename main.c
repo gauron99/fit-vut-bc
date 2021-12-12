@@ -8,7 +8,7 @@
 #define PALLETE_SPACE_FULL 1
 #define PALLETE_SPACE_DOUBLE 2
 
-#define NUM_DRIVERS_STANDARD 5
+#define NUM_DRIVERS_STANDARD 4
 #define MAX_DRIVERS 10
 
 // #define NUM_DIRECTIONS 2 // mesto a venkov
@@ -17,7 +17,8 @@
 
 
 // zakladni promenne pouzite v celem programu
-int num_drivers = NUM_DRIVERS_STANDARD;
+int num_drivers_start = NUM_DRIVERS_STANDARD;
+int num_drivers;
 int inc_drivers = 0; //false
 
 
@@ -213,17 +214,17 @@ void showAnswers(int pocet_dni){
 
     float driver_pay = 5*12*(45000+0.34*45000);
     vysled.MONEY_EARNED -= driver_pay;
-    printf("Pokud mam standardne 5 ridicu, jejichz mesicni plat je 45000,- a za 12 mesicu za ne zaplatim %.0f,- (prepocteno s 34%% dane)\n",driver_pay);
+    printf("Pokud mam standardne %d ridicu, jejichz mesicni plat je 45000,- a za 12 mesicu za ne zaplatim %.0f,- (prepocteno s 34%% dane)\n",num_drivers_start,driver_pay);
     
     int car_pay = 600000*5;
     vysled.MONEY_EARNED -= car_pay;
-    printf("Koupil jsem techto 5 aut, kazde za ~600.000,- tedy celkem: %d,-\n",car_pay);
+    printf("Koupil jsem techto %d aut, kazde za ~600.000,- tedy celkem: %d,-\n",num_drivers_start,car_pay);
 
     int car_service = 5000*12*5 + 20000*12*5;
     vysled.MONEY_EARNED -= car_service;
     printf("Kazdy mesic si odlozim 5.000,- na opravy kazdeho auta, 20.000,- na naftu, celkem: %d,-\n",car_service);
     
-    int cars_rented = vysled.NUM_OF_DRIVERS[0]/vysled.NUM_OF_DRIVERS[1]-5;
+    int cars_rented = vysled.NUM_OF_DRIVERS[0]/vysled.NUM_OF_DRIVERS[1]-num_drivers_start;
     vysled.MONEY_EARNED -= cars_rented;
     printf("Prumerne si pujcim kazdy den %d aut(o). Za jedno zaplatim 3000,- za den, tedy: %d,-\n",cars_rented,cars_rented*3000*365);
 
@@ -373,6 +374,8 @@ int parser(int argc, char **argv){
       }
     } else if(!strcmp(argv[i],"--vic_aut")){
       inc_drivers = 1; 
+    } else if(!strcmp(argv[i],"--ridici")){
+      num_drivers_start = strtol(argv[++i],&end,10);
     }
   }
   return 0;
@@ -395,7 +398,6 @@ void initTrucks(){
         //odeber zasilky
         printf("Aktualni pocet zasilek %d (poveze %d kamionu) nevytizi posledni kamion dostatecne(volne misto: %d), snizuji pocet zasilek\n",space,trucks,space_lt);
         while(space_lt > 0){
-          printf("space_remaining: %d\n",space_lt); //DEBUG
           if      (packages_double_pallete > 0 && space_lt >= 2){packages_double_pallete -=1; space_lt-=2;}
           else if (packages_pallete        > 0 && space_lt >= 1){packages_pallete        -=1; space_lt-=1;}
           else if (packages_half_pallete   > 1 && space_lt >= 1){packages_half_pallete   -=2; space_lt-=1;}
@@ -405,7 +407,6 @@ void initTrucks(){
       else {
         // pridej zasilky
         while(space_lt < 26){
-          printf("space_filled: %d\n",space_lt); //DEBUG
           if      (space_lt <= 24)  {packages_double_pallete +=1; space_lt+=2;}
           else if (space_lt <= 25)  {packages_pallete        +=1; space_lt+=1;}
           else if (space_lt <= 25){packages_half_pallete     +=2; space_lt+=1;}
@@ -463,7 +464,6 @@ void validateTrucks(){
         } else {
           printf("Aktualni pocet zasilek %d (poveze %d kamionu) nevytizi posledni kamion dostatecne(volne misto: %d), snizuji pocet zasilek\n",space,trucks,space_lt);
           while(space_lt > 0){
-            // printf("space_remaining: %d\n",space_lt); //DEBUG
             if(in_today_double > 0 && space_lt >= 2){in_today_double-=2;space_lt-=2;}
             else if(in_today_full > 0 && space_lt >= 1){in_today_full-=1;space_lt-=1;}
             else if(in_today_half > 1 && space_lt >= 1){in_today_half-=2;space_lt-=1;}
@@ -721,7 +721,7 @@ void getDelivery(){
       }
     }
     if(!found_space){
-      printf_err("Na skladu je vice nez 1000 zasilek. Je zastaven provoz!\n");
+      printf_err("Na skladu je vice nez %d zasilek. Je zastaven provoz!\n",WAREHOUSE_SPACE);
     }
   }
 }
@@ -781,7 +781,6 @@ int getHiDirByNumOfPckgs(){ // WORKS
         tmp += 1;
       }
     }
-    // printf("Smer %i ma %d zasilek\n",i,tmp); //DEBUG
     if(tmp > highest){
       highest = tmp;
       dir = i;
@@ -794,7 +793,6 @@ enum rozvoz_smer* getDirs(){ //WORKS
   enum rozvoz_smer* rs = malloc(NUM_DIRECTIONS*sizeof(enum rozvoz_smer));
 
   int hd = getHiDirByNumOfPckgs();
-  // printf("smer s nejvetsim poctem zasilek:%d \n",hd); //DEBUG
   rs[0] = hd;
   int cnt = 1;
   // uloz smery do pole
@@ -874,7 +872,7 @@ int getPossiblePackage(struct rozvoz_auto **car){
   if((*car)->zaplneny_prostor <= 6){ // vleze se dvoj paleta
     z = findPackage(DVOJPALETA,(*car)->smer,(*car)->doba);
     if(z.id != -1){
-      printf("- nasel jsem dvojpaletu s id: %3d; jede na: %d; zabere: %3dmin; za: %3d (%s),-\n",z.id,z.smer,z.cas,z.cena,getServis(z.servis));
+      // printf("- nasel jsem dvojpaletu s id: %3d; jede na: %d; zabere: %3dmin; za: %3d (%s),-\n",z.id,z.smer,z.cas,z.cena,getServis(z.servis));
       removePackageFromWarehouse(z);
       (*car)->doba += z.cas;
       (*car)->cena += z.cena;
@@ -885,7 +883,7 @@ int getPossiblePackage(struct rozvoz_auto **car){
   if((*car)->zaplneny_prostor <= 7){ //vleze se paleta
     z = findPackage(PALETA,(*car)->smer,(*car)->doba);
     if(z.id != -1){
-      printf("- nasel jsem paletu     s id: %3d; jede na: %d; zabere: %3dmin; za: %3d (%s),-\n",z.id,z.smer,z.cas,z.cena,getServis(z.servis));
+      // printf("- nasel jsem paletu     s id: %3d; jede na: %d; zabere: %3dmin; za: %3d (%s),-\n",z.id,z.smer,z.cas,z.cena,getServis(z.servis));
       removePackageFromWarehouse(z);
       (*car)->doba += z.cas;
       (*car)->cena += z.cena;
@@ -896,7 +894,7 @@ int getPossiblePackage(struct rozvoz_auto **car){
   if((*car)->zaplneny_prostor <= 7.5){ //vleze se pulpaleta
     z = findPackage(PULPALETA,(*car)->smer,(*car)->doba);
     if(z.id != -1){
-      printf("- nasel jsem pulpaletu  s id: %3d; jede na: %d; zabere: %3dmin; za: %3d (%s),-\n",z.id,z.smer,z.cas,z.cena,getServis(z.servis));
+      // printf("- nasel jsem pulpaletu  s id: %3d; jede na: %d; zabere: %3dmin; za: %3d (%s),-\n",z.id,z.smer,z.cas,z.cena,getServis(z.servis));
       removePackageFromWarehouse(z);
       (*car)->doba += z.cas;
       (*car)->cena += z.cena;
@@ -907,7 +905,7 @@ int getPossiblePackage(struct rozvoz_auto **car){
   if((*car)->zaplneny_prostor <= 7.8){ //vleze se balik
     z = findPackage(BALIK,(*car)->smer,(*car)->doba);
     if(z.id != -1){
-      printf("- nasel jsem balik      s id: %3d; jede na: %d; zabere: %3dmin; za: %3d (%s),-\n",z.id,z.smer,z.cas,z.cena,getServis(z.servis));
+      // printf("- nasel jsem balik      s id: %3d; jede na: %d; zabere: %3dmin; za: %3d (%s),-\n",z.id,z.smer,z.cas,z.cena,getServis(z.servis));
       removePackageFromWarehouse(z);
       (*car)->doba += z.cas;
       (*car)->cena += z.cena;
@@ -938,7 +936,6 @@ void loadCar(struct rozvoz_auto *car){
 
     while(1){ //nakladej auto dokud nenastane jedna z podminek pro zastaveni nakladani
       if(!getPossiblePackage(&car)){//vrati 0 == jiz neni co nalozit -> (pokud je zaplneny prostor 0, znamena to ze se nenalozilo nic, zkus dalsi smer)
-        // printf("(loadCar_in)>auto %d ma nalozeno %.2f paletoveho prostoru.\n",car->id,car->zaplneny_prostor); //DEBUG
         if(car->zaplneny_prostor != 0.0){
           done=1;
         }
@@ -947,8 +944,6 @@ void loadCar(struct rozvoz_auto *car){
     }
     if(done){break;}
   }
-
-  // printf("(loadCar_out)>smer:%d,cena:%d,doba:%d prostor:%.2f",car->smer,car->cena,car->doba,car->zaplneny_prostor); //DEBUG
 
   free(rs); //alokuje se ve funkci getDirs()
 }
@@ -961,9 +956,7 @@ int lastMonthReview(int day, int avg[],int *drivers_per_month){
     for (int i = 0; i < 30; i++){
       tmp += avg[day-31+i];
     }
-
     printf("Mesicni vydelek za auto: %ld,-\n",tmp/30);
-    printf("%d ddddriiiiverssss\n",*drivers_per_month);
     printf("Mesicni pocet ridicu prumerne: %d\n",(*drivers_per_month)/30);      
     *drivers_per_month = 0;
   }
@@ -975,6 +968,7 @@ int main(int argc, char **argv){
   printf("------------------\n");
   srand(time(NULL)); // init randomizer
 
+  int num_drivers = num_drivers_start;
   //inicializace ID zasilek (pokud je zasilka dorucena, ID se uvolnuje a je znovu pouzitelne)
   for(int i = 0; i < WAREHOUSE_SPACE;++i){
     zasilky[i].id = i;
@@ -996,6 +990,7 @@ int main(int argc, char **argv){
   const int pocet_dni = 365;  // 1 rok
   // const int pocet_dni = 730;  // 2 roky
   // const int pocet_dni = 1095; // 3 roky
+  // const int pocet_dni = 3650; // 10 let
 
   int average_day_pay[pocet_dni];
   int drivers_month = 0;
@@ -1016,7 +1011,7 @@ int main(int argc, char **argv){
       }
 
     } else if(sklad == 0){
-      num_drivers = 4;
+      num_drivers = num_drivers_start;
     } else if (sklad <= 5 && num_drivers >= 6){
       num_drivers -= 2;
     }
@@ -1025,9 +1020,6 @@ int main(int argc, char **argv){
     getDelivery();
     validateTrucks();
     printf("(Rano)Den %3d: [%2db,%2dp,%2dP,%2dPP](celkem: %d)\n",den,curr_small,curr_half,curr_full,curr_double,sklad);
-    printf("Na skladu je celkem %d zasilek\n",sklad);
-    // mame pouze 4 auta; rozvoz = Mesto || Venkov
-
     // printZasilkyNaSkladu(); //DEBUG
 
     int finishDay = 0;
@@ -1063,7 +1055,6 @@ int main(int argc, char **argv){
         if(auta[j].doba <= 480 && auta[j].zaplneny_prostor < 5){
           inside_check_for_end_of_day += 1;
           allDriversDone = 0;
-          // printf("ne vsichni jsou plni!\n");
           break;
         }
       }
