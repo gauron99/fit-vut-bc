@@ -10,10 +10,12 @@ build: $(MAIN).c
 	$(CC) $< $(CFLAGS) -o $(MAIN)
 
 # tady pridat standardni parametry pro spusteni
-run: 
-	./$(MAIN) -b 20,5 --pulpaleta 16,5 --paleta 7,3  --dvojpaleta 3,3 --vic_aut 
+runbasic: 
+	./$(MAIN) --vic_aut 
+run:
+	./$(MAIN) -b 165 --vic_aut
 malo:
-	./$(MAIN) -b 15 --pulpaleta 10 --paleta 10  --dvojpaleta 2
+	./$(MAIN) -b 20,5 --pulpaleta 11,5 --paleta 7,3  --dvojpaleta 0 --vic_aut 
 
 
 clean:
