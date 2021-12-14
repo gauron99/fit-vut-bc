@@ -1,4 +1,4 @@
-CREATE TABLE `Conveyor` (
+EATE TABLE `Conveyor` (
   `ID` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `passwd` VARCHAR(100) NOT NULL,
   `firm` VARCHAR(50) NOT NULL,
@@ -94,8 +94,8 @@ CREATE TABLE `Reservation_seat` (
 );
 
  INSERT INTO Conveyor (passwd,firm) VALUES("awdawd","SimoniJezdi S.R.O");
- INSERT INTO Conveyor (passwd,firm) VALUES("aaaaa","RYCHLE JED VOLE"); 
- INSERT INTO Conveyor (passwd,firm) VALUES("awdawd","kundy pomaly ale dobry"); 
+ INSERT INTO Conveyor (passwd,firm) VALUES("aaaaa","RYCHLE JED"); 
+ INSERT INTO Conveyor (passwd,firm) VALUES("awdawd","speedy gonzales"); 
  INSERT INTO Conveyor (passwd,firm) VALUES("awdawd","dej mi vic Enterprise"); 
 
  INSERT INTO Stop VALUES(1,"Zahrebska",1,TRUE);
@@ -104,10 +104,10 @@ CREATE TABLE `Reservation_seat` (
  INSERT INTO Stop VALUES(4,"Simonova",3,FALSE);
  
  INSERT INTO Vehicle (max_seats_poor,max_seats_rich,description,last_visited,conveyorID)
- VALUES (1,2,"novej vuz vole, potahy cajk, sukat se bude o sto sest",1,1);
+ VALUES (1,2,"Standardni vuz",1,1);
  
  INSERT INTO Vehicle (max_seats_poor,max_seats_rich,description,last_visited,conveyorID)
- VALUES (3,0,"pro rich bich",2,2);
+ VALUES (3,0,"Novy, super, ultra rychly transporter",2,2);
  
  INSERT INTO Vehicle (max_seats_poor,max_seats_rich,description,last_visited,conveyorID)
  VALUES (1,11,"stara rachotina z nemecka, kvalita slusna",3,3);
@@ -147,9 +147,9 @@ CREATE TABLE `Reservation_seat` (
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,9,1,1);
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,10,1,1);
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,11,1,1);
- INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,1,2,1);
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,12,2,1);
  
- INSERT INTO Crew (ID,conveyorID,passwd,name) VALUES (1,1,"hovnokleslo","Michal Dvořák");
+ INSERT INTO Crew (ID,conveyorID,passwd,name) VALUES (1,1,"346125","Michal Dvořák");
  INSERT INTO Crew (ID,conveyorID,passwd,name) VALUES (2,2,"hezlo321","Petr Straka");
    
  INSERT INTO Crew (ID,conveyorID,passwd,name) VALUES (3,2,"nicmenenapada","Ondřej Cringešt");
