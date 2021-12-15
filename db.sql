@@ -1,4 +1,4 @@
-EATE TABLE `Conveyor` (
+CREATE TABLE `Conveyor` (
   `ID` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `passwd` VARCHAR(100) NOT NULL,
   `firm` VARCHAR(50) NOT NULL,
@@ -101,8 +101,9 @@ CREATE TABLE `Reservation_seat` (
  INSERT INTO Stop VALUES(1,"Zahrebska",1,TRUE);
  INSERT INTO Stop VALUES(2,"Honzova",1,TRUE); 
  INSERT INTO Stop VALUES(3,"Zahradnicka",2,TRUE); 
- INSERT INTO Stop VALUES(4,"Simonova",3,FALSE);
- 
+ INSERT INTO Stop VALUES(4,"Simonova",3,TRUE);
+ INSERT INTO Stop VALUES(5,"Pepova",3,FALSE);
+
  INSERT INTO Vehicle (max_seats_poor,max_seats_rich,description,last_visited,conveyorID)
  VALUES (1,2,"Standardni vuz",1,1);
  
@@ -131,11 +132,26 @@ CREATE TABLE `Reservation_seat` (
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (1,0,1,TRUE); 
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (1,1,1,TRUE); 
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (1,2,2,TRUE); 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (1,3,2,TRUE); 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (1,4,2,TRUE); 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (1,5,2,TRUE); 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (1,6,2,TRUE); 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (1,7,1,TRUE); 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (1,8,1,TRUE); 
+
 
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (2,0,2,TRUE); 
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (2,1,2,TRUE); 
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (2,2,2,TRUE); 
- 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (2,3,2,TRUE); 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (2,4,2,TRUE); 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (2,5,2,TRUE); 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (2,6,1,TRUE); 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (2,7,1,TRUE); 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (2,8,1,TRUE); 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (2,9,1,TRUE); 
+ INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (2,10,1,TRUE); 
+
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,1,1,1);
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,2,1,1);
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,3,1,1);
@@ -149,19 +165,18 @@ CREATE TABLE `Reservation_seat` (
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,11,1,1);
  INSERT INTO Vehicle_seat (vehicleID,seat,class,free) VALUES (3,12,2,1);
  
- INSERT INTO Crew (ID,conveyorID,passwd,name) VALUES (1,1,"346125","Michal Dvořák");
- INSERT INTO Crew (ID,conveyorID,passwd,name) VALUES (2,2,"hezlo321","Petr Straka");
+ INSERT INTO Crew (ID,conveyorID,passwd,name) VALUES (1,1,"personal","Michal Dvořák");
+ INSERT INTO Crew (ID,conveyorID,passwd,name) VALUES (2,2,"personal","Petr Straka");
    
- INSERT INTO Crew (ID,conveyorID,passwd,name) VALUES (3,2,"nicmenenapada","Ondřej Cringešt");
- INSERT INTO Crew (ID,conveyorID,passwd,name) VALUES (4,2,"uhoh69","Jaromír Soukup");
+ INSERT INTO Crew (ID,conveyorID,passwd,name) VALUES (3,2,"dopravce","Ondřej Ringešt");
+ INSERT INTO Crew (ID,conveyorID,passwd,name) VALUES (4,2,"dopravce","Jaromír Skup");
 
- INSERT INTO Admin (ID,name,passwd) VALUES (1,"louda","hehehe");
- INSERT INTO Admin (ID,name,passwd) VALUES (2,"kuli","yoboi");
- INSERT INTO Admin (ID,name,passwd) VALUES (3,"sabi","hellothere");
+ INSERT INTO Admin (ID,name,passwd) VALUES (1,"louda","tajny");
+ INSERT INTO Admin (ID,name,passwd) VALUES (2,"kuli","tajny");
  
- INSERT INTO Passenger (ID,name,passwd,registered) VALUES (1,"zebrak1","boringPW1",TRUE);
- INSERT INTO Passenger (ID,name,passwd,registered) VALUES (2,"zebrak2","boringPW2",TRUE);
- INSERT INTO Passenger (ID,name,passwd,registered) VALUES (3,"zebrak3","boringPW3",TRUE);
+ INSERT INTO Passenger (ID,name,passwd,registered) VALUES (1,"Petr Dobrouk","heslo",TRUE);
+ INSERT INTO Passenger (ID,name,passwd,registered) VALUES (2,"Marek Pomyslny","heslo",TRUE);
+ INSERT INTO Passenger (ID,name,passwd,registered) VALUES (3,"Zlatana Kvetna","heslo",TRUE);
 
  INSERT INTO Reservation (ID,connectionID,passengerID,paid) VALUES (1,100,1,FALSE);
  INSERT INTO Reservation (ID,connectionID,passengerID,paid) VALUES (2,102,2,FALSE);

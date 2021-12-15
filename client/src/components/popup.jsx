@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Multiselect } from "multiselect-react-dropdown";
-import "../App.css"
+import { getToken } from "../services/userControl"
+import { useNavigate } from 'react-router';
 
+import "../App.css"
 
 const transformDataToMultiselect = (data,seatClass) => {
   var tmp = [];
@@ -33,20 +35,18 @@ async function getSeatsPoor(ID,setVeh){
   })
 }
 
-async function getAllInfoReservations(connID,set,setVeh) {
+async function getAllInfoReservations(connID,setVeh) {
   await fetch("/api/spoj?ID="+connID,{
     method: "GET",
   })
   .then(response => response.json())
   .then(conn => {
-    set({poor:conn.price_poor,rich:conn.price_rich});
     getSeatsPoor(conn.vehicleID,setVeh)
     getSeatsRich(conn.vehicleID,setVeh)
   })
 }
 
-
-const onSelect = (selectedList,set,poor,rich) =>{
+const onSelect = (selectedList,set,poor,rich,setallSelected) =>{
   var currPrice = 0;
   for(let i = 0; i < selectedList.length;++i){
     if(selectedList[i].class.localeCompare("Třída 2")===0){
@@ -56,9 +56,11 @@ const onSelect = (selectedList,set,poor,rich) =>{
     }
   } 
   set(currPrice);
+  setallSelected(selectedList);
+
 } 
 
-const onRemove = (selectedList,set,poor,rich) =>{
+const onRemove = (selectedList,set,poor,rich,setallSelected) =>{
   var currPrice = 0;
   for(let i = 0; i < selectedList.length;++i){
     if(selectedList[i].class.localeCompare("Třída 2")===0){
@@ -68,27 +70,69 @@ const onRemove = (selectedList,set,poor,rich) =>{
     }
   } 
   set(currPrice);
+  setallSelected(selectedList);
+}
+//   const navv = useNavigate(); REDIRECT TO ANOTHER WINDOW BABY
+async function RegisterOnly(list,connID,cost,navv){
+  // if no seats were selected
+  if(list === undefined){
+    alert("Vyberte sedadla k rezervaci")
+    return;
+  }
+
+  var ID;
+  const token = getToken();
+  if (!token) {
+    alert ("Prosím registruj se předtím než si něco koupíš (bo zatím nelze jinak)");
+    // create new user - table-row registered=FALSE (all i need is a name)
+
+  } else {
+    ID = token.id;
+  }
+
+  var seats = '';
+  for (let iter of list){
+    var seatID = iter.name.split(' ')[1];
+    seats += seatID+','
+  }
+  const res = seats.slice(0, -1);
+  console.log("res seats:",res)
+
+  await fetch("/api/reservation?connectionID="+connID+"&passengerID="+ID+"&seats="+res+"&cost="+cost,{
+    method: "POST",
+  })
+  .then(data => {
+    console.log("DATAAFETRPOST: ",data)
+    if(data.msg.localeCompare("OK") === 0) {
+      alert("Rezervace úspěšná!")
+      navv('/');
+    } else {
+      alert("Rezervace nemohla být provedena(některá ze sedadel již nejsou volná)")
+      // navv('/');
+    }
+  })
 }
 
+async function RegisterBuy(list){
+  await fetch('/api/reservation?ID=',{
 
-
-
+  })
+  .then()
+}
 
 export const PopupRegister = (props) => {
-  const [price, setPrice]       = useState({poor:0,rich:0});
+  const price = props.price;
+  const [allSelected, setallSelected] = useState();
   const [vehSeats,setVehSeats]  = useState([]);
   const [total, setTotal] = useState(0);
+  const navv = useNavigate();
 
   useEffect(()=>{
     if(props.trigger){
-      getAllInfoReservations(props.connID,setPrice,setVehSeats)
+      getAllInfoReservations(props.connID,setVehSeats)
     }
   },[props.connID])//whenever connID changes (button clicks and sets it in home.jsx - useEffect runs)
 
-  useEffect(()=>{
-
-  },[total])
-  
   return props.trigger ? (
     <div className="popup-window">
         <div className="popup-in">
@@ -97,15 +141,15 @@ export const PopupRegister = (props) => {
 
           <Multiselect
             placeholder="Vyber jízdenky"
-            onSelect={(a)=>onSelect(a,setTotal,price.poor,price.rich)}
-            onRemove={(a)=>onRemove(a,setTotal,price.poor,price.rich)}
+            onSelect={(a)=>onSelect(a,setTotal,price[0],price[1],setallSelected)}
+            onRemove={(a)=>onRemove(a,setTotal,price[0],price[1],setallSelected)}
             options={vehSeats}
             displayValue="name"
             groupBy="class"
             />
           <p>Celková cena: {total},-</p>
-          <button className="reserve-confirms" onClick={()=>console.log("REZERVUJES JEN")}>Rezervovat</button>
-          <button className="reserve-confirms" onClick={()=>console.log("KUPUJES HNED")}>Rezervovat a koupit</button>
+          <button className="reserve-confirms" onClick={()=>RegisterOnly(allSelected,props.connID,total,navv)}>Rezervovat</button>
+          <button className="reserve-confirms" onClick={()=>RegisterBuy(allSelected,props.connID,total,navv)}>Rezervovat a koupit</button>
         </div>
     </div>
   ) : "";

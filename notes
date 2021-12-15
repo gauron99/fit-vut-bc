@@ -1,6 +1,18 @@
-use component to tell react what you want to see on the screen (when data changes, react will re-render)
+---
+	poslat request na koupi jizdenky
+	-- koupe / rezervace
 
-<div> element is React.createElement('div')
+okno na aktualni rezervace
+
+---
+view:
+	admin
+	conveyor
+		spoje, zastavky (crud, concept only)
+	personel (personal dopravce)
+	passenger -- reservace (today+ ?)
+
+---
+zastavky ktere nejsou confirmed nemuzou byt videny/pouzivany VUBEC
 
 
-JSX instead of JS for easier HTML 

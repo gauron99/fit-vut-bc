@@ -1,5 +1,5 @@
 import React,{useEffect,useState,useRef} from 'react';
-import { isLoggedIn, getToken, handleLogin,handleRegister, removeToken} from '../services/userControl';
+import { isLoggedIn, getToken, setToken, handleRegister, removeToken} from '../services/userControl';
 import { useNavigate } from 'react-router';
 
 import "../App.css";
@@ -104,7 +104,7 @@ const EditLogout = (props) => {
   )
   } else {
     return (
-      <EditLogin/>
+      <EditLogin handleSubmit={props.handleSubmitLogin}/>
     )
   }
 }
@@ -179,19 +179,21 @@ async function loginUser(setLogin,data) {
     if(data.ACCESS == "GRANTED"){
       alert("login úspěšný");
       const d = {
+        id: data.ID,
         login: us,
         passwd: pas,
         type: data.ROLE
       }
-      localStorage.setItem("token",JSON.stringify(d));
-      console.log("local storage set");
+      // localStorage.setItem("token",JSON.stringify(d));
+      setToken(d);
+      // const data = getToken("token")
+      setLogin({id:d.id,login:d.login, passwd:d.passwd,type:d.type})
     } else {
       alert("Nepodařilo se přihlásit");
     }
   })
   .then( () => {
-    const data = getToken("token")
-    setLogin({login:data.login, passwd:data.passwd,type:data.type})
+    
   })
 };
  
@@ -205,7 +207,7 @@ const AccountSelector = (props) => {
     return <EditLogin handleSubmit={handleSubmitLogin}/>
   } else if (props.viewACC === 1) { //logged in page
     console.log("ALREADY LOGGED IN")
-    return <EditLogout view={props.view} setView={props.setView} login={props.login} setLogin={props.setLogin}/>;
+    return <EditLogout view={props.view} setView={props.setView} login={props.login} setLogin={props.setLogin} handleSubmit={handleSubmitLogin}/>;
   } else {// trying to register
     console.log("REGISTERING")
     return <EditRegister setView={props.setView} login={props.login} setLogin={props.setLogin}/>
@@ -215,16 +217,13 @@ const AccountSelector = (props) => {
 const Account = (props) => {
   // if someone is logged in, show logout button
   const [viewACC,setviewACC] = useState(0);
-  const [login,setLogin] = useState({login:'',passwd:'',type:''});
+  const [login,setLogin] = useState({id:-1,login:'',passwd:'',type:''});
 
   console.log("ACCOUNTview: ",props.view)
   console.log("ACCOUNTlogin: ",login)
-  console.log("ACCOUNTviewacc: ",viewACC)
-  console.log("loggedIN: ",isLoggedIn())
 
   useEffect(()=>{
     if(isLoggedIn()){
-      console.log("TELLME IN: ",isLoggedIn());
 
       let data = getToken("token");
       console.log(data)
@@ -232,6 +231,7 @@ const Account = (props) => {
         const loc = data;
         if(login.login !== loc.login){
           setLogin(() => ({
+            id: loc.id,
             login: loc.login,
             passwd: loc.passwd,
             type: loc.type

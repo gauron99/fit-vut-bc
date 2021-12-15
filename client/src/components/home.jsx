@@ -3,7 +3,7 @@ import { PopupRegister } from "./popup";
 
 export const GeneralErrorPage = () => {
   return (
-    <h3>Obecná chyba.</h3>
+    <h3>Obecná chyba. Nejsem si jistý proč se tohle stalo :(</h3>
   )
 }
 
@@ -52,25 +52,27 @@ class ShowTable extends React.Component{
     super(props);
     // set initial state
     this.state={
-      usePOP: false,
-      connID: 0
+      usePOP:     false,
+      connID:     0,
+      priceRich:  0,
+      pricePoor:  0
     } 
     // bind function
     this.handlePOP = this.handlePOP.bind(this)
   }
 
-  handlePOP(e) {
+  handlePOP(e,poor,rich) {
+    console.log("INHANDLE:",poor,rich)
     // change the state whenever the button is pressed
     this.setState(prev => ({
       usePOP: !prev.usePOP,
-      connID: e.target.id
+      connID: e.target.id,
+      pricePoor: poor,
+      priceRich: rich
     }));
 
   }
 
-  lol(comp){
-        console.log(comp)
-    }
     render(){
     return(
         <div>
@@ -81,12 +83,12 @@ class ShowTable extends React.Component{
                   <th>Odkud</th>
                   <th>Prichod</th>
                   <th>Kam</th>
-                  <th>CenaPoor</th>
-                  <th>CenaRich</th>
+                  <th>2. třída(Kč)</th>
+                  <th>1. třída(Kč)</th>
               </thead>
               <tbody>
-                    {this.props.veci.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}<td><button type='button' id={comp[0]} onClick={(e)=>this.handlePOP(e)} className="button-show">Jízdenky</button></td></tr>)}
-                    <PopupRegister trigger={this.state.usePOP} updTrigger={this.handlePOP} connID={this.state.connID}/>
+                    {this.props.veci.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}<td><button type='button' id={comp[0]} onClick={(e)=>this.handlePOP(e,comp[5],comp[6])} className="button-show">Jízdenky</button></td></tr>)}
+                    <PopupRegister trigger={this.state.usePOP} updTrigger={this.handlePOP} connID={this.state.connID} price={[this.state.pricePoor,this.state.priceRich]}/>
               </tbody>
           </table>
           </div>
@@ -95,6 +97,7 @@ class ShowTable extends React.Component{
 }
 
 class MainSearchBlock extends React.Component{
+
   render (){
     return (
 
@@ -110,7 +113,7 @@ class MainSearchBlock extends React.Component{
   }
 }
 
-class WrapPico extends React.Component{
+class Wrap extends React.Component{
     constructor(props){
         super(props);
         
@@ -159,7 +162,7 @@ class WrapPico extends React.Component{
 function Home() {
     return (
     <>
-      <WrapPico />
+      <Wrap />
     </>
   );
 }

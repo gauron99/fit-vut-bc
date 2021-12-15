@@ -24,15 +24,26 @@ app.use(express.urlencoded({ extended: true}));
 //     database        : 'iis_db'
 //   });
 
+ var pool  = mysql.createPool({
+     connectionLimit : 10,
+     host            : 'localhost',
+     user            : 'root',
+     password        : '',
+     // database        : 'iis_db',
+     database        : 'backup',
+     port            : 3306
+   });
 
-var pool  = mysql.createPool({
-    connectionLimit : 10,
-    host            : 'localhost',
-    user            : 'root',
-    password        : '',
-    database        : 'iis_db',
-    port            : 3306
-  });
+//var pool  = mysql.createPool({
+ //   connectionLimit : 10,
+   // host            : '85.208.51.209',
+   // user            : 'kuli_home',
+   /// password        : 'secret',
+    // database        : 'iis_db',
+   // database        : 'backup',
+ // });
+
+
 
 kvery = (query) => {
     return new Promise((resolve,reject) =>{
@@ -316,10 +327,12 @@ router.route('/reservation')
             res.json({msg: 'ERR'});
         }
         else {
-            await kvery('INSERT INTO Reservation(connectionID, passengerID, paid) VALUES ('+req.query.connectionID+', '+req.query.passengerID+', FALSE)');
+            await kvery('INSERT INTO Reservation(connectionID, passengerID, paid, cost) VALUES ('+req.query.connectionID+', '+req.query.passengerID+', FALSE,'+req.query.cost+')');
+            console.log('MINE I INTO Reservation(connectionID, passengerID, paid, cost) VALUES ('+req.query.connectionID+', '+req.query.passengerID+', FALSE,'+req.query.cost+')')
             var resID = await kvery('SELECT LAST_INSERT_ID();');
-    
+            console.log("RESID: ",resID);
             for (let seat of req.query.seats.split(',')){
+                console.log('INFOR: INTO Reservation_seat(reservationID, seat) VALUES ('+resID[0]['LAST_INSERT_ID()']+','+seat+')')
                 await kvery('INSERT INTO Reservation_seat(reservationID, seat) VALUES ('+resID[0]['LAST_INSERT_ID()']+','+seat+')');
                 await kvery('UPDATE Vehicle_seat SET free=FALSE WHERE vehicleID='+vehID[0].vehicleID+' AND seat='+seat+';');
             }

@@ -19,8 +19,8 @@ export const isLoggedIn = (props) => {
 }
 
 export const getToken = () => {
-  let token = localStorage.getItem("token",token)
-  console.log("TOKEN in SES: ",token);
+  let token = localStorage.getItem("token")
+  console.log("TOKEN in SESS: ",token);
   return JSON.parse(token, null, -1);
 }
 
@@ -32,6 +32,5 @@ export const setToken = (data) => {
 export const removeToken = () => {
   localStorage.removeItem("token");
   const data = localStorage.getItem("token") === null;
-  console.log("removed is null now?: ",data)
-
+  console.log("removed logged; is null now?: ",data)
 }
