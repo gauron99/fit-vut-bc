@@ -1,5 +1,5 @@
 import React,{useEffect,useState,useRef} from 'react';
-import { isLoggedIn, getToken, setToken, handleRegister, removeToken} from '../services/userControl';
+import { isLoggedIn, getToken, setToken, removeToken} from '../services/userControl';
 import { useNavigate } from 'react-router';
 
 import "../App.css";
@@ -44,7 +44,7 @@ const EditLogin = (props) => {
 
         <button type="submit" className="button-submit button-login float-left">Přihlásit </button>
       </form>
-        <button type="button" className="button-submit button-login" onClick={()=>handleRegister()}>Registrovat </button>
+        <button type="button" className="button-submit button-login" onClick={()=>props.setviewACC(2)}>Registrovat </button>
       </div>
     </div>
   )
@@ -104,64 +104,43 @@ const EditLogout = (props) => {
   )
   } else {
     return (
-      <EditLogin handleSubmit={props.handleSubmitLogin}/>
+      <EditLogin handleSubmit={props.handleSubmitLogin} setView={setView}/>
     )
   }
 }
 
-const handleRegForm = (info) => {
-
-}
 
 const EditRegister = () => {
-  const [regView,setregView] = useState(0);
-  
+  const handleRegister = (event) => {
+    event.preventDefault();
+    const data = event.target;
+    if(data.regp != data.regpp){
+      alert("Hesla nejsou stejna!");
+    }
+    console.log(data.regn.value);
+    console.log(data.regp.value,"=");
+    console.log(data.regpp.value);
 
-  if(regView===0){
-    return (
-      <div>
+  }
 
-    <form>
-      <label>
-        <input className="login-item" id="regn" type="text" placeholder="jmeno"></input>
-      </label>
-
-      <label>
-        <input className="login-item" id="regp" type="password" placeholder="heslo"></input>
-      </label>
-      
-      <select name="regAS" id="regAS">
-        <option  value="Cestující" selected onChange={()=>handleRegForm("user")}>Cestující</option>
-        <option value="Dopravce" onChange={()=>handleRegForm("conveyor")}>Dopravce</option>
-      </select>
-    </form>
+  console.log("editRegister in\n");
+  return (
+    <div className="registering">
+      <h3 className="h3reg">Zaregistruj se</h3>
+      <form onSubmit={handleRegister}>
+        <label htmlFor="regn">Jméno</label>
+          <input className="register-item" id="regn" type="text" placeholder="jmeno"></input>
+        
+        <label htmlFor="regp">Heslo</label>
+          <input className="register-item" id="regp" type="password" placeholder="heslo"></input>
+                
+        <label htmlFor="regpp">Heslo zopakovat</label>
+          <input className="register-item" id="regpp" type="password" placeholder="heslo"></input>
+          <hr className="solid" />
+        <button type="submit" className=" register-item button-submit button-login">Registrovat</button>
+      </form>
     </div>
   )
-  } else {
-
-    return (
-      <div>
-        <form>
-          <label>
-            <input className="login-item" id="regn" type="text" placeholder="jmeno"></input>
-          </label>
-
-          <label>
-            <input className="login-item" id="regp" type="password" placeholder="heslo"></input>
-          </label>
-          
-          <label>
-            <input className="login-item" id="regp" type="password" placeholder="heslo"></input>
-          </label>
-          
-          <select name="regAS" id="regAS">
-            <option  value="Cestující" selected onChange={()=>setregView(1)}>Cestující</option>
-            <option value="Dopravce" onChange={()=>setregView(1)}>Dopravce</option>
-          </select>
-        </form>
-      </div>
-    )
-  }
 }
 
 async function loginUser(setLogin,data) {
@@ -204,7 +183,7 @@ const AccountSelector = (props) => {
 
   if (props.viewACC === 0){ //basic page, not logged in
     console.log("LOGGING IN")
-    return <EditLogin handleSubmit={handleSubmitLogin}/>
+    return <EditLogin handleSubmit={handleSubmitLogin} setviewACC={props.setviewACC}/>
   } else if (props.viewACC === 1) { //logged in page
     console.log("ALREADY LOGGED IN")
     return <EditLogout view={props.view} setView={props.setView} login={props.login} setLogin={props.setLogin} handleSubmit={handleSubmitLogin}/>;

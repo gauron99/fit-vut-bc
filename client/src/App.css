@@ -148,6 +148,28 @@ input[type="time"], input[type="date"] {
   clear: both;
 }
 
+/* REGISTER */
+
+.h3reg{
+  text-align: center;
+  font-weight: bold;
+}
+
+.registering{
+  margin-top: 2%;
+  margin-left: 30%;
+  margin-right: 30%;
+  background-color: var(--darker_color);
+  padding: 2%;
+  border: 2px black solid;
+  width: auto;
+
+}
+
+.register-item{
+  width: 100%;
+}
+
 
 /* POPUP */
 .popup-window{
@@ -178,3 +200,4 @@ input[type="time"], input[type="date"] {
   content: "";
   clear: both;
 }
+
