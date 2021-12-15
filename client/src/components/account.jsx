@@ -81,7 +81,6 @@ const Logout = (setL,setV,navv) => {
     setV("UNREGISTERED");
 
   navv('/')
-  
 }
 
 const EditLogout = (props) => {
@@ -110,17 +109,56 @@ const EditLogout = (props) => {
 }
 
 
+async function registerUser(n,p){
+  await fetch('/api/passenger_manage?name='+n+"&passwd="+p+"&registered=1",{
+    method: "POST",
+    headers: { 'Content-Type': 'application/json' },
+  }).then( () => {
+    console.log("USPESNE REGISTROVAT\n");
+  }
+  )
+}
+
+async function checkPassengers(name,passwd){
+  await fetch('/api/passenger_manage',{
+    method: "GET",
+  })
+  .then(response => response.json())
+  .then(users => {
+    console.log(users);
+    for (const x of users){
+      console.log("porovnavam: ",x.name,name);
+      if (x.name == name){
+        alert("Chyba! jmeno jiz existuje");
+        return;
+      }
+    }
+    console.log("Jsem za! vseckocajk");
+    // pokud neexistuje uzivatel, muzes se uspesne registrovat
+      // registerUser(name,passwd)
+  })
+
+}
+
 const EditRegister = () => {
   const handleRegister = (event) => {
     event.preventDefault();
     const data = event.target;
-    if(data.regp != data.regpp){
-      alert("Hesla nejsou stejna!");
-    }
-    console.log(data.regn.value);
-    console.log(data.regp.value,"=");
-    console.log(data.regpp.value);
 
+    // passwd not given
+    if( data.regp.value == ""){
+      alert("Zadejte heslo prosím!");
+      return;
+    }
+
+    // check if passwords match
+    if(data.regp.value != data.regpp.value){
+      alert("Hesla nejsou stejna!");
+      return;
+    }
+
+    // check if user exists
+    checkPassengers(data.regn.value,data.regp.value);
   }
 
   console.log("editRegister in\n");
@@ -146,7 +184,7 @@ const EditRegister = () => {
 async function loginUser(setLogin,data) {
   const us = data.username;
   const pas = data.passwd;
-  console.log("/api/login?name="+us+"&passwd="+pas)
+  // console.log("/api/login?name="+us+"&passwd="+pas)
 
   await fetch("/api/login?name="+us+"&passwd="+pas,{
     method: "POST",
