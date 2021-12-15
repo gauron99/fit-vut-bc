@@ -1,9 +1,9 @@
 import React,{useEffect,useState} from "react";
 import Account from "../components/account"
 
+
 export const handleRegister = (props) => {
-  const regMEnow = true;
-  Account(regMEnow); //call account handler?
+  
 }
 
 export const Logout = (props) => {
