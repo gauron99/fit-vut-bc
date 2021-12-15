@@ -16,23 +16,23 @@ var id = 0;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}));
 
-// var pool  = mysql.createPool({
-//     connectionLimit : 10,
-//     host            : '85.208.51.209',
-//     user            : 'loudik',
-//     password        : 'popici',
-//     database        : 'iis_db'
-//   });
+var pool  = mysql.createPool({
+    connectionLimit : 10,
+    host            : '85.208.51.209',
+    user            : 'loudik',
+    password        : 'popici',
+    database        : 'iis_db'
+  });
 
- var pool  = mysql.createPool({
-     connectionLimit : 10,
-     host            : 'localhost',
-     user            : 'root',
-     password        : '',
-     // database        : 'iis_db',
-     database        : 'backup',
-     port            : 3306
-   });
+//  var pool  = mysql.createPool({
+//      connectionLimit : 10,
+//      host            : 'localhost',
+//      user            : 'root',
+//      password        : '',
+//      // database        : 'iis_db',
+//      database        : 'backup',
+//      port            : 3306
+//    });
 
 //var pool  = mysql.createPool({
  //   connectionLimit : 10,
@@ -114,14 +114,17 @@ router.route('/passenger_manage')
     })
     .post(async function(req, res) {
         await kvery('INSERT INTO Passenger(name,passwd,registered) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\",'+req.query.registered+');');
+        res.json({msg: "sup"})
     })
     
     .put(async function(req, res) {
         await kvery('UPDATE Passenger SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID+', registered = '+req.query.registered+';');
+        res.json({msg: "sup"})
     })
 
     .delete(async function(req, res) {
         await kvery('DELETE FROM Passenger WHERE name='+req.query.name+';');
+        res.json({msg: "sup"})
     })
 
 router.route('/crew_manage')
@@ -270,7 +273,7 @@ router.route('/spoj')
 router.route('/spoje')
     .get(async function(req, res) {
         var spoje = [];
-        var result = await kvery('SELECT connID, arrival FROM Connection_stop AS CSS WHERE CSS.stopID IN (SELECT ID FROM Stop WHERE Stop.ID = stopID AND Stop.name = "'+req.query.odkud+'") AND CSS.connID IN (SELECT connID FROM Connection_stop CS WHERE CS.stopID IN (SELECT ID FROM Stop AS S WHERE S.name = "'+req.query.kam+'") AND TIMEDIFF(CSS.arrival, CS.arrival) < 0 AND TIMEDIFF(TIME("'+req.query.kdy+'"),CSS.arrival) < 0);');
+        var result = await kvery('SELECT connID, arrival FROM Connection_stop AS CSS WHERE CSS.stopID IN (SELECT ID FROM Stop WHERE Stop.ID = stopID AND Stop.confirmed=true AND Stop.name = "'+req.query.odkud+'") AND CSS.connID IN (SELECT connID FROM Connection_stop CS WHERE CS.stopID IN (SELECT ID FROM Stop AS S WHERE S.confirmed=true AND S.name = "'+req.query.kam+'") AND TIMEDIFF(CSS.arrival, CS.arrival) < 0 AND TIMEDIFF(TIME("'+req.query.kdy+'"),CSS.arrival) < 0);');
         for (let spoj of result){
             var spojReturn = {}
             var result2 = await kvery('SELECT arrival FROM Connection_stop WHERE stopID IN (SELECT ID FROM Stop AS S WHERE S.name = "'+req.query.kam+'") AND connID = '+spoj.connID+';');
