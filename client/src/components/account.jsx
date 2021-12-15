@@ -91,16 +91,25 @@ const EditLogout = (props) => {
   const token = getToken();
 
   if(token){
-
-    return (
-      <div>
+    if(token.type == "admin"){
+      // if logged in is admin, cant delete
+      return (
+        <div>
+        <p>Jste přihlášen jako {token.login} (úroveň: {token.type})</p>
+        <button type="button" className="button-submit" onClick={() => Logout(setLogin,setView,navv)}>Odhlásit</button>
+      </div>
+      )
+    }
+    else {
+      // if anyone else, you can delete
+      return (
+        <div>
         <p>Jste přihlášen jako {token.login} (úroveň: {token.type})</p>
         <button type="button" className="button-submit" onClick={() => Logout(setLogin,setView,navv)}>Odhlásit</button>
         <button type="button" className="button-submit" onClick={() => DeleteAcc(token.login,setLogin,setView,navv)}>Smazat</button>
-        
       </div>
-      
-  )
+      )
+    }
   } else {
     return (
       <EditLogin handleSubmit={props.handleSubmitLogin} setView={setView}/>
@@ -109,17 +118,21 @@ const EditLogout = (props) => {
 }
 
 
-async function registerUser(n,p){
+async function registerUser(n,p,setView){
   await fetch('/api/passenger_manage?name='+n+"&passwd="+p+"&registered=1",{
     method: "POST",
     headers: { 'Content-Type': 'application/json' },
-  }).then( () => {
-    console.log("USPESNE REGISTROVAT\n");
-  }
-  )
+  })
+  .then(response => response.json())
+  .then((res)=>{
+    alert("Uspesne registrovan!");
+    var data = {name: n, passwd: p, type:"passenger"}
+    setToken(data);
+    setView("USER");
+  })
 }
 
-async function checkPassengers(name,passwd){
+async function checkPassengers(name,passwd,setView){
   await fetch('/api/passenger_manage',{
     method: "GET",
   })
@@ -127,20 +140,19 @@ async function checkPassengers(name,passwd){
   .then(users => {
     console.log(users);
     for (const x of users){
-      console.log("porovnavam: ",x.name,name);
       if (x.name == name){
         alert("Chyba! jmeno jiz existuje");
         return;
       }
     }
-    console.log("Jsem za! vseckocajk");
+    // console.log("Jsem za! vseckocajk");
     // pokud neexistuje uzivatel, muzes se uspesne registrovat
-      // registerUser(name,passwd)
+      registerUser(name,passwd,setView)
   })
 
 }
 
-const EditRegister = () => {
+const EditRegister = (props) => {
   const handleRegister = (event) => {
     event.preventDefault();
     const data = event.target;
@@ -158,10 +170,9 @@ const EditRegister = () => {
     }
 
     // check if user exists
-    checkPassengers(data.regn.value,data.regp.value);
+    checkPassengers(data.regn.value,data.regp.value,props.setView);
   }
 
-  console.log("editRegister in\n");
   return (
     <div className="registering">
       <h3 className="h3reg">Zaregistruj se</h3>
