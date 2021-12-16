@@ -251,14 +251,17 @@ router.route('/stops')
     })
     .post(async function(req, res) {
         await kvery('INSERT INTO Stop(name,conveyorID,confirmed) VALUES (\"'+req.query.name+'\",'+req.query.conveyorID+',FALSE);');
+        res.json({msg: "sup"})
     })
 
     .put(async function(req, res) {
         await kvery('UPDATE Stop SET name = \"'+req.query.name+'\", conveyorID = '+req.query.conveyorID+', confirmed = '+req.query.confirmed+' WHERE ID='+req.query.ID+';');
+        res.json({msg: "sup"})
     })
 
     .delete(async function(req, res) {
         await kvery('DELETE FROM Stop WHERE name='+req.query.name+';');
+        res.json({msg: "sup"})
     })
 
 
@@ -271,6 +274,7 @@ router.route('/stops_unconfirmed')
 router.route('/confirm_stop')
     .post(async function(req, res) {
         await kvery('UPDATE Stop SET confirmed = TRUE WHERE ID='+req.query.ID+';');
+        res.json({msg: "sup"})
     })
 
 router.route('/vehicle')
@@ -280,14 +284,17 @@ router.route('/vehicle')
     })
     .post(async function(req, res) {
         await kvery('INSERT INTO Vehicle(max_seats_poor,max_seats_rich,description,last_visited,conveyorID) VALUES ('+req.query.max_seats_poor+', '+req.query.max_seats_rich+',\"'+req.query.description+'\",'+req.query.last_visited+','+req.query.conveyorID+');');
+        res.json({msg: "sup"})
     })
 
     .put(async function(req, res) {
         await kvery('UPDATE Vehicle SET max_seats_poor = '+req.query.max_seats_poor+', max_seats_rich = '+req.query.max_seats_rich+', description = \"'+req.query.description+'\", last_visited = '+req.query.last_visited+', conveyorID = '+req.query.conveyorID+' WHERE ID='+req.query.ID+';');
+        res.json({msg: "sup"})
     })
 
     .delete(async function(req, res) {
         await kvery('DELETE FROM Vehicle WHERE ID='+req.query.ID+';');
+        res.json({msg: "sup"})
     })
 
 
@@ -328,16 +335,24 @@ router.route('/spoje')
 
     .put(async function(req, res) {
         await kvery('UPDATE Vehicle SET max_seats_poor = '+req.query.max_seats_poor+', max_seats_rich = '+req.query.max_seats_rich+', description = \"'+req.query.description+'\", last_visited = '+req.query.last_visited+', conveyorID = '+req.query.conveyorID+' WHERE ID='+req.query.ID+';');
+        res.json({msg: "sup"})
     })
 
     .delete(async function(req, res) {
         await kvery('DELETE FROM Vehicle WHERE ID='+req.query.ID+';');
+        res.json({msg: "sup"})
+    })
+
+router.route('/getvehicle')
+    .get(async function(req, res) {        
+        var result = await kvery('SELECT vehicleID FROM Connection WHERE ID = '+req.query.ID+';');
+        res.json(result[0])
     })
 
 router.route('/gde_spoj')
     .get(async function(req, res) {        
-        var result = await kvery('SELECT Stop.name FROM Vehicle, Stop WHERE Vehicle.last_visited = Stop.ID AND Vehicle.ID = '+req.query.ID+';');
-        res.json(result)
+        var result = await kvery('SELECT Stop.name as stopName FROM Vehicle, Stop WHERE Vehicle.last_visited = Stop.ID AND Vehicle.ID = '+req.query.ID+';');
+        res.json(result[0])
     })        
 
 router.route('/reservation')
@@ -382,10 +397,16 @@ router.route('/free_vehicle_seats_rich')
         res.json(result)
     })
 
+router.route('/reservation_deconfirm')
+    .post(async function(req, res) {
+        await kvery('UPDATE Reservation SET paid = FALSE WHERE ID ='+req.query.ID+';');
+        res.json({msg: "sup"})
+    })
+
 router.route('/reservation_confirm')
 
     .get(async function(req, res) {
-        var result = await kvery('SELECT * FROM Reservation WHERE paid = FALSE;');
+        var result = await kvery('SELECT * FROM Reservation;');
         res.json(result)
     })
 
@@ -395,6 +416,11 @@ router.route('/reservation_confirm')
         if (result[0].PBOOL == "FALSE"){
             await kvery('DELETE FROM Passenger WHERE ID ='+result[0].RPID+';');
         }
+        res.json({msg: "sup"})
+    })
+    .delete(async function(req, res) {
+        await kvery('DELETE FROM Reservation WHERE ID='+req.query.ID+';');
+        res.json({msg: "sup"})
     })
 
 router.route('/test')

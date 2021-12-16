@@ -54,10 +54,11 @@ const EditLogin = (props) => {
 
 
 
-async function DelAcc(data,setL,setV) {
-  console.log("/api/delete?"+data)
+async function DelAcc(login,setL,setV,role) {
+  var nameName = role === "conveyor" ? "firm" : "name";
+  console.log("/api/"+role+"_manage?"+nameName+"="+login);
 
-  await fetch("/api/delete?"+data,{
+  await fetch("/api/"+role+"_manage?"+nameName+"="+login,{
     method: "DELETE",
   })
   .then(()=> {
@@ -68,9 +69,9 @@ async function DelAcc(data,setL,setV) {
   })
 }
 
-const DeleteAcc = (login,setL,setV,navv) => {
+const DeleteAcc = (login,setL,setV,navv,role) => {
   removeToken("token");
-  DelAcc(login.login,setL,setV);
+  DelAcc(login,setL,setV,role);
 
   navv('/');
 }
@@ -106,7 +107,7 @@ const EditLogout = (props) => {
         <div>
         <p>Jste přihlášen jako {token.login} (úroveň: {token.type})</p>
         <button type="button" className="button-submit" onClick={() => Logout(setLogin,setView,navv)}>Odhlásit</button>
-        <button type="button" className="button-submit" onClick={() => DeleteAcc(token.login,setLogin,setView,navv)}>Smazat</button>
+        <button type="button" className="button-submit" onClick={() => DeleteAcc(token.login,setLogin,setView,navv,token.type)}>Smazat</button>
       </div>
       )
     }

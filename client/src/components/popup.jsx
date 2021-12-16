@@ -120,36 +120,58 @@ async function RegisterBuy(list){
   .then()
 }
 
+async function updateStop(connID,setLastStop) {
+  var vehicleID;
+  await fetch('/api/getvehicle?ID='+connID,{
+    method: "GET",
+  })
+  .then(response => response.json())
+  .then(result => {
+    vehicleID = result.vehicleID;
+  })
+  console.log("no?"+vehicleID)
+  await fetch('/api/gde_spoj?ID='+vehicleID,{
+    method: "GET",
+  })
+  .then(response => response.json())
+  .then(result =>{
+      console.log(result.stopName);
+      setLastStop(result.stopName);
+  })
+}
+
 export const PopupRegister = (props) => {
   const price = props.price;
   const [allSelected, setallSelected] = useState();
   const [vehSeats,setVehSeats]  = useState([]);
   const [total, setTotal] = useState(0);
+  const [lastStop, setLastStop] = useState("");
   const navv = useNavigate();
-
   useEffect(()=>{
     if(props.trigger){
       getAllInfoReservations(props.connID,setVehSeats)
     }
+    updateStop(props.connID, setLastStop);
   },[props.connID])//whenever connID changes (button clicks and sets it in home.jsx - useEffect runs)
-
   return props.trigger ? (
     <div className="popup-window">
         <div className="popup-in">
           <button className="reserve-close-button" onClick={(e) =>{ props.updTrigger(e);setTotal(0);}}>X</button>
           <h3>Rezervace: Linka: {props.connID}</h3>
 
-          <Multiselect
+          {/* <Multiselect
             placeholder="Vyber jízdenky"
             onSelect={(a)=>onSelect(a,setTotal,price[0],price[1],setallSelected)}
             onRemove={(a)=>onRemove(a,setTotal,price[0],price[1],setallSelected)}
             options={vehSeats}
             displayValue="name"
             groupBy="class"
-            />
+            /> */}
           <p>Celková cena: {total},-</p>
+          <div>Last stop: {lastStop}</div>
           <button className="reserve-confirms" onClick={()=>RegisterOnly(allSelected,props.connID,total,navv)}>Rezervovat</button>
           <button className="reserve-confirms" onClick={()=>RegisterBuy(allSelected,props.connID,total,navv)}>Rezervovat a koupit</button>
+          <button className="reserve-confirms" onClick={()=>updateStop(props.connID, setLastStop)}>Aktualizovat polohu vozidla</button>
         </div>
     </div>
   ) : "";
