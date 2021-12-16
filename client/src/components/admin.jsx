@@ -2,13 +2,16 @@ import React,{useState, useEffect , Fragment} from 'react';
 
 import "../Admin.css"
 
-async function updateCuraka(){
+async function updateCuraka(name, pwd, id, role){
     console.log("teka se updatne curak tadyhle");
-    // await fetch("/api/login?name="+us+"&passwd="+pas,{
-    //     method: "POST",
-    //     headers: { 'Content-Type': 'application/json' },
-    //   })
-    //   .then(response => response.json())
+    var nameName = role === 'Conveyor' ? 'firm' : 'name';
+
+    
+    await fetch("/api/"+role+"_manage?"+nameName+"="+name+"&passwd="+pwd+'&ID='+id,{
+        method: "PUT",
+        headers: { 'Content-Type': 'application/json' },
+      })
+      .then(response => response.json())
 }
 
 async function getHeslo(setslo,userRole,userID) {
@@ -35,13 +38,13 @@ const PopPeopleWindow = (props) => {
                 <h3 className="h3reg">Opichej zmrda</h3>
                 <form>
                 <label htmlFor="regn">{name}</label>
-                    <input className="register-item" id="regn" type="text" defaultValue={props.userName}></input>
+                    <input className="register-item" id="meno" type="text" defaultValue={props.userName}></input>
                 
                 <label htmlFor="regp">Heslo</label>
-                    <input className="register-item" key={props.heslo} id="regp" type="text" defaultValue={props.heslo}></input>
+                    <input className="register-item" key={props.heslo} id="hesloo" type="text" defaultValue={props.heslo}></input>
                         
                     <hr className="solid" />
-                <button onClick={() => updateCuraka()} type="button" className=" register-item button-submit button-login">Posrat hlavu zmrdovi</button>
+                <button onClick={() => updateCuraka(document.getElementById('meno').value, document.getElementById('hesloo').value, props.userID, props.userRole)} type="submit" className=" register-item button-submit button-login">Posrat hlavu zmrdovi</button>
                 </form>
             </div>
             </div>

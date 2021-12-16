@@ -49,10 +49,9 @@ app.use(express.urlencoded({ extended: true}));
 var pool  = mysql.createPool({
     connectionLimit : 10,
     host            : '85.208.51.209',
-    user            : 'kuli3',
-     password        : 'secret',
-     database        : 'iis_db',
- //    database        : 'backup',
+    user            : 'loudik',
+    password        : 'popici',
+    database        : 'iis_db'
   });
  
 
@@ -119,6 +118,13 @@ router.route('/read_and_subsequently_possibly_config_if_desired_or_not_if_not_ne
         }
     })
 
+router.route('/getpwd')
+    .get(async function(req, res){
+        var tabka =  req.query.role[0].toUpperCase() + req.query.role.substring(1);
+        var result = await kvery('SELECT passwd FROM '+tabka+' WHERE ID='+req.query.ID);
+        res.json(result[0])
+    })
+
 router.route('/passenger_manage')
     .get(async function(req, res){
         var result = await kvery('SELECT * FROM Passenger WHERE registered=TRUE');
@@ -130,12 +136,12 @@ router.route('/passenger_manage')
     })
     
     .put(async function(req, res) {
-        await kvery('UPDATE Passenger SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID+', registered = '+req.query.registered+';');
+        await kvery('UPDATE Passenger SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID+';');
         res.json({msg: "sup"})
     })
 
     .delete(async function(req, res) {
-        await kvery('DELETE FROM Passenger WHERE name='+req.query.name+';');
+        await kvery('DELETE FROM Passenger WHERE name=\"'+req.query.name+'\";');
         res.json({msg: "sup"})
     })
 
@@ -150,12 +156,12 @@ router.route('/crew_manage')
     })
     
     .put(async function(req, res) {
-        await kvery('UPDATE Crew SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\", conveyorID = \"'+req.query.conveyorID+'\" WHERE ID='+req.query.ID+';');
+        await kvery('UPDATE Crew SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID+';');
         res.json({msg: "sup"})
     })
 
     .delete(async function(req, res) {
-        await kvery('DELETE FROM Crew WHERE firm='+req.query.name+';');
+        await kvery('DELETE FROM Crew WHERE name=\"'+req.query.name+'\";');
         res.json({msg: "sup"})
     })
 
@@ -167,14 +173,17 @@ router.route('/conveyor_manage')
 
     .post(async function(req, res) {
         await kvery('INSERT INTO Conveyor(firm,passwd) VALUES (\"'+req.query.firm+'\",\"'+req.query.passwd+'\");');
+        res.json({msg: "sup"})
     })
     
     .put(async function(req, res) {
         await kvery('UPDATE Conveyor SET firm = \"'+req.query.firm+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID+';');
+        res.json({msg: "sup"})
     })
 
     .delete(async function(req, res) {
-        await kvery('DELETE FROM Conveyor WHERE name='+req.query.name+';');
+        await kvery('DELETE FROM Conveyor WHERE firm=\"'+req.query.firm+'\";');
+        res.json({msg: "sup"})
     })
 
 router.route('/admin_manage')
@@ -184,14 +193,17 @@ router.route('/admin_manage')
     })
     .post(async function(req, res) {
         await kvery('INSERT INTO Admin(name,passwd) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\");');
+        res.json({msg: "sup"})
     })
     
     .put(async function(req, res) {
         await kvery('UPDATE Admin SET name = \"'+req.query.name+'\", passwd = \"'+req.query.passwd+'\" WHERE ID='+req.query.ID+';');
+        res.json({msg: "sup"})
     })
 
     .delete(async function(req, res) {
-        await kvery('DELETE FROM Admin WHERE name='+req.query.name+';');
+        await kvery('DELETE FROM Admin WHERE name=\"'+req.query.name+'\";');
+        res.json({msg: "sup"})
     })
 
 router.route('/login')
