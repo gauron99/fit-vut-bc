@@ -115,12 +115,27 @@ router.route('/getpwd')
         res.json(result[0])
     })
 
+router.route('/isuserok')
+    .get(async function(req, res){
+        var result1 = await kvery('SELECT * FROM Passenger WHERE name=\"'+req.query.name+'\";');
+        var result2 = await kvery('SELECT * FROM Crew WHERE name=\"'+req.query.name+'\";');
+        var result3 = await kvery('SELECT * FROM Admin WHERE name=\"'+req.query.name+'\";');
+        var result4 = await kvery('SELECT * FROM Conveyor WHERE firm=\"'+req.query.name+'\";');
+        var bruh = 0;
+        result1.length > 0 ? bruh++ : bruh;
+        result2.length > 0 ? bruh++ : bruh;
+        result3.length > 0 ? bruh++ : bruh;
+        result4.length > 0 ? bruh++ : bruh;
+        res.json({msg: !bruh})
+    })
+
 router.route('/passenger_manage')
     .get(async function(req, res){
         var result = await kvery('SELECT * FROM Passenger WHERE registered=TRUE');
         res.json(result)
     })
     .post(async function(req, res) {
+        await kvery('SELECT * FROM Passenger')
         await kvery('INSERT INTO Passenger(name,passwd,registered) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\",'+req.query.registered+');');
         res.json({msg: "sup"})
     })
@@ -282,10 +297,16 @@ router.route('/confirm_stop')
 
 // get all vehicles from one conveyor by conveyorID
 router.route('/conveyor_vehicle')
-.   get(async function(req, res) {
+    .get(async function(req, res) {
         var result = await kvery('SELECT * FROM Vehicle WHERE conveyorID='+req.query.conveyorID+';');
         res.json(result);
 })
+
+router.route('/available_vehicles')
+    .get(async function(req, res) {
+        var result = await kvery('SELECT DISTINCT Vehicle.ID, Vehicle.max_seats_poor, Vehicle.max_seats_rich FROM Vehicle, Connection WHERE Vehicle.ID NOT IN (SELECT Vehicle.ID FROM Connection, Vehicle WHERE Connection.vehicleID=Vehicle.ID);');
+        res.json(result);
+    })
 
 router.route('/vehicle')
     .get(async function(req, res) {
