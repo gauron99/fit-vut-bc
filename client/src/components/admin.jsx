@@ -1,9 +1,8 @@
-import React,{useState, useEffect , Fragment} from 'react';
+import React,{useState, useEffect} from 'react';
 
 import "../Admin.css"
 
-async function updateCuraka(name, pwd, id, role){
-    console.log("teka se updatne curak tadyhle");
+async function updatePerson(name, pwd, id, role){
     var nameName = role === 'Conveyor' ? 'firm' : 'name';
 
     
@@ -35,7 +34,7 @@ const PopPeopleWindow = (props) => {
             <div className="popup-window">
             <div className="popup-in">
             <button className="reserve-close-button" onClick={() =>{props.handleTrigger(!props.trigger)}}>X</button>
-                <h3 className="h3reg">Opichej zmrda</h3>
+                <h3 className="h3reg">Uprav uživatele</h3>
                 <form>
                 <label htmlFor="regn">{name}</label>
                     <input className="register-item" id="meno" type="text" defaultValue={props.userName}></input>
@@ -44,7 +43,7 @@ const PopPeopleWindow = (props) => {
                     <input className="register-item" key={props.heslo} id="hesloo" type="text" defaultValue={props.heslo}></input>
                         
                     <hr className="solid" />
-                <button onClick={() => updateCuraka(document.getElementById('meno').value, document.getElementById('hesloo').value, props.userID, props.userRole)} type="submit" className=" register-item button-submit button-login">Posrat hlavu zmrdovi</button>
+                <button onClick={() => updatePerson(document.getElementById('meno').value, document.getElementById('hesloo').value, props.userID, props.userRole)} type="submit" className=" register-item button-submit button-login">Potvrdit</button>
                 </form>
             </div>
             </div>
@@ -91,7 +90,7 @@ export const EditAdminPage = () => {
             </tr>
           </thead>
           <tbody>
-            {users.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}<td><button type='button' onClick={()=>setPop([!usePOP[0],comp[0],comp[2],comp[1],getHeslo(setslo,comp[2],comp[0])])} className="button-show">pičo</button></td></tr>)}
+            {users.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}<td><button type='button' onClick={()=>setPop([!usePOP[0],comp[0],comp[2],comp[1],getHeslo(setslo,comp[2],comp[0])])} className="button-show">upravit</button></td></tr>)}
             <PopPeopleWindow trigger={usePOP[0]} heslo={typeof(usePOP[4]) === 'object' ? heslo : typeof(usePOP[4])} userName={usePOP[3]} userID={usePOP[1] === undefined ? '1' : usePOP[1]} userRole={usePOP[2] === undefined ? 'admin' : usePOP[2]} handleTrigger={setPop} />
           </tbody>
         </table>

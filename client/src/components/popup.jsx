@@ -108,7 +108,7 @@ async function RegisterOnly(list,connID,cost,navv){
       navv('/');
     } else {
       alert("Rezervace nemohla být provedena(některá ze sedadel již nejsou volná)")
-      // navv('/');
+      navv('/');
     }
   })
 }
