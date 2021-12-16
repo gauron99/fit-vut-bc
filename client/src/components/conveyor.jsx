@@ -90,10 +90,25 @@ async function registerConn(richseats,poorseats,handleTrigger,trigger,setviewID)
 
 }
 
+async function getVehicleOptions(setVehicleOptions){
+  await fetch('/api/available_vehicles',{
+    method: "GET",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+      },
+  })
+  .then(r => r.json())
+  .then(res=>{
+    setVehicleOptions(res)
+  })
+};
+
 const NewConnWindow = (props) => {
   const setviewID = props.setviewID;
   const trigger = props.trigger;
   const handleTrigger = props.handleTrigger;
+  const [vehicleOptions,setVehicleOptions] = useState([])
 
   const  handleNewConn = (event) => {
     event.preventDefault();
@@ -124,13 +139,32 @@ const NewConnWindow = (props) => {
     registerConn(data.richseats.value,data.poorseats.value,handleTrigger,trigger,setviewID);
   }
 
+
+  useEffect(()=> {
+    getVehicleOptions(setVehicleOptions)
+  },[]);
+
+  let vehList = []
+  useEffect(()=> {
+    if(vehicleOptions.length === 0){
+      vehList = <option>Nejsou dostupná žádná auta</option>
+    }else {
+      vehList = vehicleOptions.length > 0 && vehicleOptions.map((item, i) => {
+        <option key={item.ID} value={item.description}>{item.description, item.max_seats_rich,item.max_seats_poor}</option>
+      })
+    }
+
+  },[vehicleOptions])
+
   return (
     <div className="conveyor-rightside">
       <div className="main-page-vehicle">
         <h3 className="h3reg">Vytvoř nový spoj</h3>
         <form onSubmit={handleNewConn}>
           <label htmlFor="vehID"></label>
-            <input>
+            <select>
+                {vehList}
+            </select>          
           <label htmlFor="richseats">Cena za 1. třídu</label>
             <input className="register-item" id="richseats" type="text" placeholder="cena pro 1.třídu"></input>
                   
