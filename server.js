@@ -254,10 +254,17 @@ router.route('/stops')
         res.json({msg: "sup"})
     })
 
+// get all stops that have been confirmed (for conveyors to propose an update)
+router.route('/stops_all_confirmed')
+    .get(async function(req,res) {
+        var results = await kvery('SELECT * FROM Stop WHERE confirmed=1;');
+        res.json(results);
+    })
+
     // get all stops for one connection ID
 router.route('/stops_by_conn')
     .get(async function(req,res) {
-        var results = await kvery('SELECT name,arrival FROM Connection_stop,Stop WHERE connID=\"'+req.query.connID+'\" AND confirmed=1 AND Connection_stop.stopID=Stop.ID;');
+        var results = await kvery('SELECT name,arrival FROM Connection_stop,Stop WHERE connID=\"'+req.query.connID+'\" AND confirmed=1 AND Connection_stop.stopID=Stop.ID ORDER BY arrival;');
         res.json(results);
     })
 
