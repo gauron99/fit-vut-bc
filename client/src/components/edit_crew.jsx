@@ -29,9 +29,8 @@ async function destroyReservation(resID, setJizdenkos){
     getRezs(setJizdenkos)
 }
 
-async function getRezs(setJizdenkos, name, role){
-    console.log(name,role)
-    fetch('/api/reservation_confirm',{
+async function getRezs(setJizdenkos){
+    await fetch('/api/reservation_confirm',{
         method:"GET",
         headers: {
           'Content-Type': 'application/json',
@@ -47,7 +46,30 @@ async function getRezs(setJizdenkos, name, role){
         setJizdenkos(jizdenkz);
     })
 }
-async function getVoZas(setJizdenkos){
+async function getVoZas(setVozidlosZastavkos){
+    var tokenis = getToken();
+    var name = tokenis.login;
+    await fetch('/api/ultimate_getfucked?name='+name,{
+        method:"GET",
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+      })
+      .then((res) => res.json())
+      .then((result) => {
+        var fuha = [];
+        var klicky = Object.keys(result); 
+        for (let klic of klicky){
+            let temp = [klic];
+            for(let zast of result[klic]){
+                temp.push(zast['stopName']);
+            }
+            fuha.push(temp);
+        }
+        console.log(fuha);
+        setVozidlosZastavkos(fuha);
+    })
 
 }
 
@@ -59,7 +81,8 @@ export const EditCrewPage = () => {
 
   useEffect(() =>{
     getRezs(setJizdenkos);
-    getVoZas(setVozidlosZastavkos, tokenis.login, tokenis.type);
+    getVoZas(setVozidlosZastavkos);
+    console.log(vozidlosZastavkos)
   }, []);
 
   if(isLoggedIn("CREW")){
@@ -90,23 +113,16 @@ export const EditCrewPage = () => {
         </div>
   
         <div className="admin_users_config">
-          <table className="admin_users_table">
-            <thead className="admin_table_head">
-              <tr>
-                <th>ID</th>
-                <th>connectionID</th>
-                <th>passengerID</th>
-                <th>paid</th>
-                <th>cost</th>
-                <th>potvrdit</th>
-                <th>zneplatnit</th>
-                <th>smazat</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jizdenkos.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}</tr>)}
-            </tbody>
-          </table>
+            {vozidlosZastavkos.map(comp => 
+            <table className="admin_users_table">
+                <thead className="admin_table_head">
+                    <tr><th>Linka - {comp[0]}</th></tr>
+                </thead>
+                <tbody>
+                    {comp.slice(1).map(compy => <td>{compy}</td>)}
+                </tbody>
+            </table>
+            )}
         </div>
 
         <div className="admin_others_config">
