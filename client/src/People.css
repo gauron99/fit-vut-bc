@@ -17,9 +17,10 @@
 }
 
 .main-page-people{
-  margin-left: 5%;
-  margin-right:5% ;
+  margin-left: 20%;
+  margin-right:20% ;
   background-color: var(--light_cyan_color);
+  border: 3px var(--more_darker_color) solid;
 }
 
 .btn-ppl{
@@ -31,4 +32,25 @@
   height: auto;
   text-align: left;
   align-content: center;
+  padding: 2%;
 }
+
+.people-tr:nth-child(1) { 
+  border-top: 1px solid black; 
+  border-bottom: 1px solid black;
+  width: 100%;
+}
+
+tr.solidline {
+  border-bottom: 2px solid var(--more_darker_color);
+  /* margin-bottom: 5px; */
+  /* margin-top: 5px; */
+}
+
+tbody tr:nth-child(odd) {
+  background-color: var(--light_blue_color);
+}
+
+/* tbody tr:nth-child(even) { */
+  /* background-color: blue; */
+/* } */

@@ -62,7 +62,6 @@ class ShowTable extends React.Component{
   }
 
   handlePOP(e,poor,rich) {
-    console.log("INHANDLE:",poor,rich)
     // change the state whenever the button is pressed
     this.setState(prev => ({
       usePOP: !prev.usePOP,
