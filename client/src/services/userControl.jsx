@@ -6,6 +6,20 @@ export const handleRegister = (props) => {
   
 }
 
+export async function checkForUsers(name){
+    await fetch('/api/isuserok?name='+name,{
+        method:"GET",
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+      })
+      .then((res) => res.json())
+      .then((result) => {
+        return result.msgis;
+    })
+}
+
 export const Logout = (props) => {
   if (isLoggedIn()){
 

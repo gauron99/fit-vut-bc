@@ -1,6 +1,7 @@
 import React,{useEffect,useState,useRef} from 'react';
 import { isLoggedIn, getToken, setToken, removeToken} from '../services/userControl';
 import { useNavigate } from 'react-router';
+import {checkForUsers} from '../services/userControl';
 
 import "../App.css";
 
@@ -122,17 +123,23 @@ const EditLogout = (props) => {
 
 
 async function registerUser(n,p,setView){
-  await fetch('/api/passenger_manage?name='+n+"&passwd="+p+"&registered=1",{
-    method: "POST",
-    headers: { 'Content-Type': 'application/json' },
-  })
-  .then(response => response.json())
-  .then((res)=>{
-    alert("Uspesne registrovan!");
-    var data = {name: n, passwd: p, type:"passenger"}
-    setToken(data);
-    setView("USER");
-  })
+    var boolec = await checkForUsers(n);
+   if(boolec){
+    await fetch('/api/passenger_manage?name='+n+"&passwd="+p+"&registered=1",{
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+    })
+    .then(response => response.json())
+    .then((res)=>{
+        alert("Uspesne registrovan!");
+        var data = {name: n, passwd: p, type:"passenger"}
+        setToken(data);
+        setView("USER");
+    })
+  }
+  else {
+      alert("zajděte se na matriku přejmenovat prosím, uživatele s takovým jménem již v databázi máme");
+  }
 }
 
 async function checkPassengers(name,passwd,setView){
