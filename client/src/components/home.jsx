@@ -3,7 +3,7 @@ import { PopupRegister } from "./popup";
 
 export const GeneralErrorPage = () => {
   return (
-    <h3>Obecná chyba. Nejsem si jistý proč se tohle stalo :(</h3>
+    <h3>Vnitřní chyba.</h3>
   )
 }
 

@@ -33,6 +33,14 @@
 
 .btn-ppl{
   padding: 5px;
+  margin-left: 10px;
+  margin-bottom: 3px;
+  margin-top: 2px;
+  background-color: var(--body_background_color);
+}
+
+.add-button{
+  background-color: var(--body_background_color);
 }
 
 .people-table{
@@ -93,4 +101,8 @@ tbody tr:nth-child(odd) {
 
 .people-table-items tr:hover {
   background-color: #ddd;
+}
+
+.float-right{
+  float:right;
 }

@@ -5,61 +5,143 @@ import {getToken} from "../services/userControl"
 import "../People.css"
 import "../App.css"
 
+
+
+async function GetStops(setStops){
+  await fetch('/api/stops_all_confirmed',{
+    method: "GET",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+      },
+  })
+  .then(r => r.json())
+  .then(res => {
+    setStops(res)
+  })
+}
+
+// new 'stop proposal' popup window
+const PopStopsWindow = (props) => {
+  console.log("novy zastavis")
+  return (null)
+
+}
+
+// 'proposal for existing stops' popup window
+const EditStop = (props) => {
+  console.log("edituj")
+  return (null)
+}
+
 const EditConvStops = () => {
-  return (
-    null
+  const [popProposal,setPopProposal] = useState(false)//for new proposal
+  const [popEditStop,setPopEditStop] = useState(false)//for editing existing stop
+  const [stops,setStops] = useState([]);
+  const [stopData,setStopData] = useState({ID:"",name:"",conveyorID:"",confirmed:""});
+
+  useEffect(()=>{
+    GetStops(setStops);
+  },[])
+
+  const handleData = (id,n,cid) => {
+    console.log(id,n,cid);
+    setStopData(()=>({
+      ID:id,
+      name:n,
+      conveyorID:cid,
+    }));
+    setPopProposal(!popProposal);
+  }
+
+  return(
+  <div className="main-page-people">
+    <button class="add-button" onClick={() => setPopProposal(!popProposal)}>Nový návrh</button>
+    <PopStopsWindow trigger={popProposal} handleTrigger={setPopProposal} setStops={setStops} stops={stops}/>
+    <EditStop trigger={popEditStop} handleTrigger={setPopEditStop} data={stopData} setData={handleData} setStops={setStops} stops={stops}/>
+    <table className="people-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Jméno</th>
+          <th>Návrh vytvořil(DopravceID)</th>
+          <th className="float-right">*</th>
+        </tr>
+      </thead>
+      <tbody>
+        {stops.map(val => {
+          return (
+            <tr>
+              <td>{val.ID}</td>
+              <td>{val.name}</td>
+              <td>{val.conveyorID}</td>
+              <td><button class="editbtn float-right" onClick={()=> handleData(val.ID,val.name,val.conveyorID)}>úprava</button></td>
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
+  </div>
   )
 }
 
 
+async function registerConn(richseats,poorseats,handleTrigger,trigger,setviewID){
 
-const PopConnWindow = (props) => {
+}
+
+const NewConnWindow = (props) => {
+  const setviewID = props.setviewID;
   const trigger = props.trigger;
   const handleTrigger = props.handleTrigger;
 
-  const  handleNewVehicle = (event) => {
+  const  handleNewConn = (event) => {
     event.preventDefault();
     const data = event.target;
-    // desc not given
-    if( data.desc.value === ""){
-      alert("Zadejte popis prosim!");
-      return;
-    }
+    
     // max seats not given
     if( data.richseats.value === ""){
-      alert("Zadejte pocet sedadel pro 1. třídu prosím!");
+      alert("Zadejte počet sedadel pro 1. třídu prosím!");
       return;
     }
+    // if is not a number
+    if((isNaN(data.richseats.value) || isNaN(parseFloat(data.richseats.value)))){
+      alert("Chyba! počet sedadel může být pouze číslo(1.třída)")
+      return;
+    }
+
     // check if passwords match
     if(data.poorseats.value === ""){
-      alert("Zadejte pocet sedadel pro 2. třídu prosím!");
+      alert("Zadejte počet sedadel pro 2. třídu prosím!");
       return;
     }
-    // check if crew exists inside registerCrew
-    registerVehicle(data.desc.value,data.richseats.value,data.poorseats.value,handleTrigger,trigger,props.vehicles,props.setVehicles);
+    // check if not a number
+    if((isNaN(data.poorseats.value) || isNaN(parseFloat(data.poorseats.value)))){
+      alert("Chyba! počet sedadel může být pouze číslo(2.třída)")
+      return;
+    }
+
+    registerConn(data.richseats.value,data.poorseats.value,handleTrigger,trigger,setviewID);
   }
 
-  return trigger ? (
-    <div className="popup-window">
-      <div className="popup-in">
-      <button className="reserve-close-button" onClick={() =>{handleTrigger(!trigger)}}>X</button>
-        <h3 className="h3reg">Vytvořit nový spoj</h3>
-        <form onSubmit={handleNewVehicle}>
-          <label htmlFor="desc">Popis</label>
-            <input className="register-item" id="desc" type="text" placeholder="popis pro vozidlo"></input>
-          
+  return (
+    <div className="conveyor-rightside">
+      <div className="main-page-vehicle">
+        <h3 className="h3reg">Vytvoř nový spoj</h3>
+        <form onSubmit={handleNewConn}>
+          <label htmlFor="vehID"></label>
+            <input>
           <label htmlFor="richseats">Cena za 1. třídu</label>
             <input className="register-item" id="richseats" type="text" placeholder="cena pro 1.třídu"></input>
                   
-          <label htmlFor="poorseats">Cena za ě. třídu</label>
+          <label htmlFor="poorseats">Cena za 2. třídu</label>
             <input className="register-item" id="poorseats" type="text" placeholder="cena pro 2.třídu"></input>
             <hr className="solid" />
           <button type="submit" className=" register-item button-submit button-login">Vytvořit</button>
         </form>
       </div>
     </div>
-  ) 
-  : "";
+  );
 }
 
 async function getAllStopsByConn(connID,setStops){
@@ -86,8 +168,7 @@ const EditConn = (props) => {
   const [stops,setStops] = useState([])
 
   useEffect(()=> {
-    // nacti vsechny zastavky ve spoji podle spojID
-    // if(connViewID !== undefined){
+    // laod all stops in connection by connViewID
       getAllStopsByConn(connViewID,setStops);
     // }
   },[connViewID]);
@@ -95,9 +176,8 @@ const EditConn = (props) => {
   const handleData = (e,num,name,arrival) => {
     console.log("yello printing editing and shuch");
   }
- 
   var count = 1;
-  return (
+  return connViewID !== undefined ? (
     <div className="conveyor-rightside">
        <div className="main-page-vehicle">
 
@@ -128,7 +208,7 @@ const EditConn = (props) => {
         <button>Přidat zastávku</button>
        </div>
     </div>
-  );
+  ): "";
 }
 
 async function deleteConnection(id,conns,setConns){
@@ -141,7 +221,7 @@ async function deleteConnection(id,conns,setConns){
     })
     .then(r => r.json())
     .then(res => {
-      // update spoje
+      // update connections
       GetConnections(conns,setConns)
     })
   }else{
@@ -164,9 +244,23 @@ async function GetConnections(conns,setConns){
   })
 }
 
+
+
+const ConnChooseRightView = (props) => {
+  if(props.connViewID === undefined){
+    return "";
+  }
+  else if(props.connViewID <= 0){
+    return <NewConnWindow trigger={props.popConn} handleTrigger={props.setPopConn} setConns={props.setConns} conns={props.conns} setviewID={props.setShowStopsByID}/>
+  }
+  else {
+    return <EditConn connViewID={props.connViewID} setconnViewID={props.setConnViewID} data={props.data} handleData={props.handleData} conns={props.conns} setConns={props.setConns} />
+  }
+}
+
 const EditConvConn = () => {
   const [popConn,setPopConn] = useState(false)
-  const [showStopsByID,setShowStopsByID] = useState()
+  const [connViewID,setConnViewID] = useState()
   const [conns,setConns] = useState([]);
   const [connData,setConnData] = useState({id:"",vehID:"",price_poor:"",price_rich:""});
 
@@ -182,7 +276,7 @@ const EditConvConn = () => {
       price_poor:pp,
       price_rich:pr
     }));
-    setShowStopsByID(id);
+    setConnViewID(id);
   }
 
   return(
@@ -190,8 +284,7 @@ const EditConvConn = () => {
     <div className="conveyor-leftside">
       <div className="main-page-vehicle">
         <h3 className="h3reg">Spoje</h3>
-        <button class="add-button" onClick={() => setPopConn(!popConn)}>+</button>
-        <PopConnWindow trigger={popConn} handleTrigger={setPopConn} setConns={setConns} conns={conns}/>
+        <button class="add-button" onClick={() => setConnViewID(-1)}>+</button>
         <table className="people-table">
           <thead>
             <tr>
@@ -218,7 +311,7 @@ const EditConvConn = () => {
         </table>
       </div>
     </div>
-    <EditConn connViewID={showStopsByID} setconnViewID={setShowStopsByID} data={connData} setData={handleData} conns={conns} setConns={setConns} />
+    <ConnChooseRightView connViewID={connViewID} setconnViewID={setConnViewID} data={connData} handleData={handleData} conns={conns} setConns={setConns} />
   </div>
   )
 }
@@ -488,7 +581,6 @@ async function GetPeople(personel,setPersonel) {
    })
   .then((res) => res.json())
   .then((result) => {
-    // console.log(personel);
     setPersonel(result)
   })
 }
@@ -670,7 +762,7 @@ const EditConvPerson = (props) => {
         <tr>
           <th>ID</th>
           <th>Jméno</th>
-          <th>*</th>
+          <th className="float-right">*</th>
         </tr>
       </thead>
       <tbody>
@@ -681,7 +773,7 @@ const EditConvPerson = (props) => {
               <td>{val.ID}</td>
               <td>{val.name}</td>
               {/* <td>{val.passwd}</td> */}
-              <td><button class="editbtn" onClick={()=> handleData(val.ID,val.name,val.passwd)}>upravit</button></td>
+              <td><button class="editbtn float-right" onClick={()=> handleData(val.ID,val.name,val.passwd)}>upravit</button></td>
             </tr>
           )
         })}
@@ -714,7 +806,6 @@ const EditHeaderPeople = (props) => {
         <button onClick={() => props.setConvPage(1)} className="btn-ppl">Vozidla</button>
         <button onClick={() => props.setConvPage(2)} className="btn-ppl">Spoje</button>
         <button onClick={() => props.setConvPage(3)} className="btn-ppl">Zastávky</button>
-        vidim: {props.convPage}
       </div>
       <div>
         
