@@ -73,6 +73,13 @@ async function getVoZas(setVozidlosZastavkos){
 
 }
 
+async function updateStop(id,stop){
+    await fetch('/api/gde_spoj?connID='+id+'&stopName='+stop,{
+        method: "POST",
+    })
+    .then((res) => res.json())
+}
+
 export const EditCrewPage = () => {
   // check if crew is connected
   const  [jizdenkos,setJizdenkos] = useState([]);
@@ -119,7 +126,10 @@ export const EditCrewPage = () => {
                     <tr><th>Linka - {comp[0]}</th></tr>
                 </thead>
                 <tbody>
-                    {comp.slice(1).map(compy => <td>{compy}</td>)}
+                    <td><select id={"selekty-"+comp[0]}>
+                        {comp.slice(1).map(compy => <option value={compy}>{compy}</option>)}    
+                    </select></td>
+                    <td><button type='button' id={comp[0]} onClick={() => updateStop(comp[0], document.getElementById("selekty-"+comp[0]).value)}>Aktualizovat polohu vozidla</button></td>
                 </tbody>
             </table>
             )}

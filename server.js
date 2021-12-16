@@ -39,8 +39,8 @@ app.use(express.urlencoded({ extended: true}));
 var pool  = mysql.createPool({
     connectionLimit : 10,
     host            : '85.208.51.209',
-    user            : 'kuli4',
-    password        : 'secret',
+    user            : 'loudik',
+    password        : 'popici',
     database        : 'iis_db',
 //  //    database        : 'backup',
   });
@@ -388,7 +388,13 @@ router.route('/gde_spoj')
     .get(async function(req, res) {        
         var result = await kvery('SELECT Stop.name as stopName FROM Vehicle, Stop WHERE Vehicle.last_visited = Stop.ID AND Vehicle.ID = '+req.query.ID+';');
         res.json(result[0])
-    })        
+    })
+    .post(async function(req, res) {
+        var vehicleID = await kvery('SELECT vehicleID FROM Connection WHERE ID='+req.query.connID+';');
+        var stopID = await kvery('SELECT ID FROM Stop WHERE name=\"'+req.query.stopName+'\";');
+        await kvery('UPDATE Vehicle SET last_visited='+stopID[0].ID+' WHERE ID ='+vehicleID[0].vehicleID+';');
+        res.json({msg: "sup"})
+    })    
 
 router.route('/reservation')
     .get(async function(req, res) {
