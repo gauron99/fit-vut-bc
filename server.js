@@ -343,6 +343,17 @@ router.route('/spoje')
         res.json({msg: "sup"})
     })
 
+router.route('/ultimate_getfucked')
+    .get(async function(req, res) {
+        var resultIDs = await kvery('SELECT Connection.ID as CID FROM Connection, Crew WHERE Crew.name=\"'+req.query.name+'\" AND Crew.conveyorID=Connection.conveyorID;');
+        var final = {}
+        for(let resID of resultIDs){
+            var resultStops = await kvery('SELECT Stop.name as stopName FROM Stop, Connection_stop WHERE Stop.ID=Connection_stop.stopID AND Connection_stop.connID='+resID.CID+';');
+            final[resID.CID] = resultStops;
+        }
+        res.json(final)
+    })
+
 router.route('/getvehicle')
     .get(async function(req, res) {        
         var result = await kvery('SELECT vehicleID FROM Connection WHERE ID = '+req.query.ID+';');
