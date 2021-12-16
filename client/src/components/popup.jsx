@@ -168,7 +168,7 @@ export const PopupRegister = (props) => {
             groupBy="class"
             /> */}
           <p>Celková cena: {total},-</p>
-          <div>Last stop: {lastStop}</div>
+          <div>Poslední zastávka: {lastStop}</div>
           <button className="reserve-confirms" onClick={()=>RegisterOnly(allSelected,props.connID,total,navv)}>Rezervovat</button>
           <button className="reserve-confirms" onClick={()=>RegisterBuy(allSelected,props.connID,total,navv)}>Rezervovat a koupit</button>
           <button className="reserve-confirms" onClick={()=>updateStop(props.connID, setLastStop)}>Aktualizovat polohu vozidla</button>

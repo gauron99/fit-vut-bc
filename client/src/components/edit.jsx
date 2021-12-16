@@ -9,7 +9,7 @@ export const EditErrorPage = () => {
   if(!t){
     return <h3>Omlouváme se, k tomuto musíte být příhlášeni :(</h3>
   } else {
-    return <h3>Jste přihlášeni jako někdo jiný *suspicious*</h3>
+    return <h3>Chyba! Jste přihlášeni jako někdo jiný</h3>
   }
 }
 

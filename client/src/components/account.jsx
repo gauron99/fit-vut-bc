@@ -159,13 +159,13 @@ const EditRegister = (props) => {
     const data = event.target;
 
     // passwd not given
-    if( data.regp.value == ""){
+    if( data.regp.value === ""){
       alert("Zadejte heslo prosím!");
       return;
     }
 
     // check if passwords match
-    if(data.regp.value != data.regpp.value){
+    if(data.regp.value !== data.regpp.value){
       alert("Hesla nejsou stejna!");
       return;
     }

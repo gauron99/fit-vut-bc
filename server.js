@@ -36,25 +36,15 @@ app.use(express.urlencoded({ extended: true}));
 //  });
 
 
-// var pool  = mysql.createPool({
-//     connectionLimit : 10,
-//     host            : '85.208.51.209',
-//     user            : 'kuli2',
-//      password        : 'secret',
-//      database        : 'iis_db',
-//  //    database        : 'backup',
-//   });
- 
-
 var pool  = mysql.createPool({
     connectionLimit : 10,
     host            : '85.208.51.209',
-    user            : 'loudik',
-    password        : 'popici',
-    database        : 'iis_db'
+    user            : 'kuli4',
+    password        : 'secret',
+    database        : 'iis_db',
+//  //    database        : 'backup',
   });
  
-
 
 kvery = (query) => {
     return new Promise((resolve,reject) =>{
@@ -161,9 +151,9 @@ router.route('/crew_manage')
     })
 
     .delete(async function(req, res) {
-        await kvery('DELETE FROM Crew WHERE name=\"'+req.query.name+'\";');
+        await kvery('DELETE FROM Crew WHERE ID=\"'+req.query.ID+'\";');
         res.json({msg: "sup"})
-    })
+    })  
 
 router.route('/conveyor_manage')
     .get(async function(req, res) {
@@ -264,6 +254,12 @@ router.route('/stops')
         res.json({msg: "sup"})
     })
 
+    // get all stops for one connection ID
+router.route('/stops_by_conn')
+    .get(async function(req,res) {
+        var results = await kvery('SELECT name,arrival FROM Connection_stop,Stop WHERE connID=\"'+req.query.connID+'\" AND confirmed=1 AND Connection_stop.stopID=Stop.ID;');
+        res.json(results);
+    })
 
 router.route('/stops_unconfirmed')
     .get(async function(req, res) {
@@ -277,6 +273,13 @@ router.route('/confirm_stop')
         res.json({msg: "sup"})
     })
 
+// get all vehicles from one conveyor by conveyorID
+router.route('/conveyor_vehicle')
+.   get(async function(req, res) {
+        var result = await kvery('SELECT * FROM Vehicle WHERE conveyorID='+req.query.conveyorID+';');
+        res.json(result);
+})
+
 router.route('/vehicle')
     .get(async function(req, res) {
         var result = await kvery('SELECT * FROM Vehicle WHERE ID='+req.query.ID+';');
@@ -288,7 +291,7 @@ router.route('/vehicle')
     })
 
     .put(async function(req, res) {
-        await kvery('UPDATE Vehicle SET max_seats_poor = '+req.query.max_seats_poor+', max_seats_rich = '+req.query.max_seats_rich+', description = \"'+req.query.description+'\", last_visited = '+req.query.last_visited+', conveyorID = '+req.query.conveyorID+' WHERE ID='+req.query.ID+';');
+        await kvery('UPDATE Vehicle SET max_seats_poor = '+req.query.max_seats_poor+', max_seats_rich = '+req.query.max_seats_rich+', description = \"'+req.query.description+'\", conveyorID = '+req.query.conveyorID+' WHERE ID='+req.query.ID+';');
         res.json({msg: "sup"})
     })
 
@@ -303,6 +306,20 @@ router.route('/spoj')
       var result = await kvery('SELECT * FROM Connection WHERE ID='+req.query.ID);
       res.json(result[0]);  
     })
+    // delete connection
+    .delete(async function(req, res) {
+        var result = await kvery('DELETE * FROM Connection WHERE ID='+req.query.ID);
+        res.json(result[0]);  
+      })
+  
+// get all connections by conveyor ID
+router.route('/spoj_conveyor')
+.get(async function(req, res) {
+    var result = await kvery('SELECT * FROM Connection WHERE conveyorID='+req.query.conveyorID);
+    // console.log(result);
+    res.json(result);  
+})
+
 
 router.route('/spoje')
     .get(async function(req, res) {
