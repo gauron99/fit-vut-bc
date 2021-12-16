@@ -22,11 +22,14 @@ async function deconfirmReservation(resID, setJizdenkos){
 }
 
 async function destroyReservation(resID, setJizdenkos){
-    await fetch('/api/reservation_confirm?ID='+resID,{
-        method: "DELETE",
-    })
-    .then((res) => res.json())
-    getRezs(setJizdenkos)
+    if(window.confirm("Opravdu chcete uplně vymazat rezervaci s ID "+resID+" z databáze?")){
+        await fetch('/api/reservation_confirm?ID='+resID,{
+            method: "DELETE",
+        })
+        .then((res) => res.json())
+        getRezs(setJizdenkos)
+    }
+    else {}
 }
 
 async function getRezs(setJizdenkos){

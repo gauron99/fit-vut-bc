@@ -4,13 +4,25 @@ import "../Admin.css"
 
 async function updatePerson(name, pwd, id, role){
     var nameName = role === 'Conveyor' ? 'firm' : 'name';
-
     
     await fetch("/api/"+role+"_manage?"+nameName+"="+name+"&passwd="+pwd+'&ID='+id,{
         method: "PUT",
         headers: { 'Content-Type': 'application/json' },
       })
       .then(response => response.json())
+}
+
+async function deletePerson(name, role){
+    if(window.confirm("Opravdu chcete smazat uživatele '"+name+"'?")){
+        var nameName = role === 'Conveyor' ? 'firm' : 'name';
+        
+        await fetch("/api/"+role+"_manage?"+nameName+"="+name,{
+            method: "DELETE",
+            headers: { 'Content-Type': 'application/json' },
+        })
+        .then(response => response.json())
+    }
+    else {}
 }
 
 async function getHeslo(setslo,userRole,userID) {
@@ -44,6 +56,7 @@ const PopPeopleWindow = (props) => {
                         
                     <hr className="solid" />
                 <button onClick={() => updatePerson(document.getElementById('meno').value, document.getElementById('hesloo').value, props.userID, props.userRole)} type="submit" className=" register-item button-submit button-login">Potvrdit</button>
+                <button onClick={() => deletePerson(document.getElementById('meno').value, props.userRole)} type="submit" className=" register-item button-submit button-login">Smazat uživatele</button>
                 </form>
             </div>
             </div>

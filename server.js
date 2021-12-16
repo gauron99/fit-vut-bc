@@ -151,7 +151,7 @@ router.route('/crew_manage')
     })
 
     .delete(async function(req, res) {
-        await kvery('DELETE FROM Crew WHERE ID=\"'+req.query.ID+'\";');
+        await kvery('DELETE FROM Crew WHERE name=\"'+req.query.name+'\";');
         res.json({msg: "sup"})
     })  
 

@@ -70,10 +70,12 @@ async function DelAcc(login,setL,setV,role) {
 }
 
 const DeleteAcc = (login,setL,setV,navv,role) => {
-  removeToken("token");
-  DelAcc(login,setL,setV,role);
+  if(window.confirm("Opravdu chcete smazat svůj účet '"+login+"'?")){
+    removeToken("token");
+    DelAcc(login,setL,setV,role);
 
-  navv('/');
+    navv('/');
+  } else {}
 }
 
 const Logout = (setL,setV,navv) => {
