@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Multiselect } from "multiselect-react-dropdown";
-import { getToken } from "../services/userControl"
+import { getToken,checkForUsers} from "../services/userControl"
 import { useNavigate } from 'react-router';
 
 import "../App.css"
@@ -72,8 +72,60 @@ const onRemove = (selectedList,set,poor,rich,setallSelected) =>{
   set(currPrice);
   setallSelected(selectedList);
 }
+
+
+async function sendRegistration(n,setTrigger){
+  if(!checkForUsers(n)){
+    alert("Chyba, toto jmeno jiz existuje");
+    return;
+  }
+// (\"'+req.query.name+'\",\"'+req.query.passwd+'\",'+req.query.registered+');');
+  await fetch('/api/passenger_manage?name='+n+'&passwd=a&registered=FALSE',{
+    method:"POST",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+  })
+  .then(r=>r.json())
+  .then(res=>{
+    setTrigger(false)
+  })
+}
+
+async function unregisteredRegister(e,setTrigger){
+  const n = e.target.regn.value;
+  if(n === "" || n === undefined){
+    alert("Zadej jmeno prosim");
+    return;
+  }
+  
+  sendRegistration(n,setTrigger);
+}
+
+const RegisterUnregistered = (props) => {
+  const trigger = props.trigger
+  const handleTrigger = props.setTrigger
+  return trigger ? (
+    <div className="popup-window">
+      <div className="popup-in">
+      <button className="reserve-close-button" onClick={() =>{handleTrigger(!trigger)}}>X</button>
+        <h3 className="h3reg">Nejsi registrovaný, zadej jméno prosím</h3>
+        <form onSubmit={(e) => unregisteredRegister(e,handleTrigger)}>
+          <label htmlFor="regn">Jméno</label>
+            <input className="register-item" id="regn" type="text" placeholder="jmeno"></input>
+          
+            <hr className="solid" />
+          <button type="submit" className=" register-item button-submit button-login">Pokračovat</button>
+        </form>
+      </div>
+    </div>
+  ) 
+  : "";
+}
+
 //   const navv = useNavigate(); REDIRECT TO ANOTHER WINDOW BABY
-async function RegisterOnly(list,connID,cost,navv){
+async function RegisterOnly(list,connID,cost,navv,unregistered,setUnregistered){
   // if no seats were selected
   if(list === undefined){
     alert("Vyberte sedadla k rezervaci")
@@ -83,9 +135,9 @@ async function RegisterOnly(list,connID,cost,navv){
   var ID;
   const token = getToken();
   if (!token) {
-    alert ("Prosím registruj se předtím než si něco koupíš (bo zatím nelze jinak)");
     // create new user - table-row registered=FALSE (all i need is a name)
-
+    setUnregistered(!unregistered);
+    return;
   } else {
     ID = token.id;
   }
@@ -113,14 +165,10 @@ async function RegisterOnly(list,connID,cost,navv){
   })
 }
 
-async function RegisterBuy(list){
-  await fetch('/api/reservation?ID=',{
-
-  })
-  .then()
-}
-
 async function updateStop(connID,setLastStop) {
+  if(connID === undefined || connID === ""){
+    return;
+  }
   var vehicleID;
   await fetch('/api/getvehicle?ID='+connID,{
     method: "GET",
@@ -146,12 +194,19 @@ export const PopupRegister = (props) => {
   const [vehSeats,setVehSeats]  = useState([]);
   const [total, setTotal] = useState(0);
   const [lastStop, setLastStop] = useState("");
+  const [unregistered,setUnregistered] = useState(false)
+
   const navv = useNavigate();
+
+
   useEffect(()=>{
     if(props.trigger){
       getAllInfoReservations(props.connID,setVehSeats)
     }
-    updateStop(props.connID, setLastStop);
+    if(props.connID!== undefined || props.connID !== ""){
+      updateStop(props.connID, setLastStop);
+    }
+
   },[props.connID])//whenever connID changes (button clicks and sets it in home.jsx - useEffect runs)
   return props.trigger ? (
     <div className="popup-window">
@@ -159,20 +214,20 @@ export const PopupRegister = (props) => {
           <button className="reserve-close-button" onClick={(e) =>{ props.updTrigger(e);setTotal(0);}}>X</button>
           <h3>Rezervace: Linka: {props.connID}</h3>
 
-          {/* <Multiselect
+          <Multiselect
             placeholder="Vyber jízdenky"
             onSelect={(a)=>onSelect(a,setTotal,price[0],price[1],setallSelected)}
             onRemove={(a)=>onRemove(a,setTotal,price[0],price[1],setallSelected)}
             options={vehSeats}
             displayValue="name"
             groupBy="class"
-            /> */}
+            />
           <p>Celková cena: {total},-</p>
           <div>Poslední zastávka: {lastStop}</div>
-          <button className="reserve-confirms" onClick={()=>RegisterOnly(allSelected,props.connID,total,navv)}>Rezervovat</button>
-          <button className="reserve-confirms" onClick={()=>RegisterBuy(allSelected,props.connID,total,navv)}>Rezervovat a koupit</button>
+          <button className="reserve-confirms" onClick={()=>RegisterOnly(allSelected,props.connID,total,navv,unregistered,setUnregistered)}>Rezervovat</button>
           <button className="reserve-confirms" onClick={()=>updateStop(props.connID, setLastStop)}>Aktualizovat polohu vozidla</button>
         </div>
+        <RegisterUnregistered trigger={unregistered} handleTrigger={setUnregistered}/>
     </div>
   ) : "";
 };
