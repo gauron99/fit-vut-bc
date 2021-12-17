@@ -68,7 +68,6 @@ kvery = (query) => {
     return new Promise((resolve,reject) =>{
         pool.query(query, (error, results) => {
             if (error) return reject(error);
-            console.log(results.insertId)
             return resolve(results);
         });
     });
