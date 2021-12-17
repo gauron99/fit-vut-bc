@@ -35,16 +35,27 @@ app.use(express.urlencoded({ extended: true}));
 // //    database        : 'backup',
 //  });
 
+// var pool  = mysql.createPool({
+//     connectionLimit : 10,
+//     host            : '85.208.51.209',
+//     user            : 'kuli4',
+//     password        : 'secret',
+//     database        : 'iis_db',
+// //  //    database        : 'backup',
+//   });
 
 var pool  = mysql.createPool({
     connectionLimit : 10,
     host            : '85.208.51.209',
-    user            : 'loudik',
-    password        : 'popici',
+    user            : 'kuli5',
+    password        : 'secret',
     database        : 'iis_db',
 //  //    database        : 'backup',
   });
- 
+  
+
+
+
 
 kvery = (query) => {
     return new Promise((resolve,reject) =>{
@@ -267,6 +278,12 @@ router.route('/isstopok')
         res.json({msgis: !bruh})
     })
 
+router.route('/new_stop')
+    .post(async function(req, res) {
+        await kvery('INSERT INTO Stop(name,conveyorID,confirmed) VALUES (\"'+req.query.name+'\",'+req.query.conveyorID+',FALSE);');
+        res.json({msg: "sup"})
+    })
+
 router.route('/stops')
     .get(async function(req, res) {
         var result = await kvery('SELECT * FROM Stop WHERE ID='+req.query.ID+';');
@@ -297,10 +314,20 @@ router.route('/stops_all_confirmed')
     // get all stops for one connection ID
 router.route('/stops_by_conn')
     .get(async function(req,res) {
-        var results = await kvery('SELECT name,arrival FROM Connection_stop,Stop WHERE connID=\"'+req.query.connID+'\" AND confirmed=1 AND Connection_stop.stopID=Stop.ID ORDER BY arrival;');
+        var results = await kvery('SELECT name,arrival,stopID FROM Connection_stop,Stop WHERE connID=\"'+req.query.connID+'\" AND confirmed=1 AND Connection_stop.stopID=Stop.ID ORDER BY arrival;');
+        res.json(results);
+    })
+    .post(async function(req,res) {
+        var results = await kvery('INSERT INTO Connection_stop(connID,stopID,arrival) VALUES (\"'+req.query.connID+'\",'+req.query.stopID+',\"'+req.query.arrival+'\");');
         res.json(results);
     })
 
+    .delete(async function(req,res) {
+        var results = await kvery('DELETE FROM Connection_stop WHERE connID='+req.query.connID+' AND stopID='+req.query.stopID+';');
+        res.json({msg: "sup"});
+    })
+    
+    
 router.route('/stops_unconfirmed')
     .get(async function(req, res) {
         var results = await kvery('SELECT * FROM Stop WHERE confirmed is FALSE;');
@@ -361,8 +388,8 @@ router.route('/spoj')
     })
     // delete connection
     .delete(async function(req, res) {
-        var result = await kvery('DELETE * FROM Connection WHERE ID='+req.query.ID);
-        res.json(result[0]);  
+        var result = await kvery('DELETE FROM Connection WHERE ID='+req.query.ID);
+        res.json({msg: "sup"});  
       })
   
 // get all connections by conveyor ID
@@ -399,8 +426,9 @@ router.route('/spoje')
         var zastavky = req.body.zastavky;
         for (let stop of zastavky){
             var ID = await kvery('SELECT ID FROM Stop WHERE name=\"'+stop.name+'\";')
-            await kvery('INSERT INTO Connection_stop(connID,stopID,time) VALUES ('+connID[0]['LAST_INSERT_ID()']+', '+ID[0].ID+','+stop.cas+');');
-        }       
+            await kvery('INSERT INTO Connection_stop(connID,stopID,arrival) VALUES ('+connID[0]['LAST_INSERT_ID()']+', '+ID[0].ID+',\"'+stop.cas+'\");');
+        }
+        res.json({msg: "sup"})
     })
 
     .put(async function(req, res) {
@@ -460,9 +488,9 @@ router.route('/reservation')
         }
         else {
             await kvery('INSERT INTO Reservation(connectionID, passengerID, paid, cost) VALUES ('+req.query.connectionID+', '+req.query.passengerID+', FALSE,'+req.query.cost+')');
-            console.log('MINE I INTO Reservation(connectionID, passengerID, paid, cost) VALUES ('+req.query.connectionID+', '+req.query.passengerID+', FALSE,'+req.query.cost+')')
+            // console.log('MINE I INTO Reservation(connectionID, passengerID, paid, cost) VALUES ('+req.query.connectionID+', '+req.query.passengerID+', FALSE,'+req.query.cost+')')
             var resID = await kvery('SELECT LAST_INSERT_ID();');
-            console.log("RESID: ",resID);
+            // console.log("RESID: ",resID);
             for (let seat of req.query.seats.split(',')){
                 console.log('INFOR: INTO Reservation_seat(reservationID, seat) VALUES ('+resID[0]['LAST_INSERT_ID()']+','+seat+')')
                 await kvery('INSERT INTO Reservation_seat(reservationID, seat) VALUES ('+resID[0]['LAST_INSERT_ID()']+','+seat+')');

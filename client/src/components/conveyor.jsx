@@ -22,17 +22,60 @@ async function GetStops(setStops){
   })
 }
 
+const handleNewProposal = () => {
+  return (
+    null
+  )
+}
+
 // new 'stop proposal' popup window
 const PopStopsWindow = (props) => {
-  console.log("novy zastavis")
-  return (null)
-
+  const trigger = props.trigger
+  const handleTrigger = props.setTrigger
+  return trigger ? (
+    <div className="popup-window">
+      <div className="popup-in">
+      <button className="reserve-close-button" onClick={() =>{handleTrigger(!trigger)}}>X</button>
+        <h3 className="h3reg">Návrh na novou zastávku</h3>
+        <form onSubmit={handleNewProposal}>
+          <label htmlFor="regn">Jméno</label>
+            <input className="register-item" id="regn" type="text" placeholder="jmeno"></input>
+          
+            <hr className="solid" />
+          <button type="submit" className=" register-item button-submit button-login">Navrhnout</button>
+        </form>
+      </div>
+    </div>
+  ) 
+  : "";
 }
 
 // 'proposal for existing stops' popup window
 const EditStop = (props) => {
-  console.log("edituj")
-  return (null)
+  const data = props.data;
+  const setData = props.setData;
+  const trigger = props.trigger;
+  const handleTrigger = props.handleTrigger;
+  //  id:"",max_rich:"",max_poor:"",desc:""
+
+  return trigger ? (
+    <div className="popup-window-down">
+      <div className="popup-in">
+      <button className="reserve-close-button" onClick={() =>{handleTrigger(!trigger)}}>X</button>
+        <h3 className="h3reg">Navrhnout úpravu</h3>
+        <form onSubmit={(e)=>handleNewProposal(e,data.id,data.max_rich,data.max_poor,data.desc,trigger,handleTrigger)}>
+          <label htmlFor="desc">Jméno</label>
+            <input className="register-item" id="desc" type="text"defaultValue={data.name} ></input>
+          
+                  
+            <hr className="solid" />
+          <button type="submit" className="register-item button-login">Navrhnout</button>
+        </form>
+
+      </div>
+    </div>
+  ) 
+  : "";
 }
 
 const EditConvStops = () => {
@@ -52,7 +95,7 @@ const EditConvStops = () => {
       name:n,
       conveyorID:cid,
     }));
-    setPopProposal(!popProposal);
+    setPopEditStop(!popEditStop);
   }
 
   return(
@@ -60,6 +103,7 @@ const EditConvStops = () => {
     <button class="add-button" onClick={() => setPopProposal(!popProposal)}>Nový návrh</button>
     <PopStopsWindow trigger={popProposal} handleTrigger={setPopProposal} setStops={setStops} stops={stops}/>
     <EditStop trigger={popEditStop} handleTrigger={setPopEditStop} data={stopData} setData={handleData} setStops={setStops} stops={stops}/>
+
     <table className="people-table">
       <thead>
         <tr>
@@ -87,8 +131,24 @@ const EditConvStops = () => {
 }
 
 
-async function registerConn(richseats,poorseats,handleTrigger,trigger,setviewID){
+async function registerConn(vehID,richprice,poorprice,stops,setviewID,conns,setConns){
+  const token = getToken()
 
+  console.log("stop prev post req:",stops)
+  await fetch('/api/spoje?conveyorID='+token.id+"&vehicleID="+vehID+"&price_poor="+poorprice+"&price_rich="+richprice,{
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+      },
+      body: JSON.stringify({zastavky: stops})
+  })
+  .then(r=>r.json())
+  .then(res=>{
+    setviewID(undefined);
+    GetConnections(conns,setConns)
+    
+  })
 }
 
 // get all stops from db
@@ -145,63 +205,58 @@ async function getVehicleOptions(setVehicleOptions){
 // main window for new connection on the right side
 const NewConnWindow = (props) => {
   const setviewID = props.setviewID;
-  const trigger = props.trigger;
-  const handleTrigger = props.handleTrigger;
+  const conns = props.conns;
+  const setConns = props.setConns;
 
   // all available vehicles
   const [vehicleOptions,setVehicleOptions] = useState()
 
-  // stops already selected, under 
-  const [selectedStops,setSelectedStops] = useState([])
+  // show this in dropdown menu
   const [allStops,setAllStops] = useState([])
-
-
-  const addZastavka = (e) => {
-    console.log("lego noew zastavka: ",e.target.value,e.target.name);
-    setSelectedStops((prev)=>[
-      ...prev,e.target.name
-    ])
-  }
+  // stops already selected, under dropdown menu
+  const [selectedStops,setSelectedStops] = useState([])
   
 
-  const  handleNewConn = (event) => {
+  const  handleNewConn = (event,conns,setConns) => {
     event.preventDefault();
     const data = event.target.elements;
-    console.log("0",data[0])
+
+    let vehID = data[0].value.split(' ')[2]
+    // skip 3rd entirely
+    
+    let saveStops = []
+    // cycle through all stops and save arrival times and shit
+    for(let i=0;i<selectedStops.length;++i){
+      let x = {
+        name:data[i+4].id,
+        cas:data[i+4].value+":00"
+      }
+      saveStops.push(x)
+    }
     // test if vehicle is set
-    if(data[0] === undefined || data[0] === 0){
+    if(vehID === undefined || vehID === 0){
       alert("Vyber auto prosím!");
       return;
     }
-    console.log("1",data[1])
 
     // test if price for rich is set
-    if(data[1] === "" || (isNaN(data[1]) || isNaN(parseFloat(data[1])))){
+    if(data[1].value === "" || (isNaN(data[1].value) || isNaN(parseFloat(data[1].value)))){
       alert("Zadejte počet sedadel pro 1. třídu prosím!(číslo)");
       return;
     }
-    console.log("2",data[2])
 
     // test price for poor seats
-    if(data[2] === "" || (isNaN(data[2]) || isNaN(parseFloat(data[2])))){
+    if(data[2].value === "" || (isNaN(data[2].value) || isNaN(parseFloat(data[2].value)))){
       alert("Zadejte počet sedadel pro 2. třídu prosím!(číslo)");
       return;
     }
 
-    console.log("3",data[3])
-
-    console.log("data listu zatavek: ",data[3].length)
-    if(data[3].length < 2){
+    if(saveStops.length < 2){
       alert("Zadejte alespon 2 zastavky pro spoj prosím!");
+      return;
     }
-
-
-    console.log("lalala:",data)
-    console.log("lalala:",data[0])
-    
-    return;
-
-    registerConn(data.richseats.value,data.poorseats.value,handleTrigger,trigger,setviewID);
+  
+    registerConn(vehID,data[1].value,data[2].value,saveStops,setviewID,conns,setConns);
   }
 
   useEffect(()=> {
@@ -218,12 +273,12 @@ const NewConnWindow = (props) => {
   const handleData = (e,count,name,label) =>{
 
   }
-
+  let count = 1;
   return (
     <div className="conveyor-rightside">
       <div className="main-page-vehicle">
         <h3 className="h3reg">Vytvoř nový spoj</h3>
-        <form onSubmit={handleNewConn}>
+        <form onSubmit={(e)=>handleNewConn(e,conns,setConns)}>
           <label htmlFor="vehID">Vyber dostupné vozidlo</label>
           <div className="conveyor-conn-select">
             <select id="vehID">
@@ -238,7 +293,6 @@ const NewConnWindow = (props) => {
             <hr className="solid" />
 
           <label htmlFor="stops">Vyber zastávky</label>
-          {console.log(allStops)}
             <Select
             
               placeholder="Zastávky"
@@ -262,11 +316,10 @@ const NewConnWindow = (props) => {
             </thead>
             <tbody>
               {selectedStops.map(val => {
-                
                 return (
                   <tr>
-                  <td id={val.label}>{val.label}</td>
-                  <td><input type="time"></input></td>
+                  <td id={count++}>{val.label}</td>
+                  <td><input id={val.label} type="time"></input></td>
                   </tr>
                   )
                 })}
@@ -280,8 +333,7 @@ const NewConnWindow = (props) => {
 }
 
 async function getAllStopsByConn(connID,setStops){
-  console.log('/api/stops_by_conn?connID='+connID);
-
+  // console.log('/api/stops_by_conn?connID='+connID);
   await fetch('/api/stops_by_conn?connID='+connID,{
     method: "GET",
     headers: {
@@ -291,9 +343,63 @@ async function getAllStopsByConn(connID,setStops){
   })
   .then((result) => result.json())
   .then((res) => {
-    console.log("zastavky got: ",res);
     setStops(res);
   })
+}
+
+
+async function getNewStops(newStops,setNewStops){
+  await fetch('/api/stops_all_confirmed',{
+    method: "GET",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+      },
+  })
+  .then(r=>r.json())
+  .then(res=>{
+    let tmp = res.map((item,i)=>{
+      return (
+        <option key={item.ID}>ID:{item.ID},{item.name}</option>
+      )
+    })
+    setNewStops(tmp);
+  })
+}
+
+async function addNewStop(e,connID,stopID,arrival,setStops){
+  e.preventDefault()
+  stopID = stopID.split(",")[0].slice(3)
+  await fetch('/api/stops_by_conn?connID='+connID+"&stopID="+stopID+"&arrival="+arrival,{
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+      },
+  })
+  // .then(r=>r.json())
+  .then(res=>{
+
+    getAllStopsByConn(connID,setStops)
+  })
+}
+
+async function deleteOneStopInConn(e,id,connID,setStops){
+  if(window.confirm("Jste si jisty ze chcete zastavku odebrat ze spoje?")){
+
+    await fetch('/api/stops_by_conn?connID='+connID+"&stopID="+id,{
+      method: "DELETE",
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+    })
+    .then(r=>(r.json()))
+    .then(res=>{
+      console.log("smazano, done")
+      getAllStopsByConn(connID,setStops);
+    })
+  }
 }
 
 const EditConn = (props) => {
@@ -301,16 +407,16 @@ const EditConn = (props) => {
   const data = props.data;
   const setData = props.setData;
   const [stops,setStops] = useState([])
+  const [newStops,setNewStops] = useState([])
 
   useEffect(()=> {
     // laod all stops in connection by connViewID
       getAllStopsByConn(connViewID,setStops);
+      getNewStops(newStops,setNewStops);
     // }
   },[connViewID]);
 
-  const handleData = (e,num,name,arrival) => {
-    console.log("yello printing editing and shuch");
-  }
+ 
   var count = 1;
   return connViewID !== undefined ? (
     <div className="conveyor-rightside">
@@ -334,13 +440,21 @@ const EditConn = (props) => {
                   <td>{count++}</td>
                   <td>{val.name}</td>
                   <td>{val.arrival}</td>
-                  <td><button class="editbtn" onClick={(e)=>handleData(e,val.count,val.name,val.arrival)}>upravit</button></td>
+                  <td><button class="editbtn" onClick={(e)=>deleteOneStopInConn(e,val.stopID,connViewID,setStops)}>-</button></td>
                 </tr>
               )
             })}
           </tbody>
         </table>
-        <button>Přidat zastávku</button>
+        <hr className="solid" />
+        <form onSubmit={(e)=>addNewStop(e,connViewID,e.target.selectnewstop.value,e.target.time.value+":00",setStops)}>
+          <button>Přidat zastávku</button>
+          <label htmlFor="newstop">Nová zastávka</label>
+          <select name="selectnewstop">
+            {newStops}
+            </select>
+          <input id ="time" name="time" type="time"/>
+        </form>
        </div>
     </div>
   ): "";
@@ -348,7 +462,7 @@ const EditConn = (props) => {
 
 async function deleteConnection(id,conns,setConns){
   if(window.confirm("Chcete smazat spoj s ID "+id+" ?")){
-    await fetch('api/',{
+    await fetch('api/spoj?ID='+id,{
       method: "DELETE",
       headers: {
         'Content-Type': 'application/json',
@@ -357,6 +471,7 @@ async function deleteConnection(id,conns,setConns){
     .then(r => r.json())
     .then(res => {
       // update connections
+      console.log("mam respons:!");
       GetConnections(conns,setConns)
     })
   }else{
@@ -386,7 +501,7 @@ const ConnChooseRightView = (props) => {
     return "";
   }
   else if(props.connViewID <= 0){
-    return <NewConnWindow trigger={props.popConn} handleTrigger={props.setPopConn} setConns={props.setConns} conns={props.conns} setviewID={props.setShowStopsByID}/>
+    return <NewConnWindow setConns={props.setConns} conns={props.conns} setviewID={props.setconnViewID}/>
   }
   else {
     return <EditConn connViewID={props.connViewID} setconnViewID={props.setConnViewID} data={props.data} handleData={props.handleData} conns={props.conns} setConns={props.setConns} />
@@ -452,7 +567,7 @@ const EditConvConn = () => {
 }
 
 
-async function deleteVehicle(id,vehicles,setVehicles,tr,setTr){
+export async function deleteVehicle(id,vehicles,setVehicles,tr,setTr){
   console.log("id,vehicles:: ",id,vehicles);
   
   // check if user confirms deletion
@@ -510,7 +625,6 @@ const EditMachine = (props) => {
   const trigger = props.trigger;
   const handleTrigger = props.handleTrigger;
   //  id:"",max_rich:"",max_poor:"",desc:""
-  console.log(data.id,data.max_rich,data.max_poor,data.desc);
 
   return trigger ? (
     <div className="popup-window-down">
@@ -555,7 +669,7 @@ async function registerVehicle(desc,richseats,poorseats,handleTrigger,trigger,ve
 }
 
 
-const PopVehicleWindow = (props) => {
+export const PopVehicleWindow = (props) => {
   const trigger = props.trigger;
   const handleTrigger = props.handleTrigger;
 
