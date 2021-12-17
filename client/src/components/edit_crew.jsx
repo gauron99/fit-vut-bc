@@ -114,9 +114,9 @@ export const EditCrewPage = () => {
             </thead>
             <tbody>
               {jizdenkos.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}
-                <td><button type='submit' onClick={()=>confirmReservation(comp[0], setJizdenkos)} >vyliž</button></td>
-                <td><button type='submit' onClick={()=>deconfirmReservation(comp[0], setJizdenkos)} >si</button></td>
-                <td><button type='submit' onClick={()=>destroyReservation(comp[0], setJizdenkos)} className="button-show">prdel</button></td>
+                <td><button type='submit' onClick={()=>confirmReservation(comp[0], setJizdenkos)} >potvrdit</button></td>
+                <td><button type='submit' onClick={()=>deconfirmReservation(comp[0], setJizdenkos)} >zneplatnit</button></td>
+                <td><button type='submit' onClick={()=>destroyReservation(comp[0], setJizdenkos)} className="button-show">smazat</button></td>
                 </tr>)}
             </tbody>
           </table>
