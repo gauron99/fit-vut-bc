@@ -536,7 +536,7 @@ const ManageStops = (props) =>{
                 <th>DopravceID</th>
                 <th>Potvrzené</th>
                 <th className="">Potvrzení</th>
-                <th className="">upravit</th>
+                <th className="">Upravit</th>
               </tr>
             </thead>
             <tbody>
@@ -546,7 +546,7 @@ const ManageStops = (props) =>{
                     <td>{val.ID}</td>
                     <td>{val.name}</td>
                     <td>{val.conveyorID}</td>
-                    <td>{val.confirmed}</td>
+                    <td>{val.confirmed? "Ano" : "Ne"}</td>
                     <td><button class="editbtn" onClick={()=> ConfirmStop(val.ID,val.name,val.confirmed,setStops)}>potvrdit</button></td>
                     <td><button class="editbtn" onClick={()=> handleData(val.ID,val.name,val.conveyorID)}>úprava</button></td>
                   </tr>

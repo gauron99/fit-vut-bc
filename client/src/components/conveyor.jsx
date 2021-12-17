@@ -1,6 +1,6 @@
 import React,{useState,useEffect} from "react";
 import {GeneralErrorPage} from "./home";
-import {getToken, checkForUsers} from "../services/userControl"
+import {getToken, checkForUsers,checkForStops} from "../services/userControl"
 import Select from 'react-select';
 
 import "../People.css"
@@ -22,7 +22,7 @@ async function GetStops(setStops){
   })
 }
 
-const handleNewProposal = (e,handleTrigger) => {
+async function handleNewProposal(e,handleTrigger){
 
   // check if exists already
   if(!checkForStops(e.target.regn.value)){
@@ -31,8 +31,9 @@ const handleNewProposal = (e,handleTrigger) => {
   }
 
   console.log('new proposal vytvor zastavku=',e.target.regn.value);
-  token = getToken()
-  await fetch('/api/new_stop?name='+e.target.regn.value+'&conveyorID='+token.login,{
+  const token = getToken();
+
+  await fetch('/api/new_stop?name='+e.target.regn.value+'&conveyorID='+token.id,{
     method: "POST",
     headers: {
       'Content-Type': 'application/json',
