@@ -259,6 +259,14 @@ router.route('/login')
 
 // SPOJE MANAGEMENT API
 
+router.route('/isstopok')
+    .get(async function(req, res){
+        var result = await kvery('SELECT * FROM Stop WHERE name=\"'+req.query.name+'\";');
+        var bruh = 0;
+        result.length > 0 ? bruh++ : bruh;
+        res.json({msgis: !bruh})
+    })
+
 router.route('/stops')
     .get(async function(req, res) {
         var result = await kvery('SELECT * FROM Stop WHERE ID='+req.query.ID+';');

@@ -22,6 +22,22 @@ export async function checkForUsers(name){
     return p;
 }
 
+export async function checkForStops(name){
+    var p;
+    await fetch('/api/isstopok?name='+name,{
+        method:"GET",
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+      })
+      .then((res) => res.json())
+      .then((result) => {
+         p = result.msgis;
+        })
+    return p;
+}
+
 export const Logout = (props) => {
   if (isLoggedIn()){
 

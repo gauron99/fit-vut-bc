@@ -89,12 +89,15 @@ async function addAdmin(n,p){
 
 async function updatePerson(name, pwd, id, role){
     var nameName = role === 'Conveyor' ? 'firm' : 'name';
-    
-    await fetch("/api/"+role+"_manage?"+nameName+"="+name+"&passwd="+pwd+'&ID='+id,{
-        method: "PUT",
-        headers: { 'Content-Type': 'application/json' },
-      })
-      .then(response => response.json())
+    var boolec = await checkForUsers(name);
+    if(boolec){
+        await fetch("/api/"+role+"_manage?"+nameName+"="+name+"&passwd="+pwd+'&ID='+id,{
+            method: "PUT",
+            headers: { 'Content-Type': 'application/json' },
+        })
+        .then(response => response.json())
+    }
+    else {alert("NOPE")}
 }
 
 async function deletePerson(name, role){
