@@ -47,20 +47,28 @@ app.use(express.urlencoded({ extended: true}));
 var pool  = mysql.createPool({
     connectionLimit : 10,
     host            : '85.208.51.209',
-    user            : 'kuli5',
-    password        : 'secret',
+    user            : 'loudik',
+    password        : 'popici',
     database        : 'iis_db',
 //  //    database        : 'backup',
   });
   
 
 
-
+insertKvery = (query) => {
+    return new Promise((resolve,reject) =>{
+        pool.query(query, (error, results) => {
+            if (error) return reject(error);
+            return resolve(results.insertId);
+        });
+    });
+}
 
 kvery = (query) => {
     return new Promise((resolve,reject) =>{
         pool.query(query, (error, results) => {
             if (error) return reject(error);
+            console.log(results.insertId)
             return resolve(results);
         });
     });
@@ -430,12 +438,11 @@ router.route('/spoje')
         res.json(spoje);
     })
     .post(async function(req, res) {
-        await kvery('INSERT INTO Connection(conveyorID,vehicleID,price_poor,price_rich) VALUES ('+req.query.conveyorID+', '+req.query.vehicleID+','+req.query.price_poor+','+req.query.price_rich+');');
-        var connID = await kvery('SELECT LAST_INSERT_ID();');
+        var connID = await insertKvery('INSERT INTO Connection(conveyorID,vehicleID,price_poor,price_rich) VALUES ('+req.query.conveyorID+', '+req.query.vehicleID+','+req.query.price_poor+','+req.query.price_rich+');');
         var zastavky = req.body.zastavky;
         for (let stop of zastavky){
             var ID = await kvery('SELECT ID FROM Stop WHERE name=\"'+stop.name+'\";')
-            await kvery('INSERT INTO Connection_stop(connID,stopID,arrival) VALUES ('+connID[0]['LAST_INSERT_ID()']+', '+ID[0].ID+',\"'+stop.cas+'\");');
+            await kvery('INSERT INTO Connection_stop(connID,stopID,arrival) VALUES ('+connID+', '+ID[0].ID+',\"'+stop.cas+'\");');
         }
         res.json({msg: "sup"})
     })
@@ -496,13 +503,12 @@ router.route('/reservation')
             res.json({msg: 'ERR'});
         }
         else {
-            await kvery('INSERT INTO Reservation(connectionID, passengerID, paid, cost) VALUES ('+req.query.connectionID+', '+req.query.passengerID+', FALSE,'+req.query.cost+')');
+            var resID = await insertKvery('INSERT INTO Reservation(connectionID, passengerID, paid, cost) VALUES ('+req.query.connectionID+', '+req.query.passengerID+', FALSE,'+req.query.cost+')');
             // console.log('MINE I INTO Reservation(connectionID, passengerID, paid, cost) VALUES ('+req.query.connectionID+', '+req.query.passengerID+', FALSE,'+req.query.cost+')')
-            var resID = await kvery('SELECT LAST_INSERT_ID();');
             // console.log("RESID: ",resID);
             for (let seat of req.query.seats.split(',')){
-                console.log('INFOR: INTO Reservation_seat(reservationID, seat) VALUES ('+resID[0]['LAST_INSERT_ID()']+','+seat+')')
-                await kvery('INSERT INTO Reservation_seat(reservationID, seat) VALUES ('+resID[0]['LAST_INSERT_ID()']+','+seat+')');
+                console.log('INFOR: INTO Reservation_seat(reservationID, seat) VALUES ('+resID+','+seat+')')
+                await kvery('INSERT INTO Reservation_seat(reservationID, seat) VALUES ('+resID+','+seat+')');
                 await kvery('UPDATE Vehicle_seat SET free=FALSE WHERE vehicleID='+vehID[0].vehicleID+' AND seat='+seat+';');
             }
             res.json({msg: 'OK'});    
