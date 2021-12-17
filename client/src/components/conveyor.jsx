@@ -1,6 +1,7 @@
 import React,{useState,useEffect} from "react";
 import {GeneralErrorPage} from "./home";
 import {getToken, checkForUsers} from "../services/userControl"
+import Select from 'react-select';
 
 import "../People.css"
 import "../App.css"
@@ -101,25 +102,19 @@ async function getAllStops(setAllStops,selected){
   })
   .then(r => r.json())
   .then(res => {
-    console.log("yastavky: ",res);
     // set all stops
-    let tmp = res.map((item,i)=> {
-      let checker = 0;
-      for(let i = 0; i < selected.length;++i){
-        if(item.name === selected[i].name){
-          checker = 1;
-          break;
-        }
+    let all = [];
+    for (let i=0;i<res.length;++i){
+      let tmp = {
+        label:res[i].name,
+        value:res[i].ID,
       }
-      if(checker){
-        return ""
-      } else {
-        return (<option key={item.ID}>{item.ID}: {item.name}</option>)
-      }
-    })
-    // or exclude ones already selected?
-    console.log(tmp)
-    setAllStops(tmp)
+      console.log(tmp)
+      all.push(tmp)
+    }
+    
+    setAllStops(all)
+
   })
 }
 
@@ -171,40 +166,59 @@ const NewConnWindow = (props) => {
 
   const  handleNewConn = (event) => {
     event.preventDefault();
-    const data = event.target;
-    
-    // max seats not given
-    if( data.richseats.value === ""){
-      alert("Zadejte počet sedadel pro 1. třídu prosím!");
+    const data = event.target.elements;
+    console.log("0",data[0])
+    // test if vehicle is set
+    if(data[0] === undefined || data[0] === 0){
+      alert("Vyber auto prosím!");
       return;
     }
-    // if is not a number
-    if((isNaN(data.richseats.value) || isNaN(parseFloat(data.richseats.value)))){
-      alert("Chyba! počet sedadel může být pouze číslo(1.třída)")
+    console.log("1",data[1])
+
+    // test if price for rich is set
+    if(data[1] === "" || (isNaN(data[1]) || isNaN(parseFloat(data[1])))){
+      alert("Zadejte počet sedadel pro 1. třídu prosím!(číslo)");
+      return;
+    }
+    console.log("2",data[2])
+
+    // test price for poor seats
+    if(data[2] === "" || (isNaN(data[2]) || isNaN(parseFloat(data[2])))){
+      alert("Zadejte počet sedadel pro 2. třídu prosím!(číslo)");
       return;
     }
 
-    // check if passwords match
-    if(data.poorseats.value === ""){
-      alert("Zadejte počet sedadel pro 2. třídu prosím!");
-      return;
+    console.log("3",data[3])
+
+    console.log("data listu zatavek: ",data[3].length)
+    if(data[3].length < 2){
+      alert("Zadejte alespon 2 zastavky pro spoj prosím!");
     }
-    // check if not a number
-    if((isNaN(data.poorseats.value) || isNaN(parseFloat(data.poorseats.value)))){
-      alert("Chyba! počet sedadel může být pouze číslo(2.třída)")
-      return;
-    }
+
+
+    console.log("lalala:",data)
+    console.log("lalala:",data[0])
+    
+    return;
 
     registerConn(data.richseats.value,data.poorseats.value,handleTrigger,trigger,setviewID);
   }
-
 
   useEffect(()=> {
     getVehicleOptions(setVehicleOptions);
     getAllStops(setAllStops,selectedStops);
   },[]);
 
-  var count = 1;
+  const handleSelected = (e) => {
+    console.log("aadad:",e)
+    setSelectedStops(e)
+
+  }
+  
+  const handleData = (e,count,name,label) =>{
+
+  }
+
   return (
     <div className="conveyor-rightside">
       <div className="main-page-vehicle">
@@ -223,31 +237,39 @@ const NewConnWindow = (props) => {
             <input className="register-item" id="poorseats" type="text" placeholder="cena pro 2.třídu"></input>
             <hr className="solid" />
 
-          <label htmlFor="stops">Zastávky</label>
-            <select onChange={e => addZastavka(e)}>
-              {allStops}
-            </select>
+          <label htmlFor="stops">Vyber zastávky</label>
+          {console.log(allStops)}
+            <Select
+            
+              placeholder="Zastávky"
+              closeMenuOnSelect={false}
+              // isSearchable
+              isMulti
+              // name="name"
+              options={allStops}
+              noOptionsMessage={()=> "Zadne zastavky"}
+              onChange={handleSelected}
+              
+            />
+          <hr className="solid" />
+
           <table className="people-table">
             <thead>
               <tr>
-                <th>#</th>
                 <th>Zastávka</th>
                 <th>Příjezd</th>
-                <th>*</th>
               </tr>
             </thead>
             <tbody>
-              {/* {stops.map(val => {
+              {selectedStops.map(val => {
                 
                 return (
                   <tr>
-                  <td>{count++}</td>
-                  <td>{val.name}</td>
-                  <td>{val.arrival}</td>
-                  <td><button class="editbtn" onClick={(e)=>handleData(e,val.count,val.name,val.arrival)}>upravit</button></td>
+                  <td id={val.label}>{val.label}</td>
+                  <td><input type="time"></input></td>
                   </tr>
                   )
-                })} */}
+                })}
             </tbody>
           </table>
           <button type="submit" className=" register-item button-submit button-login">Vytvořit</button>
