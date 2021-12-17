@@ -137,7 +137,7 @@ async function RegisterOnly(list,connID,cost,navv,unregistered,setUnregistered){
   if (!token) {
     // create new user - table-row registered=FALSE (all i need is a name)
     setUnregistered(!unregistered);
-    return;
+    
   } else {
     ID = token.id;
   }
@@ -149,12 +149,15 @@ async function RegisterOnly(list,connID,cost,navv,unregistered,setUnregistered){
   }
   const res = seats.slice(0, -1);
   console.log("res seats:",res)
-
+  console.log("/api/reservation?connectionID="+connID+"&passengerID="+ID+"&seats="+res+"&cost="+cost);
   await fetch("/api/reservation?connectionID="+connID+"&passengerID="+ID+"&seats="+res+"&cost="+cost,{
     method: "POST",
   })
-  .then(data => {
+  .then(r => r.json())
+  .then(data=>{
+
     console.log("DATAAFETRPOST: ",data)
+    console.log(data.msg)
     if(data.msg.localeCompare("OK") === 0) {
       alert("Rezervace úspěšná!")
       navv('/');
