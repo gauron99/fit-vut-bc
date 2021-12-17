@@ -1,8 +1,9 @@
 import React,{useState, useEffect} from 'react';
-import {checkForUsers,checkForStops} from '../services/userControl';
+import {checkForUsers,checkForStops,getToken} from '../services/userControl';
 import {getRezs,getVoZas,confirmReservation,deconfirmReservation,destroyReservation} from './edit_crew';
-import {PopVehicleWindow,deleteVehicle} from './conveyor';
+import {PopVehicleWindow,deleteVehicle,getVehicleOptions,getAllStops,EditConn,deleteConnection} from './conveyor';
 import "../Admin.css"
+import Select from 'react-select';
 
 
 async function addUser(n,p){
@@ -413,14 +414,245 @@ const ManageReservations = (props) =>{
     } else {return "";}
 }
 
+
+
+
+
+async function GetConnections(conns,setConns){
+  const token = getToken();
+  await fetch("/api/spoj_conveyor?conveyorID="+token.id,{
+    method: "GET",
+    headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+    },
+   })
+  .then((res) => res.json())
+  .then((result) => {
+    setConns(result);
+  })
+}
+
+
+async function registerConn(vehID,richprice,poorprice,stops,setviewID,conns,setConns){
+  const token = getToken()
+
+  console.log("stop prev post req:",stops)
+  await fetch('/api/spoje?conveyorID='+token.id+"&vehicleID="+vehID+"&price_poor="+poorprice+"&price_rich="+richprice,{
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+      },
+      body: JSON.stringify({zastavky: stops})
+  })
+  .then(r=>r.json())
+  .then(res=>{
+    setviewID(undefined);
+    GetConnections(conns,setConns)
+    
+  })
+}
+
+// main window for new connection on the right side
+const NewConnWindow = (props) => {
+  const setviewID = props.setviewID;
+  const conns = props.conns;
+  const setConns = props.setConns;
+
+  // all available vehicles
+  const [vehicleOptions,setVehicleOptions] = useState()
+
+  // show this in dropdown menu
+  const [allStops,setAllStops] = useState([])
+  // stops already selected, under dropdown menu
+  const [selectedStops,setSelectedStops] = useState([])
+  
+
+  const  handleNewConn = (event,conns,setConns) => {
+    event.preventDefault();
+    const data = event.target.elements;
+
+    let vehID = data[0].value.split(' ')[2]
+    // skip 3rd entirely
+    
+    let saveStops = []
+    // cycle through all stops and save arrival times and shit
+    for(let i=0;i<selectedStops.length;++i){
+      let x = {
+        name:data[i+4].id,
+        cas:data[i+4].value+":00"
+      }
+      saveStops.push(x)
+    }
+    // test if vehicle is set
+    if(vehID === undefined || vehID === 0){
+      alert("Vyber auto prosím!");
+      return;
+    }
+
+    // test if price for rich is set
+    if(data[1].value === "" || (isNaN(data[1].value) || isNaN(parseFloat(data[1].value)))){
+      alert("Zadejte počet sedadel pro 1. třídu prosím!(číslo)");
+      return;
+    }
+
+    // test price for poor seats
+    if(data[2].value === "" || (isNaN(data[2].value) || isNaN(parseFloat(data[2].value)))){
+      alert("Zadejte počet sedadel pro 2. třídu prosím!(číslo)");
+      return;
+    }
+
+    if(saveStops.length < 2){
+      alert("Zadejte alespon 2 zastavky pro spoj prosím!");
+      return;
+    }
+  
+    registerConn(vehID,data[1].value,data[2].value,saveStops,setviewID,conns,setConns);
+  }
+
+  useEffect(()=> {
+    getVehicleOptions(setVehicleOptions);
+    getAllStops(setAllStops,selectedStops);
+  },[]);
+
+  const handleSelected = (e) => {
+    console.log("aadad:",e)
+    setSelectedStops(e)
+
+  }
+  
+  const handleData = (e,count,name,label) =>{
+
+  }
+  let count = 1;
+  return (
+    <div className="conveyor-rightside">
+      <div className="main-page-vehicle">
+        <h3 className="h3reg">Vytvoř nový spoj</h3>
+        <form onSubmit={(e)=>handleNewConn(e,conns,setConns)}>
+          <label htmlFor="vehID">Vyber dostupné vozidlo</label>
+          <div className="conveyor-conn-select">
+            <select id="vehID">
+                {vehicleOptions}
+            </select>
+          </div>
+          <label htmlFor="richseats">Cena za 1. třídu</label>
+            <input className="register-item" id="richseats" type="text" placeholder="cena pro 1.třídu"></input>
+                  
+          <label htmlFor="poorseats">Cena za 2. třídu</label>
+            <input className="register-item" id="poorseats" type="text" placeholder="cena pro 2.třídu"></input>
+            <hr className="solid" />
+
+          <label htmlFor="stops">Vyber zastávky</label>
+            <Select
+            
+              placeholder="Zastávky"
+              closeMenuOnSelect={false}
+              // isSearchable
+              isMulti
+              // name="name"
+              options={allStops}
+              noOptionsMessage={()=> "Zadne zastavky"}
+              onChange={handleSelected}
+              
+            />
+          <hr className="solid" />
+
+          <table className="people-table">
+            <thead>
+              <tr>
+                <th>Zastávka</th>
+                <th>Příjezd</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedStops.map(val => {
+                return (
+                  <tr>
+                  <td id={count++}>{val.label}</td>
+                  <td><input id={val.label} type="time"></input></td>
+                  </tr>
+                  )
+                })}
+            </tbody>
+          </table>
+          <button type="submit" className=" register-item button-submit button-login">Vytvořit</button>
+        </form>
+      </div>
+    </div>
+  );
+}
+const ConnChooseRightView = (props) => {
+  if(props.connViewID === undefined){
+    return "";
+  }
+  else if(props.connViewID <= 0){
+    return <NewConnWindow setConns={props.setConns} conns={props.conns} setviewID={props.setconnViewID}/>
+  }
+  else {
+    return <EditConn connViewID={props.connViewID} setconnViewID={props.setConnViewID} data={props.data} handleData={props.handleData} conns={props.conns} setConns={props.setConns} />
+  }
+}
+
 const ManageConnections = (props) =>{
-    if(props.trigger === "Spoje"){
-        return (
-            <div>
-                henlo spoje
-            </div>
-        );
-    } else {return "";}
+  const [popConn,setPopConn] = useState(false)
+  const [connViewID,setConnViewID] = useState()
+  const [conns,setConns] = useState([]);
+  const [connData,setConnData] = useState({id:"",vehID:"",price_poor:"",price_rich:""});
+  
+  useEffect(()=>{
+    GetConnections(conns,setConns);
+  },[])
+  
+  const handleData = (e,id,vehicleID,pp,pr) => {
+    console.log(id,vehicleID,pp,pr);
+    setConnData(()=>({
+      id:id,
+      vehID:vehicleID,
+      price_poor:pp,
+      price_rich:pr
+    }));
+    setConnViewID(id);
+  }
+
+  if(props.trigger === "Spoje"){
+    return(
+      <div className="connection-main-frame">
+        <div className="conveyor-leftside">
+          <div className="main-page-vehicle">
+            <h3 className="h3reg">Spoje</h3>
+            <button class="add-button" onClick={() => setConnViewID(-1)}>+</button>
+            <table className="people-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>VůzID</th>
+                  <th>1. tř.(Kč)</th>
+                  <th>2. tř.(Kč)</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody className="people-table-items">
+                {conns.map(val => {
+                  return (
+                    <tr onClick={(e)=>handleData(e,val.ID,val.vehicleID,val.price_rich,val.price_poor)}>
+                      <td>{val.ID}</td>
+                      <td>{val.vehicleID}</td>
+                      <td>{val.price_rich}</td>
+                      <td>{val.price_poor}</td>
+                      <td><button class="editbtn" onClick={()=> deleteConnection(val.ID,conns,setConns)}>-</button></td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <ConnChooseRightView connViewID={connViewID} setconnViewID={setConnViewID} data={connData} handleData={handleData} conns={conns} setConns={setConns} />
+      </div>
+      )
+  } else {return "";}
 }
 
 async function handleNewStop(name,setStops){
@@ -479,6 +711,52 @@ async function ConfirmStop(id,name,status,setStops){
 
 }
 
+async function handleStopChange(e,given_name,given_confirmed,id,n,confirmed,conveyorID,trigger,handleTrigger){
+  e.preventDefault();
+  const conf = confirmed.toLowerCase();
+  if(conf !== "ano" || conf !== "ne"){
+    alert("Pro konfirmaci slouží pouze slova 'ano' či 'ne'");
+    return;
+  }
+
+  const conf_num = conf === "ano" ? 1 : 0;
+  console.log('/api/new_stop?name='+n+'&conveyorID='+conveyorID+'&confirmed='+conf_num+'&ID='+id);
+  // await fetch('/api/new_stop?name='+n+'&conveyorID='+conveyorID+'&confirmed='+conf_num+'&ID='+id,{})
+  alert("stop");
+}
+
+async function delStop(){
+  console.log("smaz to")
+}
+
+// edit stop for admin view
+const EditStop = (props) =>{
+  const data = props.data;
+  const setData = props.setData;
+  const trigger = props.trigger;
+  const handleTrigger = props.handleTrigger;
+
+  return trigger ? (
+    <div className="popup-window-down">
+      <div className="popup-in">
+      <button className="reserve-close-button" onClick={() =>{handleTrigger(!trigger)}}>X</button>
+        <h3 className="h3reg">Spravuj zastávku</h3>
+        <form onSubmit={(e)=>handleStopChange(e,e.target.regn.value,e.target.conf.value,data.id,data.name,data.confirmed,data.conveyorID,trigger,handleTrigger)}>
+          <label htmlFor="regn">Název</label>
+            <input className="register-item" id="regn" type="text"defaultValue={data.name} ></input>
+          <label htmlFor="conf">Potvrzená?(Ano/Ne)</label>
+            <input className="register-item" id="conf" type="text"defaultValue={data.confirmed? "Ano": "Ne"} ></input>
+                  
+            <hr className="solid" />
+          <button type="submit" className="register-item button-login">Upravit</button>
+        </form>
+          <button type="submit" onClick={()=> delStop(data.name,data.id,)} className="register-item button-login">Smazat</button>
+
+      </div>
+    </div>
+  ) 
+  : "";
+}
 
 const NewStop = (props) => {
   const trigger = props.trigger
@@ -511,12 +789,13 @@ const ManageStops = (props) =>{
     GetStops(setStops);
   },[])
 
-  const handleData = (id,n,cid) => {
-    console.log(id,n,cid);
+  const handleData = (id,n,cid,conf) => {
+    console.log(id,n,cid,conf);
     setStopData(()=>({
       ID:id,
       name:n,
       conveyorID:cid,
+      confirmed:conf
     }));
     setPopEditStop(!popEditStop);}
 
@@ -526,7 +805,7 @@ const ManageStops = (props) =>{
         <div className="main-page-people">
           <button class="add-button" onClick={() => setPopProposal(!popProposal)}>Nová zastávka</button>
           <NewStop trigger={popProposal} handleTrigger={setPopProposal} setStops={setStops} stops={stops}/>
-          {/* <EditStop trigger={popEditStop} handleTrigger={setPopEditStop} data={stopData} setData={handleData} setStops={setStops} stops={stops}/> */}
+          <EditStop trigger={popEditStop} handleTrigger={setPopEditStop} data={stopData} setData={handleData} setStops={setStops} stops={stops}/>
       
           <table className="people-table">
             <thead>
@@ -548,7 +827,7 @@ const ManageStops = (props) =>{
                     <td>{val.conveyorID}</td>
                     <td>{val.confirmed? "Ano" : "Ne"}</td>
                     <td><button class="editbtn" onClick={()=> ConfirmStop(val.ID,val.name,val.confirmed,setStops)}>potvrdit</button></td>
-                    <td><button class="editbtn" onClick={()=> handleData(val.ID,val.name,val.conveyorID)}>úprava</button></td>
+                    <td><button class="editbtn" onClick={()=> handleData(val.ID,val.name,val.conveyorID,val.confirmed)}>úprava</button></td>
                   </tr>
                 )
               })}
@@ -624,7 +903,7 @@ export const EditAdminPage = () => {
   const  [usePOP,setPop] = useState([false]);
   const  [heslo,setslo] = useState("");
   const  [addUserB,setAddUserB] = useState(false);
-  const  [view,setView] = useState("");
+  const  [view,setView] = useState("Uživatelé"); //default view of people
 
   const  [jizdenkos,setJizdenkos] = useState([]);
   const  [vozidlosZastavkos, setVozidlosZastavkos] = useState([]);
