@@ -126,7 +126,7 @@ router.route('/isuserok')
         result2.length > 0 ? bruh++ : bruh;
         result3.length > 0 ? bruh++ : bruh;
         result4.length > 0 ? bruh++ : bruh;
-        res.json({msg: !bruh})
+        res.json({msgis: !bruh})
     })
 
 router.route('/passenger_manage')
@@ -150,11 +150,21 @@ router.route('/passenger_manage')
         res.json({msg: "sup"})
     })
 
+router.route('/getdopravceID')
+    .get(async function(req, res) {
+        var result = await kvery('SELECT ID FROM Conveyor WHERE firm="'+req.query.name+'";');
+        if (result.length>0)
+            res.json(result[0])
+        else
+            res.json({ID: 'none'})
+    })
+
 router.route('/crew_manage')
     .get(async function(req, res) {
         var result = await kvery('SELECT Crew.ID, Crew.name, Crew.passwd FROM Crew, Conveyor WHERE Conveyor.firm = "'+req.query.firm+'" AND Crew.conveyorID = Conveyor.ID;');
         res.json(result)
-})
+    })
+
     .post(async function(req, res) {
         await kvery('INSERT INTO Crew(name,passwd,conveyorID) VALUES (\"'+req.query.name+'\",\"'+req.query.passwd+'\",\"'+req.query.conveyorID+'\");');
         res.json({msg: "sup"})
@@ -248,6 +258,14 @@ router.route('/login')
     })
 
 // SPOJE MANAGEMENT API
+
+router.route('/isstopok')
+    .get(async function(req, res){
+        var result = await kvery('SELECT * FROM Stop WHERE name=\"'+req.query.name+'\";');
+        var bruh = 0;
+        result.length > 0 ? bruh++ : bruh;
+        res.json({msgis: !bruh})
+    })
 
 router.route('/stops')
     .get(async function(req, res) {
