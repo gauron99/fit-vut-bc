@@ -99,6 +99,7 @@ export const EditCrewPage = () => {
     return (
       <div className="admin_frame">
         <div className="admin_users_config">
+            <p>Seznam rezervací</p>
           <table className="admin_users_table">
             <thead className="admin_table_head">
               <tr>
@@ -121,7 +122,8 @@ export const EditCrewPage = () => {
             </tbody>
           </table>
         </div>
-  
+        <hr/>
+        <p>Aktualizace aktuální polohy vozidla jednotlivých spojů</p>
         <div className="admin_users_config">
             {vozidlosZastavkos.map(comp => 
             <table className="admin_users_table">

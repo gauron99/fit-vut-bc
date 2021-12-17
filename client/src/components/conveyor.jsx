@@ -150,7 +150,7 @@ const EditConvStops = () => {
 }
 
 
-async function registerConn(vehID,richprice,poorprice,stops,setviewID,conns,setConns){
+async function registerConn(vehID,richprice,poorprice,stops,setviewID,conns,setConns,getVehicleOptions,setVehicleOptions){
   const token = getToken()
 
   console.log("stop prev post req:",stops)
@@ -164,9 +164,11 @@ async function registerConn(vehID,richprice,poorprice,stops,setviewID,conns,setC
   })
   .then(r=>r.json())
   .then(res=>{
-    setviewID(undefined);
     GetConnections(conns,setConns)
-    
+    if(window.confirm("Chcete zadat dalsi spoj podobny?")){
+        getVehicleOptions(setVehicleOptions)
+    }
+    else {setviewID(undefined);}    
   })
 }
 
@@ -275,7 +277,7 @@ const NewConnWindow = (props) => {
       return;
     }
   
-    registerConn(vehID,data[1].value,data[2].value,saveStops,setviewID,conns,setConns);
+    registerConn(vehID,data[1].value,data[2].value,saveStops,setviewID,conns,setConns,getVehicleOptions,setVehicleOptions);
   }
 
   useEffect(()=> {
@@ -388,19 +390,24 @@ async function getNewStops(newStops,setNewStops){
 
 async function addNewStop(e,connID,stopID,arrival,setStops){
   e.preventDefault()
-  stopID = stopID.split(",")[0].slice(3)
-  await fetch('/api/stops_by_conn?connID='+connID+"&stopID="+stopID+"&arrival="+arrival,{
-    method: "POST",
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-      },
-  })
-  // .then(r=>r.json())
-  .then(res=>{
+  if(arrival[0]==':'){
+      alert('zadejte 4as!!')
+  }
+  else{
+    stopID = stopID.split(",")[0].slice(3)
+    await fetch('/api/stops_by_conn?connID='+connID+"&stopID="+stopID+"&arrival="+arrival,{
+        method: "POST",
+        headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+        },
+    })
+    // .then(r=>r.json())
+    .then(res=>{
 
-    getAllStopsByConn(connID,setStops)
-  })
+        getAllStopsByConn(connID,setStops)
+    })
+    }
 }
 
 async function deleteOneStopInConn(e,id,connID,setStops){
@@ -479,7 +486,7 @@ export const EditConn = (props) => {
   ): "";
 }
 
-export async function deleteConnection(id,conns,setConns){
+export async function deleteConnection(id,conns,setConns,setConnViewID){
   if(window.confirm("Chcete smazat spoj s ID "+id+" ?")){
     await fetch('api/spoj?ID='+id,{
       method: "DELETE",
@@ -492,6 +499,7 @@ export async function deleteConnection(id,conns,setConns){
       // update connections
       console.log("mam respons:!");
       GetConnections(conns,setConns)
+      setConnViewID(undefined);
     })
   }else{
     // do nothing
@@ -572,7 +580,7 @@ const EditConvConn = () => {
                   <td>{val.vehicleID}</td>
                   <td>{val.price_rich}</td>
                   <td>{val.price_poor}</td>
-                  <td><button class="editbtn" onClick={()=> deleteConnection(val.ID,conns,setConns)}>-</button></td>
+                  <td><button class="editbtn" onClick={()=> deleteConnection(val.ID,conns,setConns,setConnViewID)}>-</button></td>
                 </tr>
               )
             })}
@@ -951,7 +959,7 @@ const PopPeopleWindow = (props) => {
 
 async function deletePersonel(id,name,personel,setPersonel,trigger,handleTrigger){
   if(window.confirm("Opravdu chcete smazat personál '"+name+"' (ID:"+id+") ?")){
-    await fetch("/api/crew_manage?ID="+id,{
+    await fetch("/api/crew_manage?name="+name,{
       method: "DELETE",
       headers: {
         'Content-Type': 'application/json',
