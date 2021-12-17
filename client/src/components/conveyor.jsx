@@ -150,7 +150,7 @@ const EditConvStops = () => {
 }
 
 
-async function registerConn(vehID,richprice,poorprice,stops,setviewID,conns,setConns){
+async function registerConn(vehID,richprice,poorprice,stops,setviewID,conns,setConns,getVehicleOptions,setVehicleOptions){
   const token = getToken()
 
   console.log("stop prev post req:",stops)
@@ -164,9 +164,11 @@ async function registerConn(vehID,richprice,poorprice,stops,setviewID,conns,setC
   })
   .then(r=>r.json())
   .then(res=>{
-    setviewID(undefined);
     GetConnections(conns,setConns)
-    
+    if(window.confirm("Chcete zadat dalsi spoj podobny?")){
+        getVehicleOptions(setVehicleOptions)
+    }
+    else {setviewID(undefined);}    
   })
 }
 
@@ -275,7 +277,7 @@ const NewConnWindow = (props) => {
       return;
     }
   
-    registerConn(vehID,data[1].value,data[2].value,saveStops,setviewID,conns,setConns);
+    registerConn(vehID,data[1].value,data[2].value,saveStops,setviewID,conns,setConns,getVehicleOptions,setVehicleOptions);
   }
 
   useEffect(()=> {
