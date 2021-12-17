@@ -22,10 +22,28 @@ async function GetStops(setStops){
   })
 }
 
-const handleNewProposal = () => {
-  return (
-    null
-  )
+const handleNewProposal = (e,handleTrigger) => {
+
+  // check if exists already
+  if(!checkForStops(e.target.regn.value)){
+    alert("Zastávka již existuje");
+    return;
+  }
+
+  console.log('new proposal vytvor zastavku=',e.target.regn.value);
+  token = getToken()
+  await fetch('/api/new_stop?name='+e.target.regn.value+'&conveyorID='+token.login,{
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+      },
+  })
+  .then(r=>r.json())
+  .then(res=>{
+    alert("Návrh úspěšně odeslán");
+    handleTrigger(false);
+  })
 }
 
 // new 'stop proposal' popup window
@@ -37,7 +55,7 @@ const PopStopsWindow = (props) => {
       <div className="popup-in">
       <button className="reserve-close-button" onClick={() =>{handleTrigger(!trigger)}}>X</button>
         <h3 className="h3reg">Návrh na novou zastávku</h3>
-        <form onSubmit={handleNewProposal}>
+        <form onSubmit={(e) => handleNewProposal(e,handleTrigger)}>
           <label htmlFor="regn">Jméno</label>
             <input className="register-item" id="regn" type="text" placeholder="jmeno"></input>
           
@@ -619,7 +637,7 @@ const editOneVehicle = (e,id,rs,ps,desc,trigger,handleTrigger) => {
 }
 
 // popup edit window for machines
-const EditMachine = (props) => {
+export const EditMachine = (props) => {
   const data = props.data;
   const setData = props.setData;
   const trigger = props.trigger;
@@ -719,7 +737,7 @@ export const PopVehicleWindow = (props) => {
 }
 
 // fetch all mechines by conveyorID
-async function GetVehicles(vehicles,setVehicles) {
+export async function GetVehicles(vehicles,setVehicles) {
   const token = getToken();
   await fetch("/api/conveyor_vehicle?conveyorID="+token.id,{
     method: "GET",

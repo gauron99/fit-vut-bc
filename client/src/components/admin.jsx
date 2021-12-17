@@ -1,5 +1,5 @@
 import React,{useState, useEffect} from 'react';
-import {checkForUsers} from '../services/userControl';
+import {checkForUsers,checkForStops} from '../services/userControl';
 import {getRezs,getVoZas,confirmReservation,deconfirmReservation,destroyReservation} from './edit_crew';
 import {PopVehicleWindow,deleteVehicle} from './conveyor';
 import "../Admin.css"
@@ -18,7 +18,7 @@ async function addUser(n,p){
     })
   }
   else {
-      alert("zajděte se na matriku přejmenovat prosím, uživatele s takovým jménem již v databázi máme");
+      alert("Vyberte prosím jiné jméno, toto již existuje");
   }
 }
 
@@ -67,7 +67,7 @@ async function addConveyor(n,p){
     })
   }
   else {
-      alert("zajděte se na matriku přejmenovat prosím, uživatele s takovým jménem již v databázi máme");
+      alert("Vyberte prosím jiné jméno, toto již existuje");
   }
 }
 
@@ -84,7 +84,7 @@ async function addAdmin(n,p){
     })
   }
   else {
-      alert("zajděte se na matriku přejmenovat prosím, uživatele s takovým jménem již v databázi máme");
+      alert("Vyberte prosím jiné jméno, toto již existuje");
   }
 }
 
@@ -346,10 +346,47 @@ const AddUser = (props) => {
     }
 }
 
+const ManageUsers = (props) => {
+  // convert props
+  const users = props.users;
+  const setUsers = props.setUsers;
+  const trigger = props.trigger;
+  const addUserB = props.addUserB;
+  const setAddUserB = props.setAddUserB;
+  const usePOP = props.usePop;
+  const setPop = props.setPop;
+  const heslo = props.heslo;
+  const setslo = props.setslo;
+
+  if(trigger === "Uživatelé"){
+    return (
+
+      <div className="admin-item">
+      <button type="button" onClick={() => setAddUserB(!addUserB)} className=" register-item button-submit button-login">Vytvořit uživatele</button>
+      <AddUser trigger={addUserB} heslo={typeof(usePOP[4]) === 'object' ? heslo : typeof(usePOP[4])} userName={usePOP[3]} userID={usePOP[1] === undefined ? '1' : usePOP[1]} userRole={usePOP[2] === undefined ? 'admin' : usePOP[2]} handleTrigger={setAddUserB} />
+      <table className="admin_users_table">
+        <thead className="admin_table_head">
+          <tr>
+            <th>ID</th>
+            <th>Jméno</th>
+            <th>Účet</th>
+            <th>*</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}<td><button type='button' onClick={()=>setPop([!usePOP[0],comp[0],comp[2],comp[1],getHeslo(setslo,comp[2],comp[0])])} className="button-show">upravit</button></td></tr>)}
+          <PopPeopleWindow trigger={usePOP[0]} heslo={typeof(usePOP[4]) === 'object' ? heslo : typeof(usePOP[4])} userName={usePOP[3]} userID={usePOP[1] === undefined ? '1' : usePOP[1]} userRole={usePOP[2] === undefined ? 'admin' : usePOP[2]} handleTrigger={setPop} />
+        </tbody>
+      </table>
+    </div>
+    )  
+  } else {return "";}
+}
+
 const ManageReservations = (props) =>{
-    if(props.trigger === "Rezervace"){
-        return (
-            <div className="admin_users_config">
+  if(props.trigger === "Rezervace"){
+    return (
+            <div className="admin-item">
             <table className="admin_users_table">
               <thead className="admin_table_head">
                 <tr>
@@ -365,9 +402,9 @@ const ManageReservations = (props) =>{
               </thead>
               <tbody>
                 {props.jizdenkos.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}
-                  <td><button type='submit' onClick={()=>confirmReservation(comp[0], props.setJizdenkos)} >vyliž</button></td>
-                  <td><button type='submit' onClick={()=>deconfirmReservation(comp[0], props.setJizdenkos)} >si</button></td>
-                  <td><button type='submit' onClick={()=>destroyReservation(comp[0], props.setJizdenkos)} className="button-show">prdel</button></td>
+                  <td><button type='submit' onClick={()=>confirmReservation(comp[0], props.setJizdenkos)} >+</button></td>
+                  <td><button type='submit' onClick={()=>deconfirmReservation(comp[0], props.setJizdenkos)} >-</button></td>
+                  <td><button type='submit' onClick={()=>destroyReservation(comp[0], props.setJizdenkos)} className="button-show">smazat</button></td>
                   </tr>)}
               </tbody>
             </table>
@@ -386,13 +423,139 @@ const ManageConnections = (props) =>{
     } else {return "";}
 }
 
+async function handleNewStop(name,setStops){
+  // check if exists
+  if(!checkForStops(name)){
+    alert("Takova zastavka jiz existuje");
+    return;
+  }
+  
+  await fetch('/api/new_stop&name='+name+"&conveyorID=1",{
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+      },
+  })
+  .then(r=>r.json())
+  .then(res=>{
+    GetStops(setStops);
+  })
+}
+
+async function GetStops(setStops){
+  await fetch('/api/stops_all',{
+    method: "GET",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+      },
+  })
+  .then(r => r.json())
+  .then(res => {
+    setStops(res)
+  })
+}
+
+// confirm one stop if not confirmed
+async function ConfirmStop(id,name,status,setStops){
+  if(status){
+    return;
+  }
+
+  await fetch("/api/confirm_stop?ID="+id,{
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+      },
+  })
+  .then(r=>r.json())
+  .then(res=>{
+
+    // update zastavky
+    GetStops(setStops);
+  })
+
+}
+
+
+const NewStop = (props) => {
+  const trigger = props.trigger
+  const handleTrigger = props.setTrigger
+  return trigger ? (
+    <div className="popup-window">
+      <div className="popup-in">
+      <button className="reserve-close-button" onClick={() =>{handleTrigger(!trigger)}}>X</button>
+        <h3 className="h3reg">Vytvoř novou zastávku</h3>
+        <form onSubmit={handleNewStop}>
+          <label htmlFor="regn">Jméno</label>
+            <input className="register-item" id="regn" type="text" placeholder="jmeno"></input>
+          
+            <hr className="solid" />
+          <button type="submit" className=" register-item button-submit button-login">Vytvořit</button>
+        </form>
+      </div>
+    </div>
+  ) 
+  : "";
+}
+
 const ManageStops = (props) =>{
+  const [popProposal,setPopProposal] = useState(false)//for new proposal
+  const [popEditStop,setPopEditStop] = useState(false)//for editing existing stop
+  const [stops,setStops] = useState([]);
+  const [stopData,setStopData] = useState({ID:"",name:"",conveyorID:"",confirmed:""});
+
+  useEffect(()=>{
+    GetStops(setStops);
+  },[])
+
+  const handleData = (id,n,cid) => {
+    console.log(id,n,cid);
+    setStopData(()=>({
+      ID:id,
+      name:n,
+      conveyorID:cid,
+    }));
+    setPopEditStop(!popEditStop);}
+
+
     if(props.trigger === "Zastávky"){
-        return (
-            <div>
-                henlo zastavky
-            </div>
-        );
+      return(
+        <div className="main-page-people">
+          <button class="add-button" onClick={() => setPopProposal(!popProposal)}>Nová zastávka</button>
+          <NewStop trigger={popProposal} handleTrigger={setPopProposal} setStops={setStops} stops={stops}/>
+          {/* <EditStop trigger={popEditStop} handleTrigger={setPopEditStop} data={stopData} setData={handleData} setStops={setStops} stops={stops}/> */}
+      
+          <table className="people-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Jméno</th>
+                <th>DopravceID</th>
+                <th>Potvrzené</th>
+                <th className="">Potvrzení</th>
+                <th className="">upravit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stops.map(val => {
+                return (
+                  <tr>
+                    <td>{val.ID}</td>
+                    <td>{val.name}</td>
+                    <td>{val.conveyorID}</td>
+                    <td>{val.confirmed}</td>
+                    <td><button class="editbtn" onClick={()=> ConfirmStop(val.ID,val.name,val.confirmed,setStops)}>potvrdit</button></td>
+                    <td><button class="editbtn" onClick={()=> handleData(val.ID,val.name,val.conveyorID)}>úprava</button></td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+        )
     } else {return "";}
 }
 
@@ -419,7 +582,7 @@ const ManageVehicles = (props) =>{
 
     if(props.trigger === "Vozidla"){
         return ( 
-            <div className="main-page-vehicle">
+            <div className="main-page-vehicle-admin">
             <button class="add-button" onClick={() => setPopVehicle(!popVehicle)}>+</button>
             <PopVehicleWindow trigger={popVehicle} handleTrigger={setPopVehicle} setVehicles={setVehicles} vehicles={vehicles}/>
             <EditMachine trigger={popEditVehicle} handleTrigger={setPopEditVehicle} data={vehicleData} setData={handleData} vehicles={vehicles} setVehicles={setVehicles}/>
@@ -431,7 +594,6 @@ const ManageVehicles = (props) =>{
                   <th>ID vlastníka</th>
                   <th>sedadla 1. tř.</th>
                   <th>sedadla 2. tř.</th>
-                  {/* <th>Naposledy v zastávce</th> */}
                   <th>*</th>
                 </tr>
               </thead>
@@ -493,44 +655,25 @@ export const EditAdminPage = () => {
   console.log(users); //works
 
   return (
-    <div className="admin_frame">
-      <div className="admin_users_config">
-      <button type="button" onClick={() => setAddUserB(!addUserB)} className=" register-item button-submit button-login">Vytvořit uživatele</button>
-      <AddUser trigger={addUserB} heslo={typeof(usePOP[4]) === 'object' ? heslo : typeof(usePOP[4])} userName={usePOP[3]} userID={usePOP[1] === undefined ? '1' : usePOP[1]} userRole={usePOP[2] === undefined ? 'admin' : usePOP[2]} handleTrigger={setAddUserB} />
-        <table className="admin_users_table">
-          <thead className="admin_table_head">
-            <tr>
-              <th>ID</th>
-              <th>Jméno</th>
-              <th>Účet</th>
-              <th>*</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}<td><button type='button' onClick={()=>setPop([!usePOP[0],comp[0],comp[2],comp[1],getHeslo(setslo,comp[2],comp[0])])} className="button-show">upravit</button></td></tr>)}
-            <PopPeopleWindow trigger={usePOP[0]} heslo={typeof(usePOP[4]) === 'object' ? heslo : typeof(usePOP[4])} userName={usePOP[3]} userID={usePOP[1] === undefined ? '1' : usePOP[1]} userRole={usePOP[2] === undefined ? 'admin' : usePOP[2]} handleTrigger={setPop} />
-          </tbody>
-        </table>
+    <div className="admin-page">
+      <div className="admin-header">
+        <td>
+          <select id={"role"} defaultValue="Uživatelé" value={view} onChange={handleChange}>
+            <option value="Uživatelé">Uživatelé</option>
+            <option value="Rezervace">Rezervace</option>
+            <option value="Spoje">Spoje</option>
+            <option value="Zastávky">Zastávky</option>
+            <option value="Vozidla">Vozidla</option>
+          </select>
+        </td>
       </div>
+      <hr className="solid" />
 
-      <div className="admin_others_config">
-
-        <div className="">
-        <td><select id={"role"} defaultValue="" value={view} onChange={handleChange}>
-                <option value="Rezervace">Rezervace</option>
-                <option value="Spoje">Spoje</option>
-                <option value="Zastávky">Zastávky</option>
-                <option value="Vozidla">Vozidla</option>
-            </select></td>
-        </div>
-        <div>            
-            <ManageReservations trigger={view} jizdenkos={jizdenkos} vozidlosZastavkos={vozidlosZastavkos} setJizdenkos={setJizdenkos} setVozidlosZastavkos={setVozidlosZastavkos}/>
-            <ManageConnections trigger={view}/>
-            <ManageStops trigger={view}/>
-            <ManageVehicles trigger={view}/></div>
-        <div></div>
-
-      </div>
+        <ManageUsers trigger={view} users={users} setUsers={setUsers} usePop={usePOP} setPop={setPop} heslo={heslo} setslo={setslo} addUserB={addUserB} setAddUserB={setAddUserB} />
+        <ManageReservations trigger={view} jizdenkos={jizdenkos} vozidlosZastavkos={vozidlosZastavkos} setJizdenkos={setJizdenkos} setVozidlosZastavkos={setVozidlosZastavkos}/>
+        <ManageConnections trigger={view}/>
+        <ManageStops trigger={view}/>
+        <ManageVehicles trigger={view}/>
     </div>
   )   
 }

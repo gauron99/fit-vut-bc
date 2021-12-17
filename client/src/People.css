@@ -31,6 +31,13 @@
   border: 3px var(--more_darker_color) solid;
 }
 
+.main-page-vehicle-admin{
+  margin-left: 5%;
+  margin-right:5% ;
+  padding: 5px;
+  background-color: var(--light_cyan_color);
+  border: 3px var(--more_darker_color) solid;
+}
 
 .btn-ppl{
   padding: 5px;

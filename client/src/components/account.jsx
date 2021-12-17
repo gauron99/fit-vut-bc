@@ -95,8 +95,8 @@ const EditLogout = (props) => {
   const token = getToken();
 
   if(token){
-    if(token.type == "admin"){
-      // if logged in is admin, cant delete
+    if(token.type === "admin" || token.type === "conveyor"){
+      // if logged in is admin or conveyor -- cant delete
       return (
         <div>
         <p>Jste přihlášen jako {token.login} (úroveň: {token.type})</p>

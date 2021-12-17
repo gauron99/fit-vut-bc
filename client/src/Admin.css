@@ -12,7 +12,7 @@
 }
 
 .admin_frame{
-  width: 100%;
+  width: 80%;
   /* height: 20cm; */
   margin: 2%;
   
@@ -21,14 +21,23 @@
   clear:both;
 }
 
-.admin_users_config{
-  /* border: 3px solid yellow; */
+.admin-page {
+  width: 100%;
+}
+
+.admin-header{
+  width: 100%;
+  background-color: var(--light_blue_color);
+}
+
+.admin-item{
   border-left:3px solid var(--more_darker_color);
   border-right:3px solid var(--more_darker_color);
   padding-left: 2px;
   padding-right: 2px;
-  width: 45%;
-  float:left;
+  margin-left: 5%;
+  margin-right:5% ;
+  align-content: center;
 }
 
 .admin_others_config{

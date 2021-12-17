@@ -278,6 +278,7 @@ router.route('/isstopok')
         res.json({msgis: !bruh})
     })
 
+
 router.route('/new_stop')
     .post(async function(req, res) {
         await kvery('INSERT INTO Stop(name,conveyorID,confirmed) VALUES (\"'+req.query.name+'\",'+req.query.conveyorID+',FALSE);');
@@ -309,7 +310,15 @@ router.route('/stops_all_confirmed')
     .get(async function(req,res) {
         var results = await kvery('SELECT * FROM Stop WHERE confirmed=1;');
         res.json(results);
+
     })
+// get all stops for admin
+router.route('/stops_all')
+    .get(async function(req,res) {
+        var results = await kvery('SELECT * FROM Stop');
+        res.json(results);
+    })
+
 
     // get all stops for one connection ID
 router.route('/stops_by_conn')
