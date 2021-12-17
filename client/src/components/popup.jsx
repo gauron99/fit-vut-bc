@@ -217,14 +217,14 @@ export const PopupRegister = (props) => {
           <button className="reserve-close-button" onClick={(e) =>{ props.updTrigger(e);setTotal(0);}}>X</button>
           <h3>Rezervace: Linka: {props.connID}</h3>
 
-          <Multiselect
+          {/* <Multiselect
             placeholder="Vyber jízdenky"
             onSelect={(a)=>onSelect(a,setTotal,price[0],price[1],setallSelected)}
             onRemove={(a)=>onRemove(a,setTotal,price[0],price[1],setallSelected)}
             options={vehSeats}
             displayValue="name"
             groupBy="class"
-            />
+            /> */}
           <p>Celková cena: {total},-</p>
           <div>Poslední zastávka: {lastStop}</div>
           <button className="reserve-confirms" onClick={()=>RegisterOnly(allSelected,props.connID,total,navv,unregistered,setUnregistered)}>Rezervovat</button>
