@@ -6,7 +6,7 @@ import {checkForStops} from '../services/userControl';
 
 
 
-async function confirmReservation(resID, setJizdenkos){
+export async function confirmReservation(resID, setJizdenkos){
     await fetch('/api/reservation_confirm?ID='+resID,{
         method: "POST",
     })
@@ -14,7 +14,7 @@ async function confirmReservation(resID, setJizdenkos){
     getRezs(setJizdenkos)
 }
 
-async function deconfirmReservation(resID, setJizdenkos){
+export async function deconfirmReservation(resID, setJizdenkos){
     await fetch('/api/reservation_deconfirm?ID='+resID,{
         method: "POST",
     })
@@ -22,7 +22,7 @@ async function deconfirmReservation(resID, setJizdenkos){
     getRezs(setJizdenkos)
 }
 
-async function destroyReservation(resID, setJizdenkos){
+export async function destroyReservation(resID, setJizdenkos){
     if(window.confirm("Opravdu chcete uplně vymazat rezervaci s ID "+resID+" z databáze?")){
         await fetch('/api/reservation_confirm?ID='+resID,{
             method: "DELETE",
@@ -33,7 +33,7 @@ async function destroyReservation(resID, setJizdenkos){
     else {}
 }
 
-async function getRezs(setJizdenkos){
+export async function getRezs(setJizdenkos){
     await fetch('/api/reservation_confirm',{
         method:"GET",
         headers: {
@@ -50,7 +50,8 @@ async function getRezs(setJizdenkos){
         setJizdenkos(jizdenkz);
     })
 }
-async function getVoZas(setVozidlosZastavkos){
+
+export async function getVoZas(setVozidlosZastavkos){
     var tokenis = getToken();
     var name = tokenis.login;
     await fetch('/api/ultimate_getfucked?name='+name,{
@@ -88,12 +89,10 @@ export const EditCrewPage = () => {
   // check if crew is connected
   const  [jizdenkos,setJizdenkos] = useState([]);
   const  [vozidlosZastavkos, setVozidlosZastavkos] = useState([]);
-  var tokenis = getToken();
 
   useEffect(() =>{
     getRezs(setJizdenkos);
     getVoZas(setVozidlosZastavkos);
-    console.log(vozidlosZastavkos)
   }, []);
 
   if(isLoggedIn("CREW")){
@@ -115,9 +114,9 @@ export const EditCrewPage = () => {
             </thead>
             <tbody>
               {jizdenkos.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}
-                <td><button type='submit' onClick={()=>confirmReservation(comp[0], setJizdenkos)} >vyliž</button></td>
-                <td><button type='submit' onClick={()=>deconfirmReservation(comp[0], setJizdenkos)} >si</button></td>
-                <td><button type='submit' onClick={()=>destroyReservation(comp[0], setJizdenkos)} className="button-show">prdel</button></td>
+                <td><button type='submit' onClick={()=>confirmReservation(comp[0], setJizdenkos)} >potvrdit</button></td>
+                <td><button type='submit' onClick={()=>deconfirmReservation(comp[0], setJizdenkos)} >zneplatnit</button></td>
+                <td><button type='submit' onClick={()=>destroyReservation(comp[0], setJizdenkos)} className="button-show">smazat</button></td>
                 </tr>)}
             </tbody>
           </table>

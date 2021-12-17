@@ -1,5 +1,6 @@
 import React,{useState, useEffect} from 'react';
 import {checkForUsers} from '../services/userControl';
+import {getRezs,getVoZas,confirmReservation,deconfirmReservation,destroyReservation} from './edit_crew';
 
 import "../Admin.css"
 
@@ -248,7 +249,6 @@ const AddUser = (props) => {
             <div className="popup-in">
             <button className="reserve-close-button" onClick={() =>{props.handleTrigger(!props.trigger)}}>X</button>
             <td><select id={"role"} defaultValue="" value={role} onChange={handleChange}>
-                <option value=''></option>
                 <option value="Passenger">Passenger</option>
                 <option value="Conveyor">Conveyor</option>
                 <option value="Crew">Crew</option>
@@ -264,13 +264,82 @@ const AddUser = (props) => {
     }
 }
 
+const ManageReservations = (props) =>{
+    if(props.trigger === "Rezervace"){
+        return (
+            <div className="admin_users_config">
+            <table className="admin_users_table">
+              <thead className="admin_table_head">
+                <tr>
+                  <th>ID</th>
+                  <th>connectionID</th>
+                  <th>passengerID</th>
+                  <th>paid</th>
+                  <th>cost</th>
+                  <th>potvrdit</th>
+                  <th>zneplatnit</th>
+                  <th>smazat</th>
+                </tr>
+              </thead>
+              <tbody>
+                {props.jizdenkos.map(comp => <tr>{comp.map(compy => <td>{compy}</td>)}
+                  <td><button type='submit' onClick={()=>confirmReservation(comp[0], props.setJizdenkos)} >vyliž</button></td>
+                  <td><button type='submit' onClick={()=>deconfirmReservation(comp[0], props.setJizdenkos)} >si</button></td>
+                  <td><button type='submit' onClick={()=>destroyReservation(comp[0], props.setJizdenkos)} className="button-show">prdel</button></td>
+                  </tr>)}
+              </tbody>
+            </table>
+          </div>
+        );
+    } else {return "";}
+}
+
+const ManageConnections = (props) =>{
+    if(props.trigger === "Spoje"){
+        return (
+            <div>
+                henlo spoje
+            </div>
+        );
+    } else {return "";}
+}
+
+const ManageStops = (props) =>{
+    if(props.trigger === "Zastávky"){
+        return (
+            <div>
+                henlo zastavky
+            </div>
+        );
+    } else {return "";}
+}
+
+const ManageVehicles = (props) =>{
+    if(props.trigger === "Vozidla"){
+        return (
+            <div>
+                henlo auticka
+            </div>
+        );
+    } else {return "";}
+}
+
+
 export const EditAdminPage = () => {
   const  [users,setUsers] = useState([]);
   const  [usePOP,setPop] = useState([false]);
   const  [heslo,setslo] = useState("");
   const  [addUserB,setAddUserB] = useState(false);
+  const  [view,setView] = useState("");
+
+  const  [jizdenkos,setJizdenkos] = useState([]);
+  const  [vozidlosZastavkos, setVozidlosZastavkos] = useState([]);
+
+  function handleChange(event) {    setView(event.target.value);  }
 
   useEffect(() =>{
+    getRezs(setJizdenkos);
+    getVoZas(setVozidlosZastavkos);
     fetch('/api/read_and_subsequently_possibly_config_if_desired_or_not_if_not_necessary_or_not_desired',{
       method:"GET",
       headers: {
@@ -314,8 +383,19 @@ export const EditAdminPage = () => {
 
       <div className="admin_others_config">
 
-        <div className=""></div>
-        <div></div>
+        <div className="">
+        <td><select id={"role"} defaultValue="" value={view} onChange={handleChange}>
+                <option value="Rezervace">Rezervace</option>
+                <option value="Spoje">Spoje</option>
+                <option value="Zastávky">Zastávky</option>
+                <option value="Vozidla">Vozidla</option>
+            </select></td>
+        </div>
+        <div>            
+            <ManageReservations trigger={view} jizdenkos={jizdenkos} vozidlosZastavkos={vozidlosZastavkos} setJizdenkos={setJizdenkos} setVozidlosZastavkos={setVozidlosZastavkos}/>
+            <ManageConnections trigger={view}/>
+            <ManageStops trigger={view}/>
+            <ManageVehicles trigger={view}/></div>
         <div></div>
 
       </div>
