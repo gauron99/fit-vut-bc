@@ -171,7 +171,7 @@ async function registerConn(vehID,richprice,poorprice,stops,setviewID,conns,setC
 }
 
 // get all stops from db
-async function getAllStops(setAllStops,selected){
+export async function getAllStops(setAllStops,selected){
   await fetch('/api/stops_all_confirmed',{
     method: "GET",
     headers: {
@@ -198,7 +198,7 @@ async function getAllStops(setAllStops,selected){
 }
 
 // get all available vehicles from db
-async function getVehicleOptions(setVehicleOptions){
+export async function getVehicleOptions(setVehicleOptions){
   await fetch('/api/available_vehicles',{
     method: "GET",
     headers: {
@@ -421,7 +421,7 @@ async function deleteOneStopInConn(e,id,connID,setStops){
   }
 }
 
-const EditConn = (props) => {
+export const EditConn = (props) => {
   const connViewID = props.connViewID;
   const data = props.data;
   const setData = props.setData;
@@ -479,7 +479,7 @@ const EditConn = (props) => {
   ): "";
 }
 
-async function deleteConnection(id,conns,setConns){
+export async function deleteConnection(id,conns,setConns){
   if(window.confirm("Chcete smazat spoj s ID "+id+" ?")){
     await fetch('api/spoj?ID='+id,{
       method: "DELETE",
