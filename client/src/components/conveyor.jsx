@@ -1,6 +1,6 @@
 import React,{useState,useEffect} from "react";
 import {GeneralErrorPage} from "./home";
-import {getToken} from "../services/userControl"
+import {getToken, checkForUsers} from "../services/userControl"
 
 import "../People.css"
 import "../App.css"
@@ -90,6 +90,40 @@ async function registerConn(richseats,poorseats,handleTrigger,trigger,setviewID)
 
 }
 
+// get all stops from db
+async function getAllStops(setAllStops,selected){
+  await fetch('/api/stops_all_confirmed',{
+    method: "GET",
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+      },
+  })
+  .then(r => r.json())
+  .then(res => {
+    console.log("yastavky: ",res);
+    // set all stops
+    let tmp = res.map((item,i)=> {
+      let checker = 0;
+      for(let i = 0; i < selected.length;++i){
+        if(item.name === selected[i].name){
+          checker = 1;
+          break;
+        }
+      }
+      if(checker){
+        return ""
+      } else {
+        return (<option key={item.ID}>{item.ID}: {item.name}</option>)
+      }
+    })
+    // or exclude ones already selected?
+    console.log(tmp)
+    setAllStops(tmp)
+  })
+}
+
+// get all available vehicles from db
 async function getVehicleOptions(setVehicleOptions){
   await fetch('/api/available_vehicles',{
     method: "GET",
@@ -100,15 +134,40 @@ async function getVehicleOptions(setVehicleOptions){
   })
   .then(r => r.json())
   .then(res=>{
-    setVehicleOptions(res)
+    console.log(res);
+
+    let tmp = res.map((item,i)=>{
+      return (
+        <option key={item.ID}>Vozidlo ID: {item.ID}</option>
+      )
+    })
+    setVehicleOptions(tmp)
   })
 };
 
+
+
+// main window for new connection on the right side
 const NewConnWindow = (props) => {
   const setviewID = props.setviewID;
   const trigger = props.trigger;
   const handleTrigger = props.handleTrigger;
-  const [vehicleOptions,setVehicleOptions] = useState([])
+
+  // all available vehicles
+  const [vehicleOptions,setVehicleOptions] = useState()
+
+  // stops already selected, under 
+  const [selectedStops,setSelectedStops] = useState([])
+  const [allStops,setAllStops] = useState([])
+
+
+  const addZastavka = (e) => {
+    console.log("lego noew zastavka: ",e.target.value,e.target.name);
+    setSelectedStops((prev)=>[
+      ...prev,e.target.name
+    ])
+  }
+  
 
   const  handleNewConn = (event) => {
     event.preventDefault();
@@ -141,36 +200,56 @@ const NewConnWindow = (props) => {
 
 
   useEffect(()=> {
-    getVehicleOptions(setVehicleOptions)
+    getVehicleOptions(setVehicleOptions);
+    getAllStops(setAllStops,selectedStops);
   },[]);
 
-  let vehList = []
-  useEffect(()=> {
-    if(vehicleOptions.length === 0){
-      vehList = <option>Nejsou dostupná žádná auta</option>
-    }else {
-      vehList = vehicleOptions.length > 0 && vehicleOptions.map((item, i) => {
-        <option key={item.ID} value={item.description}>{item.description, item.max_seats_rich,item.max_seats_poor}</option>
-      })
-    }
-
-  },[vehicleOptions])
-
+  var count = 1;
   return (
     <div className="conveyor-rightside">
       <div className="main-page-vehicle">
         <h3 className="h3reg">Vytvoř nový spoj</h3>
         <form onSubmit={handleNewConn}>
-          <label htmlFor="vehID"></label>
-            <select>
-                {vehList}
-            </select>          
+          <label htmlFor="vehID">Vyber dostupné vozidlo</label>
+          <div className="conveyor-conn-select">
+            <select id="vehID">
+                {vehicleOptions}
+            </select>
+          </div>
           <label htmlFor="richseats">Cena za 1. třídu</label>
             <input className="register-item" id="richseats" type="text" placeholder="cena pro 1.třídu"></input>
                   
           <label htmlFor="poorseats">Cena za 2. třídu</label>
             <input className="register-item" id="poorseats" type="text" placeholder="cena pro 2.třídu"></input>
             <hr className="solid" />
+
+          <label htmlFor="stops">Zastávky</label>
+            <select onChange={e => addZastavka(e)}>
+              {allStops}
+            </select>
+          <table className="people-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Zastávka</th>
+                <th>Příjezd</th>
+                <th>*</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* {stops.map(val => {
+                
+                return (
+                  <tr>
+                  <td>{count++}</td>
+                  <td>{val.name}</td>
+                  <td>{val.arrival}</td>
+                  <td><button class="editbtn" onClick={(e)=>handleData(e,val.count,val.name,val.arrival)}>upravit</button></td>
+                  </tr>
+                  )
+                })} */}
+            </tbody>
+          </table>
           <button type="submit" className=" register-item button-submit button-login">Vytvořit</button>
         </form>
       </div>
@@ -525,7 +604,6 @@ const EditConvMachine = (props) => {
   const [vehicles,setVehicles] = useState([]);
   const [vehicleData,setVehicleData] = useState({id:"",max_rich:"",max_poor:"",desc:""});
 
-  console.log("convPAGE:",props.convPage);
 
   useEffect(()=>{
     GetVehicles(vehicles,setVehicles);
@@ -579,18 +657,23 @@ const EditConvMachine = (props) => {
   )
 }
 
-async function updatePersonel(n,p,id){  
-  await fetch('/api/crew_manage?name='+n+'&passwd='+p+'&ID='+id,{
-    method: "PUT",
-    headers: {
-      'Content-Type': 'application/json',
-      },
-  })
-  .then(response => response.json())
-  .then((res)=>{
-    alert("Úspěšně změněno!");
-  })
+async function updatePersonel(n,p,id){
+  var boolec = checkForUsers(n);
+  if(boolec){
+await fetch('/api/crew_manage?name='+n+'&passwd='+p+'&ID='+id,{
+  method: "PUT",
+  headers: {
+    'Content-Type': 'application/json',
+    },
+})
+.then(response => response.json())
+.then((res)=>{
+  alert("Úspěšně změněno!");
+})
+  }
+  else {alert("Nelze přidat, jméno již existuje")}
 }
+
 
 const editPersonel = (e,prevname,prevpasswd,id) => {
   const data = e.target;
@@ -635,8 +718,10 @@ async function addNewCrew(n,p,handleTrigger,trigger,token,pers,sPers){
 
 async function registerCrew(n,p,handleTrigger,trigger,pers,sPers) {
   const token = getToken();
+  var boolec = await checkForUsers(n);
 
   // check if name already exists
+    if (boolec){
   await fetch("/api/crew_manage?firm="+token.login,{
     method: "GET",
     headers: {
@@ -655,6 +740,8 @@ async function registerCrew(n,p,handleTrigger,trigger,pers,sPers) {
     // its new crew! create him in database
     addNewCrew(n,p,handleTrigger,trigger,token,pers,sPers);
   })
+    }
+    else {alert("tohoto člověka bohužel zaměstnat nemůžete, uživatele s takovým jménem již v databázi máme");}
 }
 
 const PopPeopleWindow = (props) => {
@@ -761,7 +848,6 @@ const EditConvPerson = (props) => {
   const [personel,setPersonel] = useState([]);
   const [personData,setPersonData] = useState({name:"",passwd:"",id:""});
 
-  console.log("convPAGE:",props.convPage);
 
   useEffect(()=>{
     GetPeople(personel,setPersonel);
@@ -851,7 +937,6 @@ const EditHeaderPeople = (props) => {
 export const EditConveyorPage = () => {
     
   const [convPage,setConvPage] = useState(0);
-  console.log("CONVPAGEROOT: ",convPage);
 
   return (
     <div>
