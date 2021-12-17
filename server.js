@@ -320,6 +320,13 @@ router.route('/conveyor_vehicle')
         res.json(result);
 })
 
+router.route('/getvehicles')
+    .get(async function(req, res) {
+        var result = await kvery('SELECT * FROM Vehicle;');
+        res.json(result);
+    })
+
+
 router.route('/available_vehicles')
     .get(async function(req, res) {
         var result = await kvery('SELECT DISTINCT Vehicle.ID, Vehicle.max_seats_poor, Vehicle.max_seats_rich FROM Vehicle, Connection WHERE Vehicle.ID NOT IN (SELECT Vehicle.ID FROM Connection, Vehicle WHERE Connection.vehicleID=Vehicle.ID);');

@@ -1,7 +1,7 @@
 import React,{useState, useEffect} from 'react';
 import {checkForUsers} from '../services/userControl';
 import {getRezs,getVoZas,confirmReservation,deconfirmReservation,destroyReservation} from './edit_crew';
-
+import {PopVehicleWindow,deleteVehicle} from './conveyor';
 import "../Admin.css"
 
 
@@ -126,6 +126,88 @@ async function getHeslo(setslo,userRole,userID) {
       })
 }
 
+async function GetVehicles(vehicles,setVehicles) {
+    await fetch("/api/getvehicles",{
+      method: "GET",
+      headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+      },
+     })
+    .then((res) => res.json())
+    .then((result) => {
+      setVehicles(result);
+    })
+  }
+
+const editOneVehicle = (e,id,rs,ps,desc,cid,trigger,handleTrigger) => {
+    const data = e.target;
+    e.preventDefault();
+    // check if anything has changed at all
+    if(data.richseats.value === rs && data.poorseats.value === ps && data.desc.value === desc && data.cid.value === cid){
+      handleTrigger(!trigger);
+      return;
+    }
+    // there is something to change
+    const rs_upd    = data.richseats.value !== "" ? data.richseats.value : rs;
+    const ps_upd    = data.poorseats.value !== "" ? data.poorseats.value : ps;
+    const desc_upd  = data.desc.value      !== "" ? data.desc.value      : desc;
+    const cid_upd  = data.cid.value      !== "" ? data.cid.value      : cid;
+
+    console.log('CID: '+cid_upd)
+    updateVehicle(id,rs_upd,ps_upd,desc_upd,cid_upd,trigger,handleTrigger);
+  }
+
+async function updateVehicle(id,rs,ps,desc,cid,trigger,handleTrigger){  
+    console.log('/api/vehicle?max_seats_poor='+ps+'&max_seats_rich='+rs+'&description='+desc+'&conveyorID='+cid+'&ID='+id)
+    await fetch('/api/vehicle?max_seats_poor='+ps+'&max_seats_rich='+rs+'&description='+desc+'&conveyorID='+cid+'&ID='+id,{
+      method: "PUT",
+      headers: {
+        'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then((res)=>{
+      alert("Úspěšně změněno!");
+    })
+  }
+
+const EditMachine = (props) => {
+    const data = props.data;
+    const setData = props.setData;
+    const trigger = props.trigger;
+    const handleTrigger = props.handleTrigger;
+    //  id:"",max_rich:"",max_poor:"",desc:""
+    console.log(data.id,data.max_rich,data.max_poor,data.desc,data.cid);
+  
+    return trigger ? (
+      <div className="popup-window-down">
+        <div className="popup-in">
+        <button className="reserve-close-button" onClick={() =>{handleTrigger(!trigger)}}>X</button>
+          <h3 className="h3reg">Uprav Vozidlo</h3>
+          <form onSubmit={(e)=>editOneVehicle(e,data.id,data.max_rich,data.max_poor,data.desc,data.cid,trigger,handleTrigger)}>
+            <label htmlFor="desc">Popis</label>
+              <input className="register-item" id="desc" type="text"defaultValue={data.desc} ></input>
+            
+            <label htmlFor="richseats">Celkový počet sedadel(1.třída)</label>
+              <input className="register-item" id="richseats" type="text" defaultValue={data.max_rich}></input>
+                    
+            <label htmlFor="poorseats">Celkový počet sedadel(2.třída)</label>
+              <input className="register-item" id="poorseats" type="text" defaultValue={data.max_poor}></input>
+              
+            <label htmlFor="poorseats">ID dopravce</label>
+              <input className="register-item" id="cid" type="text" defaultValue={data.cid}></input>
+
+              <hr className="solid" />
+            <button type="submit" className="register-item button-login">Upravit</button>
+          </form>
+          <button type="button" className="register-item button-login" onClick={() => deleteVehicle(data.id,props.vehicles,props.setVehicles,trigger,handleTrigger)}>Smazat</button>
+  
+        </div>
+      </div>
+    ) 
+    : "";
+  }
 const PopPeopleWindow = (props) => {
     if (!props.trigger)
         return "";
@@ -315,11 +397,61 @@ const ManageStops = (props) =>{
 }
 
 const ManageVehicles = (props) =>{
+    const [popVehicle,setPopVehicle] = useState(false)
+    const [popEditVehicle,setPopEditVehicle] = useState(false)
+    const [vehicles,setVehicles] = useState([]);
+    const [vehicleData,setVehicleData] = useState({id:"",max_rich:"",max_poor:"",desc:"",conveyorID: ""});
+
+    useEffect(()=>{
+        GetVehicles(vehicles,setVehicles);
+      },[])
+    const handleData = (id,desc,mr,mp,cid) => {
+    console.log(id,desc,mr,mp,cid);
+    setVehicleData(()=>({
+        id:id,
+        max_rich:mr,
+        max_poor:mp,
+        desc:desc,
+        cid:cid
+    }));
+    setPopEditVehicle(!popEditVehicle);
+    }
+
     if(props.trigger === "Vozidla"){
-        return (
-            <div>
-                henlo auticka
-            </div>
+        return ( 
+            <div className="main-page-vehicle">
+            <button class="add-button" onClick={() => setPopVehicle(!popVehicle)}>+</button>
+            <PopVehicleWindow trigger={popVehicle} handleTrigger={setPopVehicle} setVehicles={setVehicles} vehicles={vehicles}/>
+            <EditMachine trigger={popEditVehicle} handleTrigger={setPopEditVehicle} data={vehicleData} setData={handleData} vehicles={vehicles} setVehicles={setVehicles}/>
+            <table className="people-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Popis</th>
+                  <th>ID vlastníka</th>
+                  <th>sedadla 1. tř.</th>
+                  <th>sedadla 2. tř.</th>
+                  {/* <th>Naposledy v zastávce</th> */}
+                  <th>*</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vehicles.map(val => {
+                  return (
+                    <tr>
+                      <td>{val.ID}</td>
+                      <td>{val.description}</td>
+                      <td>{val.conveyorID}</td>
+                      <td>{val.max_seats_rich}</td>
+                      <td>{val.max_seats_poor}</td>
+                      {/* <td>{val.last_visited}</td> */}
+                      <td><button class="editbtn" onClick={()=> handleData(val.ID,val.description,val.max_seats_rich,val.max_seats_poor,val.conveyorID)}>upravit</button></td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         );
     } else {return "";}
 }
