@@ -7,6 +7,7 @@ export const handleRegister = (props) => {
 }
 
 export async function checkForUsers(name){
+    var p;
     await fetch('/api/isuserok?name='+name,{
         method:"GET",
         headers: {
@@ -16,8 +17,9 @@ export async function checkForUsers(name){
       })
       .then((res) => res.json())
       .then((result) => {
-        return result.msgis;
-    })
+         p = result.msgis;
+        })
+    return p;
 }
 
 export const Logout = (props) => {
