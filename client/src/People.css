@@ -1,0 +1,116 @@
+/* some colors used*/
+:root{
+  --light_blue_color: #5Ab9ea;
+  --light_cyan_color: #84ceeb;
+  --darker_color: #5680e9;
+  --more_darker_color: #0E2784;/*#0E2784 || #17329C*/
+  --gray_color: #c1c8e4;
+  --purple_color: #8860d0;
+
+  --navigation_background_color: #5ab9ea;
+  --body_background_color: #c1c8e4;
+}
+
+.header-people{
+  margin-bottom: 2%;
+  background-color: var(--darker_color);
+}
+
+.main-page-people{
+  margin-left: 20%;
+  margin-right:20% ;
+  background-color: var(--light_cyan_color);
+  border: 3px var(--more_darker_color) solid;
+}
+
+.main-page-vehicle{
+  margin-left: 10%;
+  margin-right:10% ;
+  padding: 5px;
+  background-color: var(--light_cyan_color);
+  border: 3px var(--more_darker_color) solid;
+}
+
+.main-page-vehicle-admin{
+  margin-left: 5%;
+  margin-right:5% ;
+  padding: 5px;
+  background-color: var(--light_cyan_color);
+  border: 3px var(--more_darker_color) solid;
+}
+
+.btn-ppl{
+  padding: 5px;
+  margin-left: 10px;
+  margin-bottom: 3px;
+  margin-top: 2px;
+  background-color: var(--body_background_color);
+}
+
+.add-button{
+  background-color: var(--body_background_color);
+}
+
+.people-table{
+  width: 100%;
+  height: auto;
+  text-align: left;
+  align-content: center;
+  padding: 2%;
+}
+
+.people-tr:nth-child(1) { 
+  border-top: 1px solid black; 
+  border-bottom: 1px solid black;
+  width: 100%;
+}
+
+tr.solidline {
+  border-bottom: 2px solid var(--more_darker_color);
+  /* margin-bottom: 5px; */
+  /* margin-top: 5px; */
+}
+
+tbody tr:nth-child(odd) {
+  background-color: var(--light_blue_color);
+}
+
+/* tbody tr:nth-child(even) { */
+  /* background-color: blue; */
+/* } */
+
+.connection-main-frame{
+  width: 100%;
+  /* height: 20cm; */
+  margin: 2%;
+  
+}
+.connection-main-frame::after{
+  clear:both;
+}
+
+.conveyor-leftside{
+  /* border: 3px solid yellow; */
+  /* border-left:3px solid var(--more_darker_color); */
+  border-right:3px solid var(--more_darker_color);
+  padding-left: 2px;
+  padding-right: 2px;
+  width: 45%;
+  float:left;
+}
+
+.conveyor-rightside{
+ /* background-color: ; */
+  float:left;
+  width: 55%;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+.people-table-items tr:hover {
+  background-color: #ddd;
+}
+
+.float-right{
+  float:right;
+}
